@@ -1,0 +1,147 @@
+# External LIBRARY drive (or a temporary internal volume until it arrives) +
+# NOMAD storage bind, the essentials library on the NVMe, and the LUKS vault. Every mountpoint is made immutable while it's
+# unmounted, so a missing drive makes things fail loudly instead of silently
+# filling the NVMe.
+
+- name: Helper scripts
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: /usr/local/sbin/{{ item }}
+    mode: "0755"
+  loop: [homestead-vault, homestead-library-format, homestead-library-online, homestead-library-migrate]
+
+- name: Template vault/library config for the helpers
+  ansible.builtin.template:
+    src: storage.conf.j2
+    dest: /etc/homestead/storage.conf
+    mode: "0644"
+
+- name: Mountpoints exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop: ["{{ library_mount }}", "{{ nomad_dir }}", "{{ nomad_storage }}", "{{ vault_mount }}"]
+
+- name: Lock empty mountpoints (only while nothing is mounted on them)
+  ansible.builtin.shell: |
+    mountpoint -q {{ item }} && exit 0
+    if [ -z "$(ls -A {{ item }})" ]; then chattr +i {{ item }}; echo locked; fi
+  loop: ["{{ library_mount }}", "{{ nomad_storage }}", "{{ vault_mount }}"]
+  register: lock
+  changed_when: "'locked' in lock.stdout"
+
+- name: fstab - external library drive (nofail so the box boots without it)
+  ansible.posix.mount:
+    path: "{{ library_mount }}"
+    src: LABEL={{ library_label }}
+    fstype: ext4
+    opts: defaults,noatime,nofail,x-systemd.device-timeout=15s
+    state: present
+
+- name: fstab - NOMAD storage lives on the library drive
+  ansible.posix.mount:
+    path: "{{ nomad_storage }}"
+    src: "{{ library_mount }}/nomad"
+    fstype: none
+    opts: bind,nofail,x-systemd.requires-mounts-for={{ library_mount }}
+    state: present
+
+- name: Is the library drive attached?
+  ansible.builtin.command: blkid -L {{ library_label }}
+  register: libdev
+  changed_when: false
+  failed_when: false
+
+# No external drive yet: put a LIBRARY-labelled volume in the NVMe's spare LVM
+# space so everything installs and works now. `homestead-library-migrate`
+# moves it onto the external drive later.
+- name: Temporary internal library volume
+  when: libdev.rc != 0 and library_temp_size != '0'
+  block:
+    - name: Create lv_library
+      community.general.lvol:
+        vg: vg_sys
+        lv: lv_library
+        size: "{{ library_temp_size }}"
+    - name: Format it as the LIBRARY
+      community.general.filesystem:
+        fstype: ext4
+        dev: /dev/vg_sys/lv_library
+        opts: -m 0 -T largefile -L {{ library_label }}
+    - name: Wait for udev to see the label
+      ansible.builtin.command: udevadm settle
+      changed_when: false
+
+- name: Look for the LIBRARY again
+  ansible.builtin.command: blkid -L {{ library_label }}
+  register: libnow
+  changed_when: false
+  failed_when: false
+
+- name: Mount library drive and NOMAD bind
+  when: libnow.rc == 0
+  block:
+    - ansible.builtin.command: mount {{ library_mount }}
+      args: { creates: "{{ library_mount }}/lost+found" }
+    - ansible.builtin.file:
+        path: "{{ library_mount }}/{{ item }}"
+        state: directory
+        mode: "0755"
+      loop: [nomad, nomad/zim, nomad/books, nomad/media, extra]
+    - ansible.builtin.shell: mountpoint -q {{ nomad_storage }} || mount {{ nomad_storage }}
+      changed_when: false
+
+- name: Warn when the library drive is missing
+  ansible.builtin.debug:
+    msg: >-
+      No drive labelled {{ library_label }} found and library_temp_size is 0.
+      Format a drive with `sudo homestead-library-format /dev/sdX`, then re-run with --tags storage.
+  when: libnow.rc != 0
+
+- name: Docker drop-in directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/docker.service.d
+    state: directory
+    mode: "0755"
+
+- name: Docker waits for the library mounts at boot (but still starts without them)
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/docker.service.d/10-homestead-mounts.conf
+    content: |
+      [Unit]
+      Wants=srv-library.mount opt-project\x2dnomad-storage.mount
+      After=srv-library.mount opt-project\x2dnomad-storage.mount srv-core.mount
+    mode: "0644"
+  notify: reload systemd
+
+- name: Library drive hot-plug brings NOMAD back up; desktops don't automount it
+  ansible.builtin.copy:
+    dest: /etc/udev/rules.d/90-homestead-library.rules
+    content: |
+      SUBSYSTEM=="block", ENV{ID_FS_LABEL}=="{{ library_label }}", ENV{UDISKS_IGNORE}="1"
+      ACTION=="add", SUBSYSTEM=="block", ENV{ID_FS_LABEL}=="{{ library_label }}", TAG+="systemd", ENV{SYSTEMD_WANTS}+="homestead-library-online.service"
+    mode: "0644"
+  notify: reload udev
+
+- name: Library online service
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/homestead-library-online.service
+    content: |
+      [Unit]
+      Description=Mount the LIBRARY drive and (re)start Project NOMAD
+      After=docker.service
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/sbin/homestead-library-online
+    mode: "0644"
+  notify: reload systemd
+
+- name: Vault crypttab entry (never unlocked at boot; dennis runs `homestead-vault open`)
+  ansible.builtin.lineinfile:
+    path: /etc/crypttab
+    regexp: '^{{ vault_mapper }}\s'
+    line: "{{ vault_mapper }} {{ vault_lv }} none luks,noauto"
+    create: true
+    mode: "0600"

@@ -1,0 +1,103 @@
+# Homestead public entry points. Managed by Ansible (roles/proxy).
+# Backends are firewalled; everything people use goes through these ports.
+# Port-based (not hostname-based) so it works on the hotspot, a home LAN, or by IP.
+{
+	auto_https off
+	admin localhost:2019
+}
+
+(admin_auth) {
+	basicauth {
+		{{ admin_user }} {{ admin_basic_auth_hash }}
+	}
+}
+
+# --- Portal + docs + downloads (also the captive-portal landing page) -------
+:80 {
+	# Phone/OS connectivity checks land here in grid-down mode (DNS answers
+	# everything with this box); send them to the portal so the "sign in to
+	# network" sheet opens it.
+	@probe host connectivitycheck.gstatic.com clients3.google.com captive.apple.com www.apple.com www.msftconnecttest.com detectportal.firefox.com nmcheck.gnome.org
+	redir @probe http://{{ lan_name }}/ 302
+
+	handle_path /docs/* {
+		root * {{ core_dir }}/docs
+		file_server browse
+	}
+	handle_path /share/* {
+		root * {{ core_dir }}/share
+		file_server browse
+	}
+	handle {
+		root * {{ portal_dir }}
+		file_server
+	}
+	encode gzip
+}
+
+# --- Public, read-only -----------------------------------------------------
+# NOMAD Command Center for viewing (maps, docs, home). Anything that changes
+# state, and the settings/setup pages, needs the admin password.
+:{{ public_ports.nomad_readonly }} {
+	@privileged {
+		not method GET HEAD
+	}
+	@adminpages path /settings* /easy-setup* /docs/api*
+	handle @privileged {
+		import admin_auth
+		reverse_proxy 127.0.0.1:{{ ports.nomad }}
+	}
+	handle @adminpages {
+		import admin_auth
+		reverse_proxy 127.0.0.1:{{ ports.nomad }}
+	}
+	handle {
+		reverse_proxy 127.0.0.1:{{ ports.nomad }}
+	}
+}
+
+:{{ public_ports.library }} {
+	reverse_proxy 127.0.0.1:{{ ports.kiwix }}
+}
+:{{ public_ports.core_library }} {
+	reverse_proxy 127.0.0.1:{{ ports.kiwix_core }}
+}
+:{{ public_ports.education }} {
+	reverse_proxy 127.0.0.1:{{ ports.kolibri }}
+}
+:{{ public_ports.books }} {
+	reverse_proxy 127.0.0.1:{{ ports.calibreweb }}
+}
+:{{ public_ports.videos }} {
+	reverse_proxy 127.0.0.1:{{ ports.jellyfin }}
+}
+:{{ public_ports.ai }} {
+	reverse_proxy 127.0.0.1:{{ ports.open_webui }}
+}
+:{{ public_ports.pantry }} {
+	reverse_proxy 127.0.0.1:{{ ports.grocy }}
+}
+:{{ public_ports.recipes }} {
+	reverse_proxy 127.0.0.1:{{ ports.mealie }}
+}
+:{{ public_ports.notes }} {
+	reverse_proxy 127.0.0.1:{{ ports.flatnotes }}
+}
+
+# --- Admin only (password) -------------------------------------------------
+:{{ public_ports.admin_nomad }} {
+	import admin_auth
+	reverse_proxy 127.0.0.1:{{ ports.nomad }}
+}
+:{{ public_ports.admin_pat }} {
+	import admin_auth
+	reverse_proxy 127.0.0.1:{{ ports.pat }}
+}
+:{{ public_ports.admin_paperless }} {
+	import admin_auth
+	reverse_proxy 127.0.0.1:{{ ports.paperless }}
+}
+:{{ public_ports.admin_logs }} {
+	import admin_auth
+	reverse_proxy 127.0.0.1:{{ ports.dozzle }}
+}

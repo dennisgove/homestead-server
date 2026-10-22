@@ -1,0 +1,165 @@
+#!/usr/bin/env python3
+"""Battery watchdog for a Victron SmartShunt/BMV/MPPT on VE.Direct.
+
+Reads the VE.Direct text protocol from /dev/victron, writes
+/var/lib/homestead/power.json for the portal, and:
+  - SOC (or voltage) below eco    -> eco mode: stop AI + video containers
+  - back above resume             -> leave eco mode, restart them
+  - below shutdown                -> clean poweroff (BIOS "AC recovery: on" boots it again)
+
+For testing, put a number in /etc/homestead/power-override (e.g. `echo 14 >`)
+and it is used as the SOC instead of the device.
+"""
+import configparser
+import json
+import os
+import subprocess
+import sys
+import time
+
+import serial
+
+CONF = "/etc/homestead/power.conf"
+OVERRIDE = "/etc/homestead/power-override"
+STATE = "/var/lib/homestead"
+ECO_FLAG = f"{STATE}/eco"
+
+
+def load_conf():
+    c = configparser.ConfigParser()
+    c.read(CONF)
+    return c["power"]
+
+
+def read_block(port):
+    """Return one VE.Direct text block as a dict, or None."""
+    fields = {}
+    deadline = time.time() + 5
+    while time.time() < deadline:
+        raw = port.readline()
+        if not raw:
+            continue
+        line = raw.decode("ascii", "replace").strip()
+        if "\t" not in line:
+            continue
+        key, _, val = line.partition("\t")
+        if key == "Checksum":
+            if fields:
+                return fields
+            continue
+        fields[key] = val
+    return fields or None
+
+
+def parse(fields):
+    out = {"time": int(time.time())}
+    if "SOC" in fields:                 # permille on BMV/SmartShunt
+        out["soc"] = round(int(fields["SOC"]) / 10)
+    if "V" in fields:
+        out["volts"] = int(fields["V"]) / 1000
+    if "I" in fields:
+        out["amps"] = int(fields["I"]) / 1000
+    if "P" in fields:
+        out["watts"] = int(fields["P"])
+    if "PPV" in fields:                 # MPPT: panel watts
+        out["solar_watts"] = int(fields["PPV"])
+    return out
+
+
+def write_status(status):
+    tmp = f"{STATE}/power.json.tmp"
+    with open(tmp, "w") as f:
+        json.dump(status, f)
+    os.replace(tmp, f"{STATE}/power.json")
+
+
+def compose(*args):
+    subprocess.run(["docker", "compose", "-f", "/opt/homestead/compose.yaml", *args], check=False)
+
+
+def eco_on(conf):
+    if os.path.exists(ECO_FLAG):
+        return
+    open(ECO_FLAG, "w").close()
+    subprocess.run(["logger", "-t", "homestead-power", "eco mode ON"])
+    compose("stop", "open-webui", "ollama")
+    for c in conf.get("eco_stop_containers", "").split():
+        subprocess.run(["docker", "stop", c], check=False)
+
+
+def eco_off(conf):
+    if not os.path.exists(ECO_FLAG):
+        return
+    os.remove(ECO_FLAG)
+    subprocess.run(["logger", "-t", "homestead-power", "eco mode OFF"])
+    compose("start", "ollama", "open-webui")
+    for c in conf.get("eco_stop_containers", "").split():
+        subprocess.run(["docker", "start", c], check=False)
+
+
+def decide(conf, status):
+    """Return 'shutdown', 'eco', 'normal' or 'hold' (between thresholds)."""
+    if status.get("soc") is not None:
+        v, eco, resume, down = status["soc"], conf.getfloat("eco_soc"), conf.getfloat("resume_soc"), conf.getfloat("shutdown_soc")
+    elif status.get("volts") is not None:
+        v, eco, down = status["volts"], conf.getfloat("eco_volts"), conf.getfloat("shutdown_volts")
+        resume = eco + 0.2
+    else:
+        return "hold"
+    if v <= down:
+        return "shutdown"
+    if v <= eco:
+        return "eco"
+    if v >= resume:
+        return "normal"
+    return "hold"
+
+
+def main():
+    conf = load_conf()
+    dev = conf.get("device", "/dev/victron")
+    low_count = 0
+    no_data = 0
+    port = None
+    while True:
+        status = None
+        if os.path.exists(OVERRIDE):
+            with open(OVERRIDE) as f:
+                status = {"time": int(time.time()), "soc": float(f.read().strip()), "override": True}
+        else:
+            try:
+                if port is None:
+                    port = serial.Serial(dev, 19200, timeout=1)
+                block = read_block(port)
+                status = parse(block) if block else None
+            except (serial.SerialException, OSError, ValueError):
+                port = None
+        if status is None:
+            # No battery data for 10 minutes (cable unplugged, test override
+            # removed): don't leave the AI stopped forever.
+            no_data += 1
+            if no_data >= 20:
+                eco_off(conf)
+            time.sleep(30)
+            continue
+        no_data = 0
+
+        write_status(status)
+        action = decide(conf, status)
+        # Require 3 consecutive low readings so a load spike doesn't trip it.
+        low_count = low_count + 1 if action == "shutdown" else 0
+        if action == "shutdown" and low_count >= 3:
+            subprocess.run(["logger", "-t", "homestead-power", f"battery critical {status}; powering off"])
+            subprocess.run(["wall", "Battery critical: shutting down in 60 seconds to protect the battery."])
+            time.sleep(60)
+            subprocess.run(["systemctl", "poweroff"])
+            return
+        if action in ("eco", "shutdown"):
+            eco_on(conf)
+        elif action == "normal":
+            eco_off(conf)
+        time.sleep(conf.getint("interval", 20))
+
+
+if __name__ == "__main__":
+    sys.exit(main())

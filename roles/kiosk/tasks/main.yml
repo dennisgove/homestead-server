@@ -1,0 +1,177 @@
+# The guest account boots straight into a desktop with the portal open. It can
+# browse, use LibreOffice, play media, run the radio apps and mount USB sticks,
+# but it can't change the system, the network, or the disks.
+
+- name: Auto-login the kiosk user
+  community.general.ini_file:
+    path: /etc/gdm3/custom.conf
+    section: daemon
+    option: "{{ item.k }}"
+    value: "{{ item.v }}"
+    no_extra_spaces: true
+    mode: "0644"
+  loop:
+    - { k: AutomaticLoginEnable, v: "true" }
+    - { k: AutomaticLogin, v: "{{ kiosk_user }}" }
+
+- name: dconf profile for the kiosk session
+  ansible.builtin.copy:
+    dest: /etc/dconf/profile/homestead-kiosk
+    content: |
+      user-db:user
+      system-db:homestead-kiosk
+    mode: "0644"
+
+- name: dconf directories
+  ansible.builtin.file:
+    path: /etc/dconf/db/homestead-kiosk.d/locks
+    state: directory
+    mode: "0755"
+
+- name: Kiosk desktop settings and locks
+  ansible.builtin.copy:
+    dest: "/etc/dconf/db/homestead-kiosk.d/{{ item.f }}"
+    content: "{{ item.c }}"
+    mode: "0644"
+  loop:
+    - f: 00-kiosk
+      c: |
+        [org/gnome/desktop/screensaver]
+        lock-enabled=false
+        idle-activation-enabled=false
+
+        [org/gnome/desktop/session]
+        idle-delay=uint32 900
+
+        [org/gnome/desktop/lockdown]
+        disable-lock-screen=true
+        disable-log-out=false
+        user-administration-disabled=true
+
+        [org/gnome/settings-daemon/plugins/power]
+        sleep-inactive-ac-type='nothing'
+        sleep-inactive-battery-type='nothing'
+        power-button-action='interactive'
+
+        [org/gnome/desktop/background]
+        picture-options='none'
+        primary-color='#2f5d3a'
+        color-shading-type='solid'
+
+        [org/gnome/shell]
+        favorite-apps=['firefox_firefox.desktop', 'libreoffice-writer.desktop', 'libreoffice-calc.desktop', 'org.gnome.Nautilus.desktop', 'vlc.desktop', 'js8call.desktop', 'fldigi.desktop', 'gqrx.desktop']
+        welcome-dialog-last-shown-version='999'
+
+        [org/gnome/software]
+        download-updates=false
+        allow-updates=false
+
+        [org/gnome/desktop/notifications]
+        show-in-lock-screen=false
+    - f: locks/kiosk
+      c: |
+        /org/gnome/desktop/screensaver/lock-enabled
+        /org/gnome/desktop/lockdown/disable-lock-screen
+        /org/gnome/desktop/lockdown/user-administration-disabled
+        /org/gnome/settings-daemon/plugins/power/sleep-inactive-ac-type
+        /org/gnome/software/allow-updates
+  notify: dconf update
+
+- name: Kiosk ~/.config belongs to the kiosk user
+  ansible.builtin.file:
+    path: /home/{{ kiosk_user }}/.config
+    state: directory
+    owner: "{{ kiosk_user }}"
+    group: "{{ kiosk_user }}"
+    mode: "0700"
+
+- name: Kiosk config dirs owned by root (guest can't remove its own lockdown)
+  ansible.builtin.file:
+    path: "/home/{{ kiosk_user }}/.config/{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop: [environment.d, autostart]
+
+- name: Kiosk session uses the locked dconf profile
+  ansible.builtin.copy:
+    dest: /home/{{ kiosk_user }}/.config/environment.d/90-homestead.conf
+    content: "DCONF_PROFILE=homestead-kiosk\n"
+    owner: root
+    mode: "0644"
+
+- name: Open the portal on login
+  ansible.builtin.copy:
+    dest: /home/{{ kiosk_user }}/.config/autostart/homestead-portal.desktop
+    content: |
+      [Desktop Entry]
+      Type=Application
+      Name=Homestead Library
+      Exec=sh -c "sleep 8; firefox --new-window http://{{ lan_name }}/"
+      X-GNOME-Autostart-enabled=true
+    owner: root
+    mode: "0644"
+
+- name: Desktop launcher for the portal (for anyone who closes the browser)
+  ansible.builtin.copy:
+    dest: /usr/share/applications/homestead-portal.desktop
+    content: |
+      [Desktop Entry]
+      Type=Application
+      Name=Homestead Library
+      Comment=Open the offline library portal
+      Exec=firefox --new-window http://{{ lan_name }}/
+      Icon=accessories-dictionary
+      Categories=Education;
+    mode: "0644"
+
+- name: Polkit - the kiosk user can't administer anything
+  ansible.builtin.copy:
+    dest: /etc/polkit-1/rules.d/50-homestead-kiosk.rules
+    content: |
+      // Managed by Ansible (roles/kiosk).
+      polkit.addRule(function (action, subject) {
+        if (subject.user !== "{{ kiosk_user }}") return polkit.Result.NOT_HANDLED;
+        var id = action.id;
+        // Allowed: USB sticks, shutdown/reboot, sound, printing.
+        var allow = [
+          "org.freedesktop.udisks2.filesystem-mount",
+          "org.freedesktop.udisks2.eject-media",
+          "org.freedesktop.udisks2.power-off-drive",
+          "org.freedesktop.login1.power-off",
+          "org.freedesktop.login1.reboot"
+        ];
+        if (allow.indexOf(id) >= 0) return polkit.Result.YES;
+        var deny = [
+          "org.freedesktop.NetworkManager.",
+          "org.freedesktop.udisks2.",
+          "org.freedesktop.packagekit.",
+          "io.snapcraft.snapd.",
+          "org.freedesktop.Flatpak.",
+          "org.freedesktop.accounts.",
+          "org.freedesktop.timedate1.",
+          "org.freedesktop.hostname1.",
+          "org.freedesktop.systemd1.",
+          "org.gnome.controlcenter.",
+          "com.ubuntu.pkexec.",
+          "org.freedesktop.policykit.exec"
+        ];
+        for (var i = 0; i < deny.length; i++) {
+          if (id.indexOf(deny[i]) === 0) return polkit.Result.NO;
+        }
+        return polkit.Result.NOT_HANDLED;
+      });
+    mode: "0644"
+
+- name: Firefox policy directory
+  ansible.builtin.file:
+    path: /etc/firefox/policies
+    state: directory
+    mode: "0755"
+
+- name: Firefox policies (homepage, bookmarks, no about:config/devtools)
+  ansible.builtin.template:
+    src: policies.json.j2
+    dest: /etc/firefox/policies/policies.json
+    mode: "0644"

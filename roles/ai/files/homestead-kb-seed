@@ -1,0 +1,82 @@
+#!/usr/bin/env python3
+"""Load the essentials PDFs into Open WebUI knowledge bases, one per category.
+
+    homestead-kb-seed --token <Open WebUI API key> [--url http://127.0.0.1:8610]
+
+Create the API key in Open WebUI: profile picture > Settings > Account > API keys
+(an admin may need to enable API keys under Admin Panel > Settings > General).
+Already-uploaded files (same name in the same knowledge base) are skipped, so
+re-run it after fetching more content.
+"""
+import argparse
+import os
+import sys
+
+import requests
+
+DOCS = "/srv/core/docs"
+NAMES = {
+    "medical": "Medical",
+    "water": "Water & Sanitation",
+    "food": "Food & Agriculture",
+    "defense": "Defense & Security",
+    "survival": "Survival & Shelter",
+    "power": "Power & Repair",
+    "repair": "Power & Repair",
+    "comms": "Radio & Comms",
+}
+EXTS = (".pdf", ".txt", ".md", ".epub", ".docx")
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--token", required=True)
+    ap.add_argument("--url", default="http://127.0.0.1:8610")
+    args = ap.parse_args()
+
+    s = requests.Session()
+    s.headers["Authorization"] = f"Bearer {args.token}"
+    api = args.url.rstrip("/") + "/api/v1"
+
+    r = s.get(f"{api}/knowledge/", timeout=30)
+    r.raise_for_status()
+    kbs = r.json()
+    if isinstance(kbs, dict):  # newer versions paginate
+        kbs = kbs.get("items", [])
+    by_name = {k["name"]: k for k in kbs}
+
+    for cat in sorted(os.listdir(DOCS)):
+        folder = os.path.join(DOCS, cat)
+        if cat not in NAMES or not os.path.isdir(folder):
+            continue
+        name = NAMES[cat]
+        kb = by_name.get(name)
+        if kb is None:
+            r = s.post(f"{api}/knowledge/create", json={"name": name, "description": f"Homestead {name} references"}, timeout=30)
+            r.raise_for_status()
+            kb = by_name[name] = r.json()
+            print(f"created knowledge base {name}")
+        detail = s.get(f"{api}/knowledge/{kb['id']}", timeout=30).json()
+        existing = {f.get("meta", {}).get("name") or f.get("filename") for f in detail.get("files") or []}
+
+        for root, _, files in os.walk(folder):
+            for fn in sorted(files):
+                if not fn.lower().endswith(EXTS) or fn in existing:
+                    continue
+                path = os.path.join(root, fn)
+                print(f"[{name}] {fn} ...", end=" ", flush=True)
+                with open(path, "rb") as fh:
+                    up = s.post(f"{api}/files/", files={"file": (fn, fh)}, timeout=3600)
+                if not up.ok:
+                    print(f"upload failed ({up.status_code})")
+                    continue
+                add = s.post(f"{api}/knowledge/{kb['id']}/file/add", json={"file_id": up.json()["id"]}, timeout=3600)
+                print("ok" if add.ok else f"index failed ({add.status_code}: {add.text[:120]})")
+                existing.add(fn)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except requests.RequestException as e:
+        sys.exit(f"error: {e}")

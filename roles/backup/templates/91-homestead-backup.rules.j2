@@ -1,0 +1,5 @@
+# Managed by Ansible (roles/backup).
+{% for l in backup_labels %}
+SUBSYSTEM=="block", ENV{ID_FS_LABEL}=="{{ l }}", ENV{UDISKS_IGNORE}="1"
+ACTION=="add", SUBSYSTEM=="block", ENV{ID_FS_LABEL}=="{{ l }}", TAG+="systemd", ENV{SYSTEMD_WANTS}+="homestead-backup@{{ l }}.service"
+{% endfor %}

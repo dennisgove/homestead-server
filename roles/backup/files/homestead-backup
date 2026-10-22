@@ -1,0 +1,146 @@
+#!/usr/bin/env bash
+# Back up everything to an external drive labelled BACKUP-A or BACKUP-B.
+# Started automatically when the drive is plugged in (udev -> systemd), or by
+# hand:  sudo homestead-backup BACKUP-A
+#
+# On the drive:
+#   borg/              encrypted, deduplicated: system config, home dirs, app data,
+#                      AI models, essentials library, DB dumps, and the vault (still LUKS-encrypted)
+#   borg-key.txt       copy of the borg key (useless without the passphrase)
+#   library/           plain-file mirror of the LIBRARY drive (usable directly in any Kiwix)
+#   library-deleted/   files removed from the library, kept by date in case it was a mistake
+#   offline/           docker images, .deb packages, this repo: rebuild with no internet
+#   clonezilla/        full system images (made by hand monthly, see docs/RESTORE.md)
+set -euo pipefail
+. /etc/homestead/storage.conf
+[[ -f /etc/homestead/backup.env ]] && . /etc/homestead/backup.env
+
+LABEL="${1:?usage: homestead-backup BACKUP-A|BACKUP-B}"
+MNT="/mnt/backup/$LABEL"
+LOG=/var/log/homestead-backup.log
+DUMPS="$STATE_DIR/dumps"
+
+exec 9>/run/homestead-backup.lock
+flock -n 9 || { echo "A backup is already running." >&2; exit 1; }
+exec > >(tee -a "$LOG") 2>&1
+
+notify() {
+  # Show on whoever's desktop is active (normally the kiosk), plus the log.
+  echo "[$(date '+%F %T')] $*"
+  local u uid
+  for u in "$KIOSK_USER" "$ADMIN_USER"; do
+    uid=$(id -u "$u" 2>/dev/null) || continue
+    [[ -S "/run/user/$uid/bus" ]] || continue
+    runuser -u "$u" -- env DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" \
+      notify-send -a "Homestead backup" "Backup $LABEL" "$*" 2>/dev/null || true
+  done
+}
+
+fail() {
+  notify "FAILED: $* - see $LOG. Do not unplug until the light stops."
+  mountpoint -q "$MNT" && { sync; umount "$MNT" || true; }
+  exit 1
+}
+trap 'fail "error on line $LINENO"' ERR
+
+notify "Started. Leave the drive plugged in; you'll get a message when it's done."
+mkdir -p "$MNT"
+mountpoint -q "$MNT" || mount -o noatime "LABEL=$LABEL" "$MNT"
+
+export BORG_REPO="$MNT/borg"
+export BORG_PASSCOMMAND="cat /etc/homestead/borg-passphrase"
+export BORG_RELOCATED_REPO_ACCESS_IS_OK=yes
+export BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK=no
+
+if [[ ! -d "$BORG_REPO" ]]; then
+  echo "Initialising new borg repository on $LABEL"
+  borg init --encryption=repokey-blake2
+fi
+rm -f "$MNT/borg-key.txt"
+borg key export "$BORG_REPO" "$MNT/borg-key.txt"
+
+# --- 1. Consistent dumps of live databases and the disk layout --------------
+mkdir -p "$DUMPS/sqlite" "$DUMPS/layout"
+if docker ps --format '{{.Names}}' | grep -qx nomad_mysql; then
+  docker exec nomad_mysql sh -c 'exec mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" --all-databases --single-transaction --routines --events' \
+    > "$DUMPS/nomad-mysql.sql.tmp" && mv "$DUMPS/nomad-mysql.sql.tmp" "$DUMPS/nomad-mysql.sql"
+fi
+find "$HOMESTEAD_DATA" -type f \( -name '*.db' -o -name '*.sqlite' -o -name '*.sqlite3' \) -size +0 2>/dev/null \
+  | while read -r db; do
+      out="$DUMPS/sqlite/$(echo "${db#/}" | tr / _)"
+      sqlite3 "$db" ".backup '$out'" 2>/dev/null || echo "warn: couldn't dump $db"
+    done
+sfdisk -d /dev/nvme0n1 > "$DUMPS/layout/nvme0n1.sfdisk" 2>/dev/null || true
+vgcfgbackup -f "$DUMPS/layout/vg_sys.vg" vg_sys >/dev/null
+lsblk -f > "$DUMPS/layout/lsblk.txt"
+cp /etc/fstab /etc/crypttab "$DUMPS/layout/" 2>/dev/null || true
+if cryptsetup isLuks "$VAULT_LV" 2>/dev/null; then
+  rm -f "$DUMPS/layout/vault-luks-header.img"
+  cryptsetup luksHeaderBackup "$VAULT_LV" --header-backup-file "$DUMPS/layout/vault-luks-header.img"
+fi
+dpkg --get-selections > "$DUMPS/layout/dpkg-selections.txt"
+docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -v '<none>' > "$DUMPS/layout/docker-images.txt"
+
+# --- 2. System + data archive -----------------------------------------------
+notify "Backing up system and data..."
+borg create --stats --compression zstd,3 --one-file-system --exclude-caches \
+  --exclude "pp:${NOMAD_STORAGE#/}" \
+  --exclude "pp:${NOMAD_DIR#/}/mysql" \
+  --exclude "pp:${LIBRARY_MOUNT#/}" \
+  --exclude "pp:${VAULT_MOUNT#/}" \
+  --exclude 'home/*/.cache' \
+  --exclude 'root/.cache' \
+  "::system-{now:%Y-%m-%dT%H:%M}" \
+  /etc /root /home /opt /usr/local "$CORE_DIR" "$PORTAL_DIR" "$STATE_DIR"
+
+# --- 3. Vault, as the raw LUKS volume (stays encrypted inside the backup) ---
+if cryptsetup isLuks "$VAULT_LV" 2>/dev/null; then
+  notify "Backing up encrypted vault..."
+  vg=$(lvs --noheadings -o vg_name "$VAULT_LV" | tr -d ' ')
+  snap="/dev/$vg/homestead_vault_snap"
+  lvremove -y "$snap" >/dev/null 2>&1 || true
+  lvcreate -q -s -L 5G -n homestead_vault_snap "$VAULT_LV" >/dev/null
+  borg create --stats --read-special --compression lz4 "::vault-{now:%Y-%m-%dT%H:%M}" "$snap" \
+    || { lvremove -y "$snap" >/dev/null; false; }
+  lvremove -y "$snap" >/dev/null
+fi
+
+# --- 4. Retention ------------------------------------------------------------
+for prefix in system vault; do
+  borg prune --glob-archives "$prefix-*" \
+    --keep-daily "${KEEP_DAILY:-7}" --keep-weekly "${KEEP_WEEKLY:-8}" --keep-monthly "${KEEP_MONTHLY:-12}"
+done
+borg compact
+
+# --- 5. Library mirror (plain files) ----------------------------------------
+if mountpoint -q "$LIBRARY_MOUNT"; then
+  notify "Mirroring the library drive (first time takes many hours)..."
+  mkdir -p "$MNT/library"
+  rsync -aH --delete-after --exclude lost+found \
+    --backup --backup-dir="$MNT/library-deleted/$(date +%F)" \
+    --info=stats1 "$LIBRARY_MOUNT/" "$MNT/library/"
+else
+  notify "Library drive not attached; skipping the library mirror this time."
+fi
+
+# --- 6. Offline rebuild kit ---------------------------------------------------
+/usr/local/sbin/homestead-export-offline "$MNT/offline"
+
+# --- 7. Verify -----------------------------------------------------------------
+# Partial repository check; continues where it left off on the next run.
+borg check --repository-only --max-duration 1800
+disk="/dev/$(lsblk -no PKNAME "$(findmnt -no SOURCE "$MNT")")"
+smart=$(smartctl -H -d sat "$disk" 2>/dev/null | grep -i 'overall-health' || true)
+[[ "$smart" == *FAILED* ]] && notify "WARNING: backup drive $LABEL reports SMART failure. Replace it."
+
+free_pct=$(df --output=pcent "$MNT" | tail -1 | tr -dc 0-9)
+(( free_pct > 92 )) && notify "WARNING: $LABEL is ${free_pct}% full."
+
+borg info --last 1 --glob-archives 'system-*' | sed -n '/Archive name/,/This archive/p' > "$MNT/LAST-BACKUP.txt" || true
+date > "$MNT/LAST-BACKUP-DATE.txt"
+touch "$STATE_DIR/last-backup" "$STATE_DIR/last-backup-$LABEL"
+
+sync
+umount "$MNT"
+trap - ERR
+notify "Done. It's safe to unplug $LABEL now."

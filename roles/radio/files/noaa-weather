@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Listen to NOAA Weather Radio through an RTL-SDR dongle.
+#   noaa-weather            scan the 7 channels, play the strongest
+#   noaa-weather 3          play channel WX3 (162.475 MHz)
+#   noaa-weather 162.550M   play a frequency
+set -euo pipefail
+
+freqs=(162.550M 162.400M 162.475M 162.425M 162.450M 162.500M 162.525M)
+gain="${GAIN:-40}"
+
+pick() {
+  echo "Scanning NOAA channels (about 20 seconds)..." >&2
+  local best="" best_p=-999 f p
+  for f in "${freqs[@]}"; do
+    # Average power over a short capture; higher (less negative) is stronger.
+    mhz="${f%M}"
+    lo=$(awk -v m="$mhz" 'BEGIN{printf "%.3f", m-0.02}')
+    hi=$(awk -v m="$mhz" 'BEGIN{printf "%.3f", m+0.02}')
+    p=$(timeout 8 rtl_power -f "${lo}M:${hi}M:5k" -i 1 -e 2 -g "$gain" - 2>/dev/null \
+        | awk -F, 'NF>6 {s=0; n=0; for (i=7;i<=NF;i++) {s+=$i; n++} if (n) printf "%.1f\n", s/n}' | tail -1)
+    [[ -z "$p" ]] && continue
+    echo "  $f  ${p} dB" >&2
+    if awk -v a="$p" -v b="$best_p" 'BEGIN{exit !(a>b)}'; then best="$f"; best_p="$p"; fi
+  done
+  echo "${best:-162.550M}"
+}
+
+case "${1:-scan}" in
+  scan) f=$(pick) ;;
+  [1-7]) f="${freqs[$(( $1 - 1 ))]}" ;;
+  *M) f="$1" ;;
+  *) echo "usage: $0 [scan|1-7|FREQ]M" >&2; exit 2 ;;
+esac
+
+echo "Playing $f  (Ctrl+C to stop)"
+rtl_fm -f "$f" -M fm -s 22050 -E deemp -g "$gain" -l 0 - 2>/dev/null \
+  | play -q -t raw -r 22050 -e signed -b 16 -c 1 -

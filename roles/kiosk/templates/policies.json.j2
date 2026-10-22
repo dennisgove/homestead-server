@@ -1,0 +1,51 @@
+{%- set h = 'http://' ~ lan_name -%}
+{%- set marks = [
+  ('🚑 Emergency', h ~ '/emergency.html'),
+  ('Library', h ~ '/'),
+  ('Encyclopedia', h ~ ':' ~ public_ports.core_library ~ '/'),
+  ('AI', h ~ ':' ~ public_ports.ai ~ '/'),
+  ('Maps', h ~ ':' ~ public_ports.nomad_readonly ~ '/maps'),
+  ('Books', h ~ ':' ~ public_ports.books ~ '/'),
+  ('Learn', h ~ ':' ~ public_ports.education ~ '/'),
+  ('Pantry', h ~ ':' ~ public_ports.pantry ~ '/'),
+  ('Notes', h ~ ':' ~ public_ports.notes ~ '/'),
+] -%}
+{
+  "policies": {
+    "Homepage": { "URL": "{{ h }}/", "Locked": true, "StartPage": "homepage" },
+    "NewTabPage": false,
+    "DisplayBookmarksToolbar": "always",
+    "NoDefaultBookmarks": true,
+    "Bookmarks": [
+{% for title, url in marks %}
+      { "Title": {{ title | to_json }}, "URL": {{ url | to_json }}, "Placement": "toolbar" }{{ "," if not loop.last }}
+{% endfor %}
+    ],
+    "SearchEngines": {
+      "Add": [
+        {
+          "Name": "Homestead Library",
+          "URLTemplate": "{{ h }}:{{ public_ports.core_library }}/search?pattern={searchTerms}",
+          "Method": "GET",
+          "Alias": "lib"
+        }
+      ],
+      "Default": "Homestead Library"
+    },
+    "SearchSuggestEnabled": false,
+    "BlockAboutConfig": true,
+    "BlockAboutProfiles": true,
+    "DisableDeveloperTools": true,
+    "DisableAppUpdate": true,
+    "DisableTelemetry": true,
+    "DisableFirefoxStudies": true,
+    "DisablePocket": true,
+    "DisableFirefoxAccounts": true,
+    "DontCheckDefaultBrowser": true,
+    "OverrideFirstRunPage": "",
+    "OverridePostUpdatePage": "",
+    "CaptivePortal": false,
+    "ExtensionSettings": { "*": { "installation_mode": "blocked" } },
+    "UserMessaging": { "WhatsNew": false, "ExtensionRecommendations": false, "FeatureRecommendations": false, "SkipOnboarding": true, "MoreFromMozilla": false }
+  }
+}

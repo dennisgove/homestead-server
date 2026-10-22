@@ -1,0 +1,59 @@
+#!/usr/sbin/nft -f
+# Homestead firewall. Managed by Ansible (roles/proxy).
+# Only touches its own table, so Docker's rules are left alone on reload.
+
+table inet homestead {}
+delete table inet homestead
+
+table inet homestead {
+	# Every backend (NOMAD, its apps, our add-ons, Ollama, DBs). Reached only
+	# through Caddy on 80/7000-7099.
+	set backend_ports {
+		type inet_service; flags interval
+		elements = { 2019, 3306, 6333-6334, 6379, 8080-8999, 9999, 11434-11435 }
+	}
+	# The kiosk user may still use MeshCore Web directly (it needs HTTPS for
+	# Web Serial, which the plain-HTTP proxy can't give it).
+	set kiosk_blocked {
+		type inet_service; flags interval
+		elements = { 2019, 3306, 6333-6334, 6379, 8080-8499, 8501-8999, 9999, 11434-11435 }
+	}
+
+	# Runs before Docker's DNAT, so it also covers container-published ports.
+	chain prerouting_guard {
+		type filter hook prerouting priority -150; policy accept;
+		iifname "lo" accept
+		iifname "docker0" accept
+		iifname "br-*" accept
+		fib daddr type local tcp dport @backend_ports drop
+	}
+
+	# Local processes: the kiosk user can't skip the proxy (and its passwords).
+	chain output_guard {
+		type filter hook output priority -150; policy accept;
+		meta skuid "{{ kiosk_user }}" fib daddr type local tcp dport @kiosk_blocked reject with tcp reset
+		meta skuid "{{ kiosk_user }}" ip daddr 172.16.0.0/12 reject
+	}
+
+	chain input {
+		type filter hook input priority 0; policy drop;
+		iifname "lo" accept
+		ct state established,related accept
+		ct state invalid drop
+		iifname "docker0" accept
+		iifname "br-*" accept
+		meta l4proto { icmp, ipv6-icmp } accept
+
+		tcp dport { 80, 7000-7099 } accept              # portal + apps (Caddy)
+		udp dport { 53, 67, 68 } accept                 # hotspot DHCP/DNS
+		tcp dport 53 accept
+		udp dport 5353 accept                           # mDNS (homestead.local)
+		udp dport 546 accept                            # DHCPv6 client
+
+		# SSH for the admin from wired ethernet only.
+		iifname "en*" tcp dport 22 accept
+		iifname "eth*" tcp dport 22 accept
+
+		limit rate 5/minute log prefix "homestead-drop: "
+	}
+}

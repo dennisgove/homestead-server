@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Copy what a rebuild needs when there's no internet:
+#   images/   `docker save` of every image (only re-saved when it changed)
+#   debs/     every .deb apt has downloaded (keep-debs is enabled in roles/base)
+#   repo/     this provisioning repo, including secrets.yml (root-only on the drive)
+#   isos/     put Ubuntu + Clonezilla ISOs here by hand
+set -euo pipefail
+out="${1:?usage: homestead-export-offline DIR}"
+mkdir -p "$out"/{images,debs,repo,isos}
+
+docker image ls --format '{{.Repository}}:{{.Tag}} {{.ID}}' | grep -v '<none>' |
+while read -r ref id; do
+  name=$(echo "$ref" | tr '/:' '__')
+  if [[ "$(cat "$out/images/$name.id" 2>/dev/null)" != "$id" ]]; then
+    echo "saving image $ref"
+    docker save "$ref" | zstd -q -T0 -3 > "$out/images/$name.tar.zst.tmp"
+    mv "$out/images/$name.tar.zst.tmp" "$out/images/$name.tar.zst"
+    echo "$id" > "$out/images/$name.id"
+    echo "$ref" > "$out/images/$name.ref"
+  fi
+done
+
+rsync -a /var/cache/apt/archives/*.deb "$out/debs/" 2>/dev/null || true
+rsync -a --delete /opt/homestead/repo/ "$out/repo/"
+chmod 700 "$out/repo"
+
+cat > "$out/README.txt" <<'EOF'
+Offline rebuild kit. See repo/docs/RESTORE.md.
+  Load images:   for f in images/*.tar.zst; do zstd -dc "$f" | docker load; done
+  Install debs:  sudo apt install ./debs/<name>.deb   (or: sudo dpkg -i debs/*.deb; sudo apt -f install)
+EOF

@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# Restore helpers. Plug in a backup drive first (if a backup starts on its own,
+# let it finish, or stop it: sudo systemctl stop 'homestead-backup@*').
+#
+#   homestead-restore BACKUP-A list                     list archives
+#   homestead-restore BACKUP-A files ARCHIVE PATH...    restore paths (e.g. home/guest/Documents) into /restore
+#   homestead-restore BACKUP-A all ARCHIVE              restore a whole system archive into /restore
+#   homestead-restore BACKUP-A mysql                    load the NOMAD database from the latest dump
+#   homestead-restore BACKUP-A vault ARCHIVE            write a vault archive back onto the vault LV (vault must be closed)
+#   homestead-restore BACKUP-A library                  copy the library mirror onto a (new) LIBRARY drive
+#   homestead-restore BACKUP-A images                   docker load every saved image (no internet needed)
+set -euo pipefail
+. /etc/homestead/storage.conf
+[[ $EUID -eq 0 ]] || exec sudo "$0" "$@"
+
+LABEL="${1:?drive label}"; cmd="${2:?command}"; shift 2
+MNT="/mnt/backup/$LABEL"
+mkdir -p "$MNT"
+mountpoint -q "$MNT" || mount "LABEL=$LABEL" "$MNT"
+export BORG_REPO="$MNT/borg" BORG_RELOCATED_REPO_ACCESS_IS_OK=yes
+if [[ -f /etc/homestead/borg-passphrase ]]; then
+  export BORG_PASSCOMMAND="cat /etc/homestead/borg-passphrase"
+fi   # otherwise borg asks for the passphrase from the sealed sheet
+
+case "$cmd" in
+  list)
+    borg list --short
+    ;;
+  files|all)
+    archive="${1:?archive name (see list)}"; shift || true
+    mkdir -p /restore && cd /restore
+    borg extract --list "::$archive" "$@"
+    echo "Restored into /restore. Copy what you need back into place."
+    ;;
+  mysql)
+    archive=$(borg list --short --glob-archives 'system-*' --last 1)
+    mkdir -p /restore && cd /restore
+    borg extract "::$archive" "${STATE_DIR#/}/dumps/nomad-mysql.sql"
+    docker exec -i nomad_mysql sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < "/restore/${STATE_DIR#/}/dumps/nomad-mysql.sql"
+    echo "NOMAD database restored from $archive."
+    ;;
+  vault)
+    archive="${1:?vault archive name (see list)}"
+    if mountpoint -q "$VAULT_MOUNT" || [[ -e "/dev/mapper/$VAULT_MAPPER" ]]; then
+      echo "Close the vault first: homestead-vault close" >&2; exit 1
+    fi
+    read -rp "Overwrite $VAULT_LV with $archive? Type YES: " ok; [[ "$ok" == YES ]] || exit 1
+    borg extract --stdout "::$archive" > "$VAULT_LV"
+    sync
+    echo "Vault restored. Open it with: homestead-vault open"
+    ;;
+  library)
+    mountpoint -q "$LIBRARY_MOUNT" || mount "$LIBRARY_MOUNT"
+    rsync -aH --info=progress2 "$MNT/library/" "$LIBRARY_MOUNT/"
+    mountpoint -q "$NOMAD_STORAGE" || mount "$NOMAD_STORAGE"
+    /usr/local/sbin/homestead-library-online
+    ;;
+  images)
+    for f in "$MNT"/offline/images/*.tar.zst; do echo "loading $f"; zstd -dc "$f" | docker load; done
+    ;;
+  *) sed -n '2,13p' "$0"; exit 2 ;;
+esac

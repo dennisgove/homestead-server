@@ -1,0 +1,122 @@
+- name: Hostname
+  ansible.builtin.hostname:
+    name: "{{ homestead_hostname }}"
+
+- name: Timezone
+  community.general.timezone:
+    name: "{{ timezone }}"
+
+- name: Local names resolve to this machine (kiosk uses library.lan in every mode)
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: '\s{{ lan_name | regex_escape }}(\s|$)'
+    line: "127.0.0.1 {{ lan_name }} homestead.lan"
+
+- name: Keep every downloaded .deb (copied to the backup drive for offline rebuilds)
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/02keep-debs
+    content: |
+      APT::Keep-Downloaded-Packages "true";
+      Binary::apt::APT::Keep-Downloaded-Packages "true";
+    mode: "0644"
+
+- name: Base packages
+  ansible.builtin.apt:
+    update_cache: "{{ not offline }}"
+    name:
+      - ca-certificates
+      - curl
+      - gnupg
+      - jq
+      - aria2
+      - tmux
+      - htop
+      - rsync
+      - sqlite3
+      - python3-requests
+      - python3-yaml
+      - python3-serial
+      - pipx
+      - smartmontools
+      - lm-sensors
+      - powertop
+      - linux-tools-common
+      - nvme-cli
+      - cryptsetup
+      - lvm2
+      - borgbackup
+      - caddy
+      - nftables
+      - avahi-daemon
+      - libnss-mdns
+      - iw
+      - libreoffice
+      - vlc
+      - evince
+      - gnome-shell-extension-prefs
+      - libnotify-bin
+      - sox
+      - unattended-upgrades
+      - qrencode
+
+- name: Docker apt repository
+  when: not offline
+  ansible.builtin.deb822_repository:
+    name: docker
+    types: deb
+    uris: https://download.docker.com/linux/ubuntu
+    suites: "{{ ansible_distribution_release }}"
+    components: stable
+    signed_by: https://download.docker.com/linux/ubuntu/gpg
+
+- name: Docker engine
+  ansible.builtin.apt:
+    update_cache: "{{ not offline }}"
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+
+- name: Docker log rotation (small disk, long uptime)
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    content: |
+      { "log-driver": "local", "log-opts": { "max-size": "10m", "max-file": "3" } }
+    mode: "0644"
+  notify: restart docker
+
+- name: Homestead directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ homestead_dir }}"
+    - "{{ homestead_data }}"
+    - "{{ homestead_dir }}/cache"
+    - "{{ homestead_dir }}/bin"
+    - "{{ state_dir }}"
+    - "{{ state_dir }}/dumps"
+    - /etc/homestead
+    - "{{ core_dir }}/zim"
+    - "{{ core_dir }}/docs"
+    - "{{ core_dir }}/share"
+    - "{{ portal_dir }}"
+
+- name: SMART monitoring of all disks
+  ansible.builtin.copy:
+    dest: /etc/smartd.conf
+    content: |
+      DEVICESCAN -a -o on -S on -n standby,q -s (S/../.././02|L/../../6/03) -m root
+    mode: "0644"
+  notify: restart smartd
+
+- name: Unattended security updates (paused in grid-down mode by homestead-mode)
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+    mode: "0644"

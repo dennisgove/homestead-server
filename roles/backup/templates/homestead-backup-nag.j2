@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Desktop warning when the last backup is older than 8 days. Managed by Ansible.
+# Silent until the first backup ever runs (no backup drive yet); the portal's
+# status strip still shows "Last backup never".
+f={{ state_dir }}/last-backup
+if [[ ! -e "$f" || -z "$(find "$f" -mtime +8)" ]]; then
+  exit 0
+fi
+for u in {{ kiosk_user }} {{ admin_user }}; do
+  uid=$(id -u "$u") || continue
+  [[ -S /run/user/$uid/bus ]] || continue
+  runuser -u "$u" -- env DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" \
+    notify-send -u critical "Backup overdue" "Plug in {{ backup_labels[0] }} to back up the library computer." || true
+done

@@ -1,0 +1,10 @@
+- name: reload firewall
+  ansible.builtin.systemd_service:
+    name: homestead-firewall
+    state: restarted
+    daemon_reload: true
+
+- name: reload caddy
+  ansible.builtin.systemd_service:
+    name: caddy
+    state: reloaded

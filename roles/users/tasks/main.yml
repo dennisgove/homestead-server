@@ -1,0 +1,42 @@
+- name: root has a break-glass password (console only; SSH root login is off)
+  ansible.builtin.user:
+    name: root
+    password: "{{ root_password_hash }}"
+
+- name: Admin user
+  ansible.builtin.user:
+    name: "{{ admin_user }}"
+    password: "{{ admin_password_hash }}"
+    shell: /bin/bash
+    groups: [sudo, docker, adm, dialout, plugdev, audio, video, lpadmin]
+    append: true
+
+- name: Admin SSH key
+  ansible.posix.authorized_key:
+    user: "{{ admin_user }}"
+    key: "{{ admin_ssh_pubkey }}"
+  when: admin_ssh_pubkey | length > 0
+
+- name: Kiosk user (no sudo, not in docker; radio/SDR groups so family can operate comms)
+  ansible.builtin.user:
+    name: "{{ kiosk_user }}"
+    comment: Homestead Library
+    password: "{{ kiosk_password_hash }}"
+    shell: /bin/bash
+    groups: [dialout, plugdev, audio, video]
+    append: false
+
+- name: Make sure the kiosk user never gains admin groups
+  ansible.builtin.command: gpasswd -d {{ kiosk_user }} {{ item }}
+  loop: [sudo, docker, adm, lxd]
+  register: gp
+  changed_when: gp.rc == 0
+  failed_when: false
+
+- name: SSH hardening (key-only once a key is installed)
+  ansible.builtin.template:
+    src: sshd.conf.j2
+    dest: /etc/ssh/sshd_config.d/10-homestead.conf
+    mode: "0644"
+    validate: /usr/sbin/sshd -t -f %s
+  notify: restart ssh

@@ -1,0 +1,113 @@
+# Content to pull while the internet is up:  sudo scripts/fetch_content.py --tier 1
+#
+# zims:   kiwix: <dir>/<name>  -> newest <name>_YYYY-MM.zim under download.kiwix.org/zim/<dir>/
+#         target: core     -> /srv/core/zim on the NVMe (essentials; works without the USB drive)
+#                 library  -> NOMAD's zim folder on the LIBRARY drive (skipped if NOMAD already has it)
+# docs:   PDFs into /srv/core/docs/<cat>/ (listed on the portal, fed to the AI knowledge bases)
+#         url: a single file    page: every PDF linked from that page
+# manual: no stable direct link; get these by hand into /srv/core/docs/<cat>/
+#
+# tier 1 = critical (medical, water, food, defense), 2 = sustainability & repair, 3 = education & culture.
+# Rough sizes are from the Kiwix mirror in Oct 2026; the script prints exact sizes before downloading.
+# NOMAD's Command Center has its own curated collections (Medicine, Survival, Agriculture, DIY,
+# Education, Wikipedia). Install those from its setup wizard too; this list fills the gaps.
+
+zims:
+  # --- Tier 1: core (NVMe) ------------------------------------------------
+  - { kiwix: other/zimgit-medicine_en,          target: core, tier: 1, cat: medical }      # field & emergency medicine books
+  - { kiwix: other/zimgit-water_en,             target: core, tier: 1, cat: water }
+  - { kiwix: other/zimgit-food-preparation_en,  target: core, tier: 1, cat: food }
+  - { kiwix: other/zimgit-post-disaster_en,     target: core, tier: 1, cat: survival }
+  - { kiwix: other/zimgit-knots_en,             target: core, tier: 1, cat: survival }
+  - { kiwix: other/mdwiki_en_all_maxi,          target: core, tier: 1, cat: medical }      # WikiProject Medicine (WikiMed)
+  - { kiwix: other/wikem_en_all_maxi,           target: core, tier: 1, cat: medical }      # emergency medicine
+  - { kiwix: wikipedia/wikipedia_en_medicine_maxi, target: core, tier: 1, cat: medical }
+  - { kiwix: zimit/fas-military-medicine_en,    target: core, tier: 1, cat: medical }
+  - { kiwix: zimit/irp.fas.org_en_military-medicine, target: core, tier: 1, cat: medical }
+  - { kiwix: zimit/nhs.uk_en_medicines,         target: core, tier: 1, cat: medical }      # drug A-Z, doses, interactions
+  - { kiwix: zimit/wwwnc.cdc.gov_en_all,        target: core, tier: 1, cat: medical }      # CDC travel/infectious disease
+  - { kiwix: other/wikivet.net_en_all_maxi,     target: core, tier: 1, cat: food }         # veterinary medicine for livestock
+  - { kiwix: zimit/armypubs_en_all,             target: core, tier: 1, cat: defense }      # US Army field manuals (~7GB)
+  - { kiwix: zimit/www.ready.gov_en,            target: core, tier: 1, cat: survival }
+  - { kiwix: other/trueprepper.com_en_all,      target: core, tier: 1, cat: survival }
+  - { kiwix: other/usda-2015_en,                target: core, tier: 1, cat: food }
+  - { kiwix: wikipedia/wikipedia_en_all_nopic,  target: core, tier: 1, cat: reference }    # all of Wikipedia, text (~49GB)
+
+  # --- Tier 2: sustainability & repair -------------------------------------
+  - { kiwix: other/appropedia_en_all_maxi,      target: core, tier: 2, cat: power }        # appropriate technology
+  - { kiwix: other/energypedia_en_all_maxi,     target: core, tier: 2, cat: power }
+  - { kiwix: other/gardenology.org_en_all,      target: core, tier: 2, cat: food }
+  - { kiwix: other/restarters_en_all_maxi,      target: core, tier: 2, cat: repair }
+  - { kiwix: zimit/cd3wdproject.org_en_all,     target: library, tier: 2, cat: repair }    # rural development library
+  - { kiwix: zimit/survivorlibrary.com_en_all,  target: library, tier: 2, cat: survival }  # pre-industrial how-to (~205GB)
+  - { kiwix: zimit/medlineplus.gov_en_all,      target: library, tier: 2, cat: medical }
+  - { kiwix: other/librepathology_en_all_maxi,  target: library, tier: 2, cat: medical }
+  - { kiwix: zimit/solar.lowtechmagazine.com_mul_all, target: library, tier: 2, cat: power }
+  - { kiwix: zimit/publicdomainrecipes.com_en_all, target: library, tier: 2, cat: food }
+  - { kiwix: zimit/100r.co_en_all,              target: library, tier: 2, cat: survival }  # off-grid living on a boat
+  - { kiwix: wikipedia/wikipedia_en_all_maxi,   target: library, tier: 2, cat: reference } # with images (~124GB)
+  - { kiwix: stack_exchange/diy.stackexchange.com_en_all,            target: library, tier: 2, cat: repair }
+  - { kiwix: stack_exchange/mechanics.stackexchange.com_en_all,      target: library, tier: 2, cat: repair }
+  - { kiwix: stack_exchange/electronics.stackexchange.com_en_all,    target: library, tier: 2, cat: repair }
+  - { kiwix: stack_exchange/woodworking.stackexchange.com_en_all,    target: library, tier: 2, cat: repair }
+  - { kiwix: stack_exchange/engineering.stackexchange.com_en_all,    target: library, tier: 2, cat: repair }
+  - { kiwix: stack_exchange/bicycles.stackexchange.com_en_all,       target: library, tier: 2, cat: repair }
+  - { kiwix: stack_exchange/crafts.stackexchange.com_en_all,         target: library, tier: 2, cat: repair }
+  - { kiwix: stack_exchange/gardening.stackexchange.com_en_all,      target: library, tier: 2, cat: food }
+  - { kiwix: stack_exchange/cooking.stackexchange.com_en_all,        target: library, tier: 2, cat: food }
+  - { kiwix: stack_exchange/homebrew.stackexchange.com_en_all,       target: library, tier: 2, cat: food }
+  - { kiwix: stack_exchange/pets.stackexchange.com_en_all,           target: library, tier: 2, cat: food }
+  - { kiwix: stack_exchange/sustainability.stackexchange.com_en_all, target: library, tier: 2, cat: power }
+  - { kiwix: stack_exchange/outdoors.stackexchange.com_en_all,       target: library, tier: 2, cat: survival }
+  - { kiwix: stack_exchange/medicalsciences.stackexchange.com_en_all, target: library, tier: 2, cat: medical }
+  - { kiwix: stack_exchange/fitness.stackexchange.com_en_all,        target: library, tier: 2, cat: medical }
+  - { kiwix: stack_exchange/ham.stackexchange.com_en_all,            target: library, tier: 2, cat: comms }
+  - { kiwix: stack_exchange/security.stackexchange.com_en_all,       target: library, tier: 2, cat: defense }
+  - { kiwix: stack_exchange/martialarts.stackexchange.com_en_all,    target: library, tier: 2, cat: defense }
+  - { kiwix: stack_exchange/chemistry.stackexchange.com_en_all,      target: library, tier: 2, cat: reference }
+  - { kiwix: stack_exchange/biology.stackexchange.com_en_all,        target: library, tier: 2, cat: reference }
+  - { kiwix: stack_exchange/physics.stackexchange.com_en_all,        target: library, tier: 2, cat: reference }
+  - { kiwix: stack_exchange/earthscience.stackexchange.com_en_all,   target: library, tier: 2, cat: reference }
+  - { kiwix: stack_exchange/parenting.stackexchange.com_en_all,      target: library, tier: 2, cat: reference }
+  - { kiwix: stack_exchange/law.stackexchange.com_en_all,            target: library, tier: 2, cat: reference }
+
+  # --- Tier 3: education & culture ------------------------------------------
+  - { kiwix: gutenberg/gutenberg_en_all,        target: library, tier: 3, cat: reference }  # ~70k public-domain books (~206GB)
+  - { kiwix: other/khanacademy_en_all,          target: library, tier: 3, cat: education }  # videos (~168GB); Kolibri has the courses too
+  - { kiwix: other/crashcourse_en_all,          target: library, tier: 3, cat: education }
+  - { kiwix: phet/phet_en_all,                  target: library, tier: 3, cat: education }  # science simulations
+  - { kiwix: wikivoyage/wikivoyage_en_all_maxi, target: library, tier: 3, cat: reference }
+  - { kiwix: wiktionary/wiktionary_en_all_nopic, target: library, tier: 3, cat: reference }
+  - { kiwix: other/theworldfactbook_en_all,     target: library, tier: 3, cat: reference }
+  - { kiwix: other/wikispecies_en_all_nopic,    target: library, tier: 3, cat: reference }
+
+docs:
+  - { title: "Nuclear War Survival Skills (Kearny)", url: "https://www.oism.org/nwss/nwss.pdf", file: nuclear-war-survival-skills.pdf, cat: survival, tier: 1 }
+  - { title: "Are You Ready? (FEMA citizen preparedness)", url: "https://www.ready.gov/sites/default/files/2021-11/are-you-ready-guide.pdf", file: fema-are-you-ready.pdf, cat: survival, tier: 1 }
+  - { title: "Emergency War Surgery, 5th US revision (Borden Institute)", page: "https://medcoe.army.mil/borden-tb-ews", folder: emergency-war-surgery, cat: medical, tier: 1 }
+
+manual:
+  # Free, but behind landing pages or split into chapters that move around.
+  - { title: "Where There Is No Doctor; Where There Is No Dentist; Where Women Have No Doctor; A Book for Midwives (Hesperian)", where: "hesperian.org - free PDF downloads", cat: medical }
+  - { title: "Where There Is No Animal Doctor", where: "search the title; distributed free by Christian Veterinary Mission", cat: food }
+  - { title: "TCCC guidelines + All Service Members card", where: "deployedmedicine.com", cat: medical }
+  - { title: "Stop the Bleed booklet", where: "stopthebleed.org", cat: medical }
+  - { title: "Special Operations Forces Medical Handbook / Ranger Medic Handbook", where: "public PDFs; search the titles", cat: medical }
+  - { title: "The Ship Captain's Medical Guide", where: "gov.uk (Maritime and Coastguard Agency)", cat: medical }
+  - { title: "WHO Model Formulary + Essential Medicines List", where: "who.int (IRIS repository)", cat: medical }
+  - { title: "USDA Complete Guide to Home Canning (2015)", where: "nchfp.uga.edu", cat: food }
+  - { title: "So Easy to Preserve - excerpts + NCHFP fact sheets", where: "nchfp.uga.edu", cat: food }
+  - { title: "State extension service: vegetable garden calendar, livestock, food preservation", where: "your state's land-grant university extension site", cat: food }
+  - { title: "FAO technical manuals (small-scale farming, fish ponds, food storage)", where: "fao.org/documents", cat: food }
+  - { title: "CERT Basic Training participant manual", where: "fema.gov/emergency-managers/individuals-communities/cert", cat: survival }
+  - { title: "Manuals for every firearm, radio, generator, vehicle and appliance you own", where: "manufacturer sites", cat: defense }
+  - { title: "ARRL band plan, ICS-213/ICS-214 forms, local repeater list, ARES/RACES plan", where: "arrl.org, your county ARES", cat: comms }
+  - { title: "USGS topo maps (GeoPDF) for your county", where: "ngmdb.usgs.gov/topoview", cat: survival }
+  - { title: "Purchased books (ARRL Handbook, Foxfire, Machinery's Handbook, ...)", where: "your own copies, into /srv/library/personal", cat: personal }
+
+phone_apps:
+  # Into /srv/core/share/apps so phones can install them from the portal with no internet.
+  - { title: Kiwix (Android), where: "download.kiwix.org/release/kiwix-android/" }
+  - { title: Organic Maps (Android) + offline map files, where: "github.com/organicmaps/organicmaps/releases" }
+  - { title: MeshCore companion app (Android), where: "meshcore.co.uk" }
+  - { title: F-Droid (Android app store; for further offline APKs), where: "f-droid.org" }

@@ -1,0 +1,62 @@
+- name: Portal directories
+  ansible.builtin.file:
+    path: "{{ portal_dir }}/{{ item }}"
+    state: directory
+    mode: "0755"
+  loop: [data, status]
+
+- name: Portal pages
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "{{ portal_dir }}/{{ item }}"
+    mode: "0644"
+  loop: [index.html, emergency.html, style.css, app.js]
+
+- name: Portal config
+  ansible.builtin.template:
+    src: config.js.j2
+    dest: "{{ portal_dir }}/config.js"
+    mode: "0644"
+
+- name: Empty guide list until content is fetched
+  ansible.builtin.copy:
+    dest: "{{ portal_dir }}/data/docs.json"
+    content: "[]\n"
+    force: false
+    mode: "0644"
+
+- name: Status writer
+  ansible.builtin.copy:
+    src: homestead-status
+    dest: /usr/local/bin/homestead-status
+    mode: "0755"
+
+- name: Status units
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/{{ item.name }}
+    content: "{{ item.content }}"
+    mode: "0644"
+  loop:
+    - name: homestead-status.service
+      content: |
+        [Unit]
+        Description=Update portal status strip
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/local/bin/homestead-status
+    - name: homestead-status.timer
+      content: |
+        [Unit]
+        Description=Update portal status strip every minute
+        [Timer]
+        OnBootSec=30s
+        OnUnitActiveSec=60s
+        [Install]
+        WantedBy=timers.target
+
+- name: Status timer on
+  ansible.builtin.systemd_service:
+    name: homestead-status.timer
+    enabled: true
+    state: started
+    daemon_reload: true

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Called by udev when the LIBRARY drive appears (and safe to run by hand):
+# mount it, mount the NOMAD storage bind, and start NOMAD's containers.
+set -euo pipefail
+. /etc/homestead/storage.conf
+
+mountpoint -q "$LIBRARY_MOUNT" || mount "$LIBRARY_MOUNT"
+mountpoint -q "$NOMAD_STORAGE" || mount "$NOMAD_STORAGE"
+
+if [[ -f "$NOMAD_DIR/compose.yml" ]]; then
+  # --pull never: NOMAD sets pull_policy=always, which fails with no internet.
+  docker compose -p project-nomad -f "$NOMAD_DIR/compose.yml" up -d --pull never
+  # Apps NOMAD installed (Kiwix, Kolibri, ...) are plain containers, not compose services.
+  ids=$(docker ps -aq --filter name=nomad_ --filter status=exited --filter status=created)
+  [[ -n "$ids" ]] && docker start $ids
+fi
+logger -t homestead "LIBRARY drive online; NOMAD started"

@@ -1,0 +1,43 @@
+- name: Ollama is up
+  ansible.builtin.uri:
+    url: http://127.0.0.1:{{ ports.ollama }}/api/version
+  register: ov
+  retries: 10
+  delay: 6
+  until: ov.status == 200
+
+- name: Which models are present?
+  ansible.builtin.command: docker exec homestead-ollama ollama list
+  register: have
+  changed_when: false
+
+- name: Pull models (large; needs internet - skipped when already present)
+  ansible.builtin.command: docker exec homestead-ollama ollama pull {{ item }}
+  loop: "{{ ai_models.values() | list }}"
+  when: not offline and item not in have.stdout
+  register: pull
+  failed_when: false
+
+- name: Report failed pulls
+  ansible.builtin.debug:
+    msg: "Couldn't pull {{ item.item }}; check the name at ollama.com/library and re-run --tags ai."
+  loop: "{{ pull.results }}"
+  loop_control: { label: "{{ item.item }}" }
+  when: item.rc is defined and item.rc != 0
+
+- name: Planner persona Modelfile
+  ansible.builtin.template:
+    src: Modelfile.planner.j2
+    dest: "{{ homestead_data }}/ollama/Modelfile.planner"
+    mode: "0644"
+  register: modelfile
+
+- name: Build homestead-planner model
+  ansible.builtin.command: docker exec homestead-ollama ollama create homestead-planner -f /root/.ollama/Modelfile.planner
+  when: modelfile.changed or 'homestead-planner' not in have.stdout
+
+- name: Knowledge-base seeding tool
+  ansible.builtin.copy:
+    src: homestead-kb-seed
+    dest: /usr/local/bin/homestead-kb-seed
+    mode: "0755"

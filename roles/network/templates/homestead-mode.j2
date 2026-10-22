@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Switch between normal life and grid-down operation.
+#   homestead-mode griddown   WiFi becomes the HOMESTEAD hotspot + captive portal, updates paused
+#   homestead-mode gridup     WiFi back to client mode, updates resumed
+#   homestead-mode status
+# Managed by Ansible (roles/network).
+set -euo pipefail
+[[ $EUID -eq 0 ]] || exec sudo "$0" "$@"
+
+CON="{{ hotspot_con }}"
+STATE=/etc/homestead/mode
+UPDATE_TIMERS=(apt-daily.timer apt-daily-upgrade.timer)
+
+wifi_clients() {
+  nmcli -t -f NAME,TYPE con show | awk -F: -v h="$CON" '$2=="802-11-wireless" && $1!=h {print $1}'
+}
+
+case "${1:-status}" in
+  griddown)
+    while read -r c; do [[ -n "$c" ]] && nmcli con mod "$c" connection.autoconnect no; done < <(wifi_clients)
+    nmcli con mod "$CON" connection.autoconnect yes connection.autoconnect-priority 100
+    nmcli con up "$CON"
+    systemctl disable --now "${UPDATE_TIMERS[@]}" >/dev/null 2>&1 || true
+    echo griddown > "$STATE"
+    echo "Grid-down mode: hotspot {{ hotspot_ssid }} is up at {{ hotspot_ip }}. Updates paused."
+    ;;
+  gridup)
+    nmcli con mod "$CON" connection.autoconnect no
+    nmcli con down "$CON" 2>/dev/null || true
+    while read -r c; do [[ -n "$c" ]] && nmcli con mod "$c" connection.autoconnect yes; done < <(wifi_clients)
+    nmcli dev wifi rescan 2>/dev/null || true
+    systemctl enable --now "${UPDATE_TIMERS[@]}" >/dev/null 2>&1 || true
+    echo gridup > "$STATE"
+    echo "Grid-up mode: WiFi client restored, updates resumed."
+    ;;
+  status)
+    echo "mode: $(cat "$STATE" 2>/dev/null || echo gridup)"
+    nmcli -t -f NAME,DEVICE,STATE con show --active
+    ;;
+  *) echo "usage: $0 griddown|gridup|status" >&2; exit 2 ;;
+esac

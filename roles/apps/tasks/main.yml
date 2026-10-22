@@ -1,0 +1,18 @@
+- name: App data directories
+  ansible.builtin.file:
+    path: "{{ homestead_data }}/{{ item }}"
+    state: directory
+    mode: "0755"
+  loop: [ollama, open-webui, grocy, mealie]
+
+- name: Compose file
+  ansible.builtin.template:
+    src: compose.yaml.j2
+    dest: "{{ homestead_dir }}/compose.yaml"
+    mode: "0644"
+  register: compose
+
+- name: Start add-on apps
+  ansible.builtin.command: docker compose -f {{ homestead_dir }}/compose.yaml up -d --remove-orphans
+  register: up
+  changed_when: "'Started' in up.stderr or 'Recreated' in up.stderr or 'Created' in up.stderr"

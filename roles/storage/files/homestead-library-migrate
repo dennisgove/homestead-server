@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Move the library from the temporary internal volume (lv_library) onto a new
+# external drive. Erases the drive, copies everything, swaps the labels, and
+# keeps the old volume (as LIBRARY-OLD) until you delete it.
+#   sudo homestead-library-migrate /dev/sdX
+set -euo pipefail
+. /etc/homestead/storage.conf
+[[ $EUID -eq 0 ]] || exec sudo "$0" "$@"
+
+dev="${1:?usage: $0 /dev/sdX   (the new external drive, whole disk)}"
+temp_lv=/dev/vg_sys/lv_library
+new_mnt=/mnt/library-new
+
+[[ -b "$temp_lv" ]] || { echo "No temporary library volume ($temp_lv); nothing to migrate." >&2; exit 1; }
+if [[ "$(realpath "$(findmnt -no SOURCE "$LIBRARY_MOUNT")")" != "$(realpath "$temp_lv")" ]]; then
+  echo "$LIBRARY_MOUNT isn't the temporary volume; nothing to migrate." >&2; exit 1
+fi
+exec 9>/run/homestead-backup.lock
+flock -n 9 || { echo "A backup is running; try again when it finishes." >&2; exit 1; }
+
+used=$(df -B1 --output=used "$LIBRARY_MOUNT" | tail -1)
+size=$(lsblk -bdno SIZE "$dev")
+(( size > used * 105 / 100 )) || { echo "$dev is too small for $(numfmt --to=iec "$used")." >&2; exit 1; }
+
+/usr/local/sbin/homestead-library-format "$dev" LIBRARY-NEW
+udevadm settle
+part=$(blkid -L LIBRARY-NEW)
+# Desktops may have auto-mounted the new filesystem; take it back.
+findmnt -rn -S "$part" -o TARGET | xargs -r -n1 umount
+mkdir -p "$new_mnt"
+mount -o noatime "$part" "$new_mnt"
+
+echo "Copying while everything keeps running (this is the long part)..."
+rsync -aH --info=progress2 "$LIBRARY_MOUNT/" "$new_mnt/"
+
+echo "Stopping NOMAD for the final pass..."
+running=$(docker ps -q --filter name=nomad_)
+[[ -n "$running" ]] && docker stop $running >/dev/null
+rsync -aH --delete "$LIBRARY_MOUNT/" "$new_mnt/"
+umount "$new_mnt"
+umount "$NOMAD_STORAGE"
+umount "$LIBRARY_MOUNT"
+
+e2label "$temp_lv" LIBRARY-OLD
+e2label "$part" "$LIBRARY_LABEL"
+udevadm settle
+/usr/local/sbin/homestead-library-online
+
+echo
+echo "Done: the library is now on $dev."
+echo "The old copy is kept as LIBRARY-OLD. Once everything looks right, free the NVMe space:"
+echo "  sudo lvremove vg_sys/lv_library"

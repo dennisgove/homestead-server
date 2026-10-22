@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# Encrypted vault for family documents (IDs, deeds, insurance, medical records).
+#   homestead-vault init     one time: put LUKS2 + ext4 on the vault LV (DESTROYS its contents)
+#   homestead-vault open     unlock, mount, start Paperless
+#   homestead-vault close    stop Paperless, unmount, lock
+#   homestead-vault status
+set -euo pipefail
+. /etc/homestead/storage.conf
+[[ $EUID -eq 0 ]] || exec sudo "$0" "$@"
+
+compose=(docker compose -f "$HOMESTEAD_DIR/compose.yaml" --profile vault)
+
+case "${1:-status}" in
+  init)
+    if cryptsetup isLuks "$VAULT_LV"; then
+      echo "$VAULT_LV is already LUKS. Refusing to re-init." >&2; exit 1
+    fi
+    echo "This ERASES $VAULT_LV and creates the encrypted vault."
+    echo "Choose a strong passphrase and write it on the sealed recovery sheet."
+    read -rp "Type YES to continue: " ok; [[ "$ok" == YES ]] || exit 1
+    cryptsetup luksFormat --type luks2 "$VAULT_LV"
+    cryptsetup open "$VAULT_LV" "$VAULT_MAPPER"
+    mkfs.ext4 -L VAULT "/dev/mapper/$VAULT_MAPPER"
+    chattr -i "$VAULT_MOUNT"
+    mount "/dev/mapper/$VAULT_MAPPER" "$VAULT_MOUNT"
+    mkdir -p "$VAULT_MOUNT"/{paperless/data,paperless/media,paperless/consume,paperless/export,documents}
+    chown -R "$ADMIN_USER:$ADMIN_USER" "$VAULT_MOUNT/documents"
+    echo "Vault created and open at $VAULT_MOUNT. Back up the LUKS header:"
+    echo "  sudo cryptsetup luksHeaderBackup $VAULT_LV --header-backup-file /root/vault-header.img"
+    ;;
+  open)
+    [[ -e "/dev/mapper/$VAULT_MAPPER" ]] || cryptsetup open "$VAULT_LV" "$VAULT_MAPPER"
+    if ! mountpoint -q "$VAULT_MOUNT"; then
+      chattr -i "$VAULT_MOUNT"
+      mount "/dev/mapper/$VAULT_MAPPER" "$VAULT_MOUNT"
+    fi
+    "${compose[@]}" up -d paperless
+    echo "Vault open at $VAULT_MOUNT. Paperless: admin port 7092. Run 'homestead-vault close' when done."
+    ;;
+  close)
+    "${compose[@]}" stop paperless paperless-redis 2>/dev/null || true
+    mountpoint -q "$VAULT_MOUNT" && umount "$VAULT_MOUNT"
+    [[ -e "/dev/mapper/$VAULT_MAPPER" ]] && cryptsetup close "$VAULT_MAPPER"
+    [[ -z "$(ls -A "$VAULT_MOUNT")" ]] && chattr +i "$VAULT_MOUNT"
+    echo "Vault locked."
+    ;;
+  status)
+    if mountpoint -q "$VAULT_MOUNT"; then echo "open ($VAULT_MOUNT)"; else echo "locked"; fi
+    ;;
+  *) echo "usage: $0 init|open|close|status" >&2; exit 2 ;;
+esac

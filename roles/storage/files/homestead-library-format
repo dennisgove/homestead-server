@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Prepare a new external drive as the LIBRARY (or a replacement after a failure).
+#   sudo homestead-library-format /dev/sdX
+# For backup drives use: sudo homestead-library-format /dev/sdX BACKUP-A
+set -euo pipefail
+[[ -f /etc/homestead/storage.conf ]] && . /etc/homestead/storage.conf
+LIBRARY_LABEL="${LIBRARY_LABEL:-LIBRARY}"
+dev="${1:?usage: $0 /dev/sdX [LABEL]}"
+label="${2:-$LIBRARY_LABEL}"
+
+[[ -b "$dev" ]] || { echo "$dev is not a block device" >&2; exit 1; }
+if [[ "$(lsblk -no TYPE "$dev")" != disk ]]; then
+  echo "Give the whole disk (e.g. /dev/sdb), not a partition." >&2; exit 1
+fi
+if lsblk -no MOUNTPOINT "$dev" | grep -q .; then
+  echo "$dev has mounted partitions; unmount them first." >&2; exit 1
+fi
+root_disk=$(lsblk -no PKNAME "$(findmnt -no SOURCE /)" 2>/dev/null || true)
+if [[ "/dev/$root_disk" == "$dev" ]] || [[ "$dev" == /dev/nvme0n1 ]]; then
+  echo "Refusing to format the system disk." >&2; exit 1
+fi
+
+lsblk -o NAME,SIZE,MODEL,SERIAL,LABEL "$dev"
+echo
+echo "ALL DATA on $dev will be erased and it will be labelled $label."
+read -rp "Type the label ($label) to confirm: " ok
+[[ "$ok" == "$label" ]] || exit 1
+
+wipefs -a "$dev"
+parted -s "$dev" mklabel gpt mkpart "$label" ext4 1MiB 100%
+udevadm settle
+part=$(lsblk -lnpo NAME "$dev" | sed -n 2p)
+# -m 0: no reserved blocks (data drive); large_file: few, huge files (ZIMs).
+mkfs.ext4 -F -m 0 -T largefile -L "$label" "$part"
+echo "Done. $part is labelled $label."

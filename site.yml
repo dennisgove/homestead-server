@@ -1,0 +1,25 @@
+- name: Homestead preparedness server
+  hosts: localhost
+  connection: local
+  become: true
+  vars_files:
+    - secrets.yml
+  pre_tasks:
+    - name: Refuse to run with unedited settings
+      ansible.builtin.assert:
+        that: region_state != 'CHANGE-ME'
+        fail_msg: Edit group_vars/all.yml (region_state, timezone) first.
+  roles:
+    - { role: base,    tags: base }
+    - { role: users,   tags: users }
+    - { role: storage, tags: storage }
+    - { role: nomad,   tags: nomad }
+    - { role: apps,    tags: apps }
+    - { role: proxy,   tags: proxy }
+    - { role: portal,  tags: portal }
+    - { role: kiosk,   tags: kiosk }
+    - { role: network, tags: network }
+    - { role: ai,      tags: ai }
+    - { role: radio,   tags: radio }
+    - { role: power,   tags: power }
+    - { role: backup,  tags: backup }

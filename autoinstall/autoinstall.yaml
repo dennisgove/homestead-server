@@ -1,0 +1,63 @@
+#cloud-config
+# Ubuntu 26.04 LTS Desktop unattended install for the OptiPlex 3060 Micro.
+# WIPES /dev/nvme0n1. Put this file at the root of the Ventoy stick as
+# autoinstall.yaml (or pass it with Ventoy's auto-install plugin); see docs/INSTALL.md.
+#
+# Before use, replace the password hash below:   openssl passwd -6
+# (bootstrap.sh resets all passwords from secrets.yml afterwards anyway.)
+autoinstall:
+  version: 1
+  interactive-sections: []
+  locale: en_US.UTF-8
+  keyboard: { layout: us }
+  timezone: America/Chicago
+  identity:
+    hostname: homestead
+    username: dennis
+    realname: Dennis
+    password: "$6$CHANGE-ME$REPLACE-WITH-openssl-passwd-6-OUTPUT"
+  ssh:
+    install-server: true
+    allow-pw: true            # tightened to key-only by the users role
+  codecs: { install: true }
+  drivers: { install: true }
+  updates: security
+  packages: [git, ansible, rsync, curl, vim, tmux]
+  swap: { size: 0 }           # swap is an LV below
+
+  storage:
+    config:
+      - { type: disk, id: nvme, path: /dev/nvme0n1, ptable: gpt, wipe: superblock-recursive, preserve: false, grub_device: false }
+
+      - { type: partition, id: p-efi,  device: nvme, number: 1, size: 1G, flag: boot, grub_device: true, preserve: false }
+      - { type: partition, id: p-boot, device: nvme, number: 2, size: 2G, preserve: false }
+      - { type: partition, id: p-pv,   device: nvme, number: 3, size: -1, preserve: false }
+
+      - { type: lvm_volgroup, id: vg, name: vg_sys, devices: [p-pv], preserve: false }
+      - { type: lvm_partition, id: lv-root,  volgroup: vg, name: lv_root,  size: 120G, preserve: false }
+      - { type: lvm_partition, id: lv-home,  volgroup: vg, name: lv_home,  size: 60G,  preserve: false }
+      - { type: lvm_partition, id: lv-opt,   volgroup: vg, name: lv_opt,   size: 250G, preserve: false }
+      - { type: lvm_partition, id: lv-core,  volgroup: vg, name: lv_core,  size: 150G, preserve: false }
+      - { type: lvm_partition, id: lv-swap,  volgroup: vg, name: lv_swap,  size: 16G,  preserve: false }
+      # lv_vault is left unformatted; `homestead-vault init` puts LUKS2 on it.
+      - { type: lvm_partition, id: lv-vault, volgroup: vg, name: lv_vault, size: 50G,  preserve: false }
+      # ~280G stays unallocated for snapshots and growth.
+
+      - { type: format, id: f-efi,  volume: p-efi,   fstype: fat32 }
+      - { type: format, id: f-boot, volume: p-boot,  fstype: ext4 }
+      - { type: format, id: f-root, volume: lv-root, fstype: ext4 }
+      - { type: format, id: f-home, volume: lv-home, fstype: ext4 }
+      - { type: format, id: f-opt,  volume: lv-opt,  fstype: ext4 }
+      - { type: format, id: f-core, volume: lv-core, fstype: ext4 }
+      - { type: format, id: f-swap, volume: lv-swap, fstype: swap }
+
+      - { type: mount, id: m-root, device: f-root, path: / }
+      - { type: mount, id: m-boot, device: f-boot, path: /boot }
+      - { type: mount, id: m-efi,  device: f-efi,  path: /boot/efi }
+      - { type: mount, id: m-home, device: f-home, path: /home }
+      - { type: mount, id: m-opt,  device: f-opt,  path: /opt }
+      - { type: mount, id: m-core, device: f-core, path: /srv/core }
+      - { type: mount, id: m-swap, device: f-swap, path: none }
+
+  late-commands:
+    - curtin in-target -- systemctl set-default graphical.target

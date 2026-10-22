@@ -1,0 +1,101 @@
+# Homestead add-ons that NOMAD doesn't ship. Managed by Ansible (roles/apps).
+# NOMAD's own apps (Kiwix, Kolibri, Calibre-Web, Jellyfin, MeshCore Web, ...)
+# are installed from its Command Center and are not in this file.
+name: homestead
+
+services:
+  # Ollama under our control (env limits for a 32GB CPU-only box). NOMAD's AI
+  # settings point at it as a remote Ollama: http://host.docker.internal:{{ ports.ollama }}
+  ollama:
+    image: {{ images.ollama }}
+    container_name: homestead-ollama
+    restart: unless-stopped
+    ports: ["{{ ports.ollama }}:11434"]
+    environment:
+      OLLAMA_HOST: 0.0.0.0
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_NUM_PARALLEL: "1"
+      OLLAMA_KEEP_ALIVE: {{ ai_keep_alive }}
+      OLLAMA_CONTEXT_LENGTH: "{{ ai_context }}"
+    volumes:
+      - {{ homestead_data }}/ollama:/root/.ollama
+
+  open-webui:
+    image: {{ images.open_webui }}
+    container_name: homestead-open-webui
+    restart: unless-stopped
+    depends_on: [ollama]
+    ports: ["{{ ports.open_webui }}:8080"]
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      WEBUI_NAME: Homestead AI
+      ENABLE_SIGNUP: "true"
+      DEFAULT_USER_ROLE: pending        # dennis approves each family member
+      ENABLE_OPENAI_API: "false"
+      OFFLINE_MODE: "true"
+      HF_HUB_OFFLINE: "1"
+      RAG_EMBEDDING_ENGINE: ollama
+      RAG_EMBEDDING_MODEL: {{ ai_models.embed }}
+      DEFAULT_MODELS: homestead-planner
+      ENABLE_COMMUNITY_SHARING: "false"
+      ENABLE_VERSION_UPDATE_CHECK: "false"
+    volumes:
+      - {{ homestead_data }}/open-webui:/app/backend/data
+
+  # Essentials library on the NVMe: works when the LIBRARY drive is missing.
+  kiwix-core:
+    image: {{ images.kiwix }}
+    container_name: homestead-kiwix-core
+    restart: unless-stopped
+    command: ["*.zim"]
+    ports: ["{{ ports.kiwix_core }}:8080"]
+    volumes:
+      - {{ core_dir }}/zim:/data:ro
+
+  grocy:
+    image: {{ images.grocy }}
+    container_name: homestead-grocy
+    restart: unless-stopped
+    ports: ["{{ ports.grocy }}:80"]
+    environment: { PUID: "1000", PGID: "1000", TZ: "{{ timezone }}" }
+    volumes:
+      - {{ homestead_data }}/grocy:/config
+
+  mealie:
+    image: {{ images.mealie }}
+    container_name: homestead-mealie
+    restart: unless-stopped
+    ports: ["{{ ports.mealie }}:9000"]
+    environment:
+      ALLOW_SIGNUP: "false"
+      TZ: {{ timezone }}
+      BASE_URL: http://{{ lan_name }}:{{ public_ports.recipes }}
+    volumes:
+      - {{ homestead_data }}/mealie:/app/data
+
+  # Vault apps: started only by `homestead-vault open` (data is on the LUKS volume).
+  paperless-redis:
+    image: {{ images.redis }}
+    container_name: homestead-paperless-redis
+    profiles: [vault]
+    restart: "no"
+
+  paperless:
+    image: {{ images.paperless }}
+    container_name: homestead-paperless
+    profiles: [vault]
+    restart: "no"
+    depends_on: [paperless-redis]
+    ports: ["{{ ports.paperless }}:8000"]
+    environment:
+      PAPERLESS_REDIS: redis://paperless-redis:6379
+      PAPERLESS_TIME_ZONE: {{ timezone }}
+      PAPERLESS_OCR_LANGUAGE: eng
+      PAPERLESS_URL: http://{{ lan_name }}:{{ public_ports.admin_paperless }}
+      USERMAP_UID: "1000"
+      USERMAP_GID: "1000"
+    volumes:
+      - {{ vault_mount }}/paperless/data:/usr/src/paperless/data
+      - {{ vault_mount }}/paperless/media:/usr/src/paperless/media
+      - {{ vault_mount }}/paperless/consume:/usr/src/paperless/consume
+      - {{ vault_mount }}/paperless/export:/usr/src/paperless/export

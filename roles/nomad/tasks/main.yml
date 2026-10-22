@@ -1,0 +1,64 @@
+# Project NOMAD is installed with its own interactive installer, because it asks
+# you to read and accept its license. This role stages the installer, verifies
+# storage is on the LIBRARY drive, and checks the result.
+
+- name: NOMAD storage must be the LIBRARY drive before install
+  ansible.builtin.command: mountpoint -q {{ nomad_storage }}
+  changed_when: false
+  register: nomad_mount
+  failed_when: false
+
+- name: Stop if the library drive isn't mounted
+  ansible.builtin.fail:
+    msg: >-
+      {{ nomad_storage }} is not mounted. Attach and format the LIBRARY drive
+      (homestead-library-format), run --tags storage, then retry.
+  when: nomad_mount.rc != 0
+
+- name: Stage installer
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/Crosstalk-Solutions/project-nomad/refs/heads/main/install/install_nomad.sh
+    dest: "{{ homestead_dir }}/cache/install_nomad.sh"
+    mode: "0755"
+  register: staged
+  failed_when: false
+  when: not offline
+
+- name: Installer wrapper
+  ansible.builtin.copy:
+    dest: /usr/local/sbin/homestead-install-nomad
+    mode: "0755"
+    content: |
+      #!/usr/bin/env bash
+      # Interactive: read and accept the NOMAD license when prompted.
+      set -euo pipefail
+      mountpoint -q {{ nomad_storage }} || { echo "LIBRARY not mounted" >&2; exit 1; }
+      cd {{ homestead_dir }}/cache
+      bash ./install_nomad.sh
+      echo
+      echo "Now re-run: cd {{ repo_dir }} && sudo ansible-playbook site.yml"
+
+- name: Is NOMAD installed?
+  ansible.builtin.stat:
+    path: "{{ nomad_dir }}/compose.yml"
+  register: nomad_compose
+
+- name: Pause the playbook until NOMAD is installed
+  ansible.builtin.fail:
+    msg: >-
+      Project NOMAD isn't installed yet. Run `sudo homestead-install-nomad`
+      (accept the license), then re-run the playbook. Everything before this
+      point is done.
+  when: not nomad_compose.stat.exists
+
+- name: NOMAD storage path is unchanged from default (our bind mount relies on it)
+  ansible.builtin.command: grep -q "{{ nomad_storage }}:/app/storage" {{ nomad_dir }}/compose.yml
+  changed_when: false
+
+- name: Command Center healthy
+  ansible.builtin.uri:
+    url: http://127.0.0.1:{{ ports.nomad }}/api/health
+  register: health
+  retries: 10
+  delay: 15
+  until: health.status == 200

@@ -1,0 +1,85 @@
+- name: Find the WiFi interface
+  ansible.builtin.shell: iw dev | awk '/Interface/ {print $2; exit}'
+  register: wifi_detect
+  changed_when: false
+  when: wifi_iface == 'auto'
+
+- name: WiFi interface fact
+  ansible.builtin.set_fact:
+    wifi_dev: "{{ wifi_detect.stdout if wifi_iface == 'auto' else wifi_iface }}"
+
+- name: Stop if there's no WiFi device
+  ansible.builtin.fail:
+    msg: No WiFi interface found (AX210 driver missing?). Set wifi_iface in group_vars.
+  when: wifi_dev | length == 0
+
+- name: Hotspot DNS - library.lan, and every other name, answers with this box (captive portal)
+  ansible.builtin.copy:
+    dest: /etc/NetworkManager/dnsmasq-shared.d/homestead.conf
+    content: |
+      # Only active while the hotspot (NM "shared" mode) is up, i.e. grid-down.
+      address=/{{ lan_name }}/{{ hotspot_ip }}
+      address=/homestead.lan/{{ hotspot_ip }}
+      address=/#/{{ hotspot_ip }}
+      dhcp-option=option:router,{{ hotspot_ip }}
+      dhcp-option=114,http://{{ lan_name }}/
+    mode: "0644"
+
+- name: Does the hotspot profile exist?
+  ansible.builtin.command: nmcli -t -f NAME con show
+  register: cons
+  changed_when: false
+
+- name: Create hotspot profile (2.4GHz; Intel AX210 won't AP on 5GHz in most regions)
+  ansible.builtin.command: >-
+    nmcli con add type wifi ifname {{ wifi_dev }} con-name {{ hotspot_con }}
+    autoconnect no ssid {{ hotspot_ssid }}
+    802-11-wireless.mode ap 802-11-wireless.band bg 802-11-wireless.channel {{ hotspot_channel }}
+    ipv4.method shared ipv4.addresses {{ hotspot_ip }}/24 ipv6.method disabled
+    wifi-sec.key-mgmt wpa-psk wifi-sec.proto rsn wifi-sec.pairwise ccmp wifi-sec.group ccmp
+    wifi-sec.psk {{ hotspot_psk }}
+  when: hotspot_con not in cons.stdout_lines
+  no_log: true
+
+- name: Keep hotspot settings in sync
+  ansible.builtin.command: >-
+    nmcli con mod {{ hotspot_con }} ssid {{ hotspot_ssid }}
+    802-11-wireless.channel {{ hotspot_channel }} wifi-sec.psk {{ hotspot_psk }}
+  when: hotspot_con in cons.stdout_lines
+  changed_when: false
+  no_log: true
+
+- name: Mode switch command
+  ansible.builtin.template:
+    src: homestead-mode.j2
+    dest: /usr/local/sbin/homestead-mode
+    mode: "0755"
+
+- name: mDNS name homestead.local
+  community.general.ini_file:
+    path: /etc/avahi/avahi-daemon.conf
+    section: server
+    option: host-name
+    value: "{{ homestead_hostname }}"
+    no_extra_spaces: true
+    mode: "0644"
+  notify: restart avahi
+
+- name: Printable hotspot sign with QR code
+  ansible.builtin.shell: |
+    set -e
+    d={{ core_dir }}/share/print
+    mkdir -p "$d"
+    qrencode -t SVG -o "$d/wifi-qr.svg" "WIFI:T:WPA;S:{{ hotspot_ssid }};P:{{ hotspot_psk }};;"
+    qrencode -t SVG -o "$d/portal-qr.svg" "http://{{ lan_name }}/"
+    cat > "$d/wifi-sign.html" <<'EOF'
+    <!doctype html><meta charset="utf-8"><title>WiFi sign</title>
+    <style>body{font:28px system-ui;text-align:center;margin:40px}img{width:320px}</style>
+    <h1>Homestead Library WiFi</h1>
+    <p>Network: <b>{{ hotspot_ssid }}</b><br>Password: <b>{{ hotspot_psk }}</b></p>
+    <img src="wifi-qr.svg" alt="WiFi QR"><p>Then open <b>http://{{ lan_name }}</b></p>
+    <img src="portal-qr.svg" alt="Portal QR">
+    EOF
+  args:
+    creates: "{{ core_dir }}/share/print/wifi-sign.html"
+  no_log: true

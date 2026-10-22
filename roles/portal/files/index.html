@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Homestead Library</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <h1>Homestead Library</h1>
+  <p class="sub">Works with no internet. Everything here lives on this computer.</p>
+  <div id="status" class="status" aria-live="polite"></div>
+</header>
+
+<main>
+  <a class="tile emergency" href="emergency.html">
+    <span class="icon">🚑</span>
+    <span class="label">MEDICAL EMERGENCY</span>
+    <span class="hint">Bleeding, CPR, choking, burns, breaks, shock</span>
+  </a>
+
+  <form class="search" id="search" action="#">
+    <label for="q">Search everything</label>
+    <div class="row">
+      <input id="q" name="q" type="search" placeholder="e.g. water purification, canning, tourniquet" autocomplete="off">
+      <button type="submit">Search</button>
+    </div>
+  </form>
+
+  <section>
+    <h2>Topics</h2>
+    <div class="grid" id="topics"></div>
+  </section>
+
+  <section>
+    <h2>Tools</h2>
+    <div class="grid" id="tools"></div>
+  </section>
+
+  <section>
+    <h2>Downloaded guides (PDF)</h2>
+    <div id="docs" class="docs"><p class="muted">Loading…</p></div>
+  </section>
+
+  <section class="admin">
+    <h2>Admin</h2>
+    <div class="grid small" id="admin"></div>
+  </section>
+</main>
+
+<footer>
+  <p>Phones: join WiFi <b id="ssid"></b>, then open <b>http://library.lan</b>.
+  Apps for phones are under <a href="/share/">Downloads</a>.</p>
+</footer>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

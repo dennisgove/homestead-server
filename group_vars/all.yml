@@ -1,0 +1,107 @@
+# Homestead server settings. Edit the CHANGE-ME values before the first run.
+# Secrets (passwords, keys) live in secrets.yml, not here; see secrets.example.yml.
+
+homestead_hostname: homestead
+offline: false                       # rebuild with no internet: ./bootstrap.sh -e offline=true
+timezone: America/Chicago            # CHANGE-ME: `timedatectl list-timezones`
+region_state: CHANGE-ME              # e.g. "Tennessee"; drives maps + extension-service docs
+
+admin_user: dennis
+kiosk_user: guest
+
+# --- Paths ---------------------------------------------------------------
+repo_dir: /opt/homestead/repo        # bootstrap.sh copies this repo here
+homestead_dir: /opt/homestead
+homestead_data: /opt/homestead/data
+state_dir: /var/lib/homestead
+core_dir: /srv/core                  # NVMe: essentials library (always available)
+portal_dir: /srv/portal
+library_label: LIBRARY               # external 5TB USB HDD, ext4
+library_mount: /srv/library
+library_temp_size: 180G              # internal stand-in when no LIBRARY drive is attached ('0' = off);
+                                     # move it to the drive later with homestead-library-migrate
+nomad_dir: /opt/project-nomad
+nomad_storage: /opt/project-nomad/storage   # bind mount of {{ library_mount }}/nomad
+vault_lv: /dev/vg_sys/lv_vault
+vault_mapper: homestead-vault
+vault_mount: /srv/vault
+
+# --- Network -------------------------------------------------------------
+wifi_iface: auto                     # auto-detected; or set e.g. wlp2s0
+hotspot_con: homestead-hotspot
+hotspot_ssid: HOMESTEAD-LIBRARY
+hotspot_ip: 10.42.0.1
+hotspot_channel: 6
+lan_name: library.lan
+
+# Ports. Backends listen on the host but are firewalled from everything except
+# Caddy. Public faces are Caddy ports 80 and 7000-7099.
+ports:
+  nomad: 8080
+  kiwix: 8090
+  kolibri: 8310
+  flatnotes: 8200
+  calibreweb: 8420
+  jellyfin: 8490
+  meshcore_web: 8500
+  dozzle: 9999
+  kiwix_core: 8601
+  open_webui: 8610
+  grocy: 8620
+  mealie: 8630
+  paperless: 8640
+  pat: 8650
+  ollama: 11435
+
+public_ports:
+  nomad_readonly: 7000
+  library: 7001
+  core_library: 7002
+  education: 7004
+  books: 7005
+  videos: 7006
+  ai: 7007
+  pantry: 7008
+  recipes: 7009
+  notes: 7010
+  admin_nomad: 7090
+  admin_pat: 7091
+  admin_paperless: 7092
+  admin_logs: 7093
+
+# --- Container images ---------------------------------------------------
+# Pin to the versions that worked on first install; `homestead-export-offline`
+# saves them to the backup drive so a rebuild needs no internet.
+images:
+  ollama: ollama/ollama:0.33.3
+  open_webui: ghcr.io/open-webui/open-webui:main
+  kiwix: ghcr.io/kiwix/kiwix-serve:3.8.1
+  grocy: lscr.io/linuxserver/grocy:latest
+  mealie: ghcr.io/mealie-recipes/mealie:latest
+  paperless: ghcr.io/paperless-ngx/paperless-ngx:latest
+  redis: redis:7-alpine
+
+# --- AI ------------------------------------------------------------------
+# CPU-only (i7-8700T, 32GB). Revisit names at install time for newer releases
+# in the same size classes.
+ai_models:
+  planner: qwen3:30b-a3b             # MoE ~30B total / 3B active, ~19GB RAM
+  fast: qwen3:4b
+  vision: gemma3:4b
+  embed: nomic-embed-text
+ai_context: 8192
+ai_keep_alive: 30m
+
+# --- Power (Victron VE.Direct) ------------------------------------------
+power_eco_soc: 35                    # % : stop AI + video
+power_resume_soc: 45                 # % : resume (hysteresis)
+power_shutdown_soc: 15               # % : clean shutdown
+power_eco_volts: 12.9                # fallback for MPPT-only (no SOC), LiFePO4 12V
+power_shutdown_volts: 12.4
+
+# --- Backup --------------------------------------------------------------
+backup_labels: [BACKUP-A, BACKUP-B]
+backup_mount_root: /mnt/backup
+borg_keep_daily: 7
+borg_keep_weekly: 8
+borg_keep_monthly: 12

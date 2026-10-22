@@ -1,0 +1,88 @@
+- name: Backup tools
+  ansible.builtin.apt:
+    name: [borgbackup, zstd, smartmontools, sqlite3]
+    state: present
+
+- name: Borg passphrase (root only)
+  ansible.builtin.copy:
+    dest: /etc/homestead/borg-passphrase
+    content: "{{ borg_passphrase }}\n"
+    mode: "0600"
+  no_log: true
+
+- name: Backup scripts
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: /usr/local/sbin/{{ item }}
+    mode: "0755"
+  loop: [homestead-backup, homestead-export-offline, homestead-restore]
+
+- name: Retention settings
+  ansible.builtin.copy:
+    dest: /etc/homestead/backup.env
+    content: |
+      KEEP_DAILY={{ borg_keep_daily }}
+      KEEP_WEEKLY={{ borg_keep_weekly }}
+      KEEP_MONTHLY={{ borg_keep_monthly }}
+    mode: "0644"
+
+- name: Backup service (one instance per drive label)
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/homestead-backup@.service
+    content: |
+      [Unit]
+      Description=Homestead backup to %i
+      After=docker.service
+
+      [Service]
+      Type=oneshot
+      EnvironmentFile=/etc/homestead/backup.env
+      ExecStart=/usr/local/sbin/homestead-backup %i
+      TimeoutStartSec=infinity
+      Nice=10
+      IOSchedulingClass=idle
+    mode: "0644"
+  notify: reload systemd
+
+- name: Plugging in a backup drive starts a backup; desktops don't automount it
+  ansible.builtin.template:
+    src: 91-homestead-backup.rules.j2
+    dest: /etc/udev/rules.d/91-homestead-backup.rules
+    mode: "0644"
+  notify: reload udev
+
+- name: Overdue-backup reminder script
+  ansible.builtin.template:
+    src: homestead-backup-nag.j2
+    dest: /usr/local/sbin/homestead-backup-nag
+    mode: "0755"
+
+- name: Daily reminder when no backup has run for 8 days
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/{{ item.name }}
+    content: "{{ item.content }}"
+    mode: "0644"
+  loop:
+    - name: homestead-backup-nag.service
+      content: |
+        [Unit]
+        Description=Remind about overdue backups
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/local/sbin/homestead-backup-nag
+    - name: homestead-backup-nag.timer
+      content: |
+        [Unit]
+        Description=Daily overdue-backup check
+        [Timer]
+        OnCalendar=*-*-* 10:00
+        Persistent=true
+        [Install]
+        WantedBy=timers.target
+
+- name: Enable reminder
+  ansible.builtin.systemd_service:
+    name: homestead-backup-nag.timer
+    enabled: true
+    state: started
+    daemon_reload: true

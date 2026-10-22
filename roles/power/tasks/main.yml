@@ -1,0 +1,77 @@
+- name: Power settings
+  ansible.builtin.copy:
+    dest: /etc/homestead/power.conf
+    content: |
+      # Managed by Ansible (roles/power). Values from group_vars/all.yml.
+      [power]
+      device = /dev/victron
+      interval = 20
+      eco_soc = {{ power_eco_soc }}
+      resume_soc = {{ power_resume_soc }}
+      shutdown_soc = {{ power_shutdown_soc }}
+      eco_volts = {{ power_eco_volts }}
+      shutdown_volts = {{ power_shutdown_volts }}
+      # NOMAD containers also paused in eco mode:
+      eco_stop_containers = nomad_jellyfin nomad_kolibri_2
+    mode: "0644"
+
+- name: Battery watchdog
+  ansible.builtin.copy:
+    src: homestead-power
+    dest: /usr/local/sbin/homestead-power
+    mode: "0755"
+
+- name: Battery watchdog service (idles harmlessly until a Victron cable is plugged in)
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/homestead-power.service
+    content: |
+      [Unit]
+      Description=Homestead battery watchdog (Victron VE.Direct)
+      After=docker.service
+
+      [Service]
+      ExecStart=/usr/local/sbin/homestead-power
+      Restart=always
+      RestartSec=30
+
+      [Install]
+      WantedBy=multi-user.target
+    mode: "0644"
+
+- name: Power tuning script
+  ansible.builtin.copy:
+    dest: /usr/local/sbin/homestead-powertune
+    mode: "0755"
+    content: |
+      #!/usr/bin/env bash
+      # powertop's safe tunables, then turn USB autosuspend back OFF: the library
+      # HDD, SDR, radio interfaces and Victron cable misbehave when suspended.
+      powertop --auto-tune >/dev/null 2>&1 || true
+      for c in /sys/bus/usb/devices/*/power/control; do echo on > "$c" 2>/dev/null || true; done
+      echo powersave | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor >/dev/null 2>&1 || true
+      # Prefer efficiency over turbo bursts (intel_pstate EPP).
+      for e in /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference; do echo balance_power > "$e" 2>/dev/null || true; done
+
+- name: Power tuning at boot
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/homestead-powertune.service
+    content: |
+      [Unit]
+      Description=Homestead power tuning
+      After=multi-user.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/sbin/homestead-powertune
+
+      [Install]
+      WantedBy=multi-user.target
+    mode: "0644"
+
+- name: Enable power services
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+  loop: [homestead-power, homestead-powertune]

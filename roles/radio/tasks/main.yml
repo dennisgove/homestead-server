@@ -1,0 +1,126 @@
+# Ham radio digital modes, SDR receive, and MeshCore LoRa tools.
+
+- name: Radio and SDR packages
+  ansible.builtin.apt:
+    name:
+      - js8call
+      - fldigi
+      - flrig
+      - flmsg
+      - direwolf
+      - libhamlib-utils
+      - rtl-sdr
+      - gqrx-sdr
+      - rtl-433
+      - multimon-ng
+      - sox
+      - esptool
+    state: present
+
+- name: Keep the DVB driver off the RTL-SDR dongle
+  ansible.builtin.copy:
+    dest: /etc/modprobe.d/blacklist-rtlsdr.conf
+    content: |
+      blacklist dvb_usb_rtl28xxu
+      blacklist rtl2832
+      blacklist rtl2830
+    mode: "0644"
+
+- name: Stable device names (Victron cable; radios use /dev/serial/by-id)
+  ansible.builtin.copy:
+    dest: /etc/udev/rules.d/80-homestead-serial.rules
+    content: |
+      # Victron VE.Direct USB cable -> /dev/victron
+      SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6015", ATTRS{product}=="VE Direct cable", SYMLINK+="victron", MODE="0660", GROUP="dialout"
+    mode: "0644"
+
+- name: Latest Pat (Winlink) release
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/la5nta/pat/releases/latest
+    return_content: true
+  register: pat_rel
+  failed_when: false
+  when: not offline
+
+- name: Install Pat
+  ansible.builtin.apt:
+    deb: "{{ (pat_rel.json.assets | selectattr('name', 'search', '_linux_amd64\\.deb$') | first).browser_download_url }}"
+  when: pat_rel.status | default(0) == 200
+  failed_when: false
+
+- name: Pat web UI as a service for the admin (behind the proxy password)
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/pat-http.service
+    content: |
+      [Unit]
+      Description=Pat Winlink web UI
+      After=network.target
+
+      [Service]
+      User={{ admin_user }}
+      ExecStart=/usr/bin/pat http --addr 127.0.0.1:{{ ports.pat }}
+      Restart=on-failure
+
+      [Install]
+      WantedBy=multi-user.target
+    mode: "0644"
+
+- name: Enable Pat once it's configured (`pat configure` as the admin sets callsign/locator)
+  ansible.builtin.systemd_service:
+    name: pat-http
+    enabled: true
+    daemon_reload: true
+  failed_when: false
+
+- name: Latest SatDump release (Meteor-M LRPT weather satellite images)
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/SatDump/SatDump/releases/latest
+    return_content: true
+  register: satdump_rel
+  failed_when: false
+  when: not offline
+
+- name: Install SatDump .deb for this Ubuntu release (falls back to newest Ubuntu build)
+  vars:
+    debs: "{{ satdump_rel.json.assets | selectattr('name', 'search', 'ubuntu.*amd64\\.deb$') | map(attribute='browser_download_url') | list }}"
+    mine: "{{ debs | select('search', ansible_distribution_version) | list }}"
+  ansible.builtin.apt:
+    deb: "{{ (mine or (debs | sort))[-1] }}"
+  when: satdump_rel.status | default(0) == 200 and debs | length > 0
+  failed_when: false
+
+- name: MeshCore CLI (talks to a USB companion node)
+  ansible.builtin.command: pipx install --global meshcore-cli
+  args:
+    creates: /usr/local/bin/meshcore-cli
+  when: not offline
+  environment:
+    PIPX_GLOBAL_BIN_DIR: /usr/local/bin
+  failed_when: false
+
+- name: NOAA weather radio script
+  ansible.builtin.copy:
+    src: noaa-weather
+    dest: /usr/local/bin/noaa-weather
+    mode: "0755"
+
+- name: Desktop launcher for NOAA weather radio
+  ansible.builtin.copy:
+    dest: /usr/share/applications/noaa-weather.desktop
+    content: |
+      [Desktop Entry]
+      Type=Application
+      Name=NOAA Weather Radio
+      Comment=Listen to NOAA weather broadcasts via the SDR dongle
+      Exec=noaa-weather scan
+      Terminal=true
+      Icon=weather-showers
+      Categories=HamRadio;AudioVideo;
+    mode: "0644"
+
+- name: Comms downloads folder (firmware, APKs, band plans, forms)
+  ansible.builtin.file:
+    path: "{{ core_dir }}/share/{{ item }}"
+    state: directory
+    mode: "0755"
+  loop: [meshcore, apps, radio]

@@ -1,0 +1,7 @@
+PermitRootLogin no
+AllowUsers {{ admin_user }}
+{% if admin_ssh_pubkey | length > 0 %}
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+{% endif %}
+X11Forwarding no
