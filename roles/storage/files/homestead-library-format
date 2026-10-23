@@ -9,7 +9,7 @@ dev="${1:?usage: $0 /dev/sdX [LABEL]}"
 label="${2:-$LIBRARY_LABEL}"
 
 [[ -b "$dev" ]] || { echo "$dev is not a block device" >&2; exit 1; }
-if [[ "$(lsblk -no TYPE "$dev")" != disk ]]; then
+if [[ "$(lsblk -dno TYPE "$dev")" != disk ]]; then
   echo "Give the whole disk (e.g. /dev/sdb), not a partition." >&2; exit 1
 fi
 if lsblk -no MOUNTPOINT "$dev" | grep -q .; then
