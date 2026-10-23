@@ -2,7 +2,8 @@
 # Copy what a rebuild needs when there's no internet:
 #   images/   `docker save` of every image (only re-saved when it changed)
 #   debs/     every .deb apt has downloaded (keep-debs is enabled in roles/base)
-#   repo/     this provisioning repo, including secrets.yml (root-only on the drive)
+#   repo/     this provisioning repo, without secrets.yml (it holds the borg passphrase
+#             in the clear; the passphrase belongs on the server and the recovery sheet)
 #   isos/     put Ubuntu + Clonezilla ISOs here by hand
 set -euo pipefail
 out="${1:?usage: homestead-export-offline DIR}"
@@ -21,7 +22,7 @@ while read -r ref id; do
 done
 
 rsync -a /var/cache/apt/archives/*.deb "$out/debs/" 2>/dev/null || true
-rsync -a --delete /opt/homestead/repo/ "$out/repo/"
+rsync -a --delete --exclude secrets.yml --delete-excluded /opt/homestead/repo/ "$out/repo/"
 chmod 700 "$out/repo"
 
 cat > "$out/README.txt" <<'EOF'

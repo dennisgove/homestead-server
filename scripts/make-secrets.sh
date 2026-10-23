@@ -26,7 +26,12 @@ web_pw=$(ask "admin web password (Command Center, Paperless, Pat)")
 read -rp "dennis SSH public key (paste one line, or blank to skip): " ssh_key
 psk=$(ask "hotspot WiFi password (8+ chars)")
 (( ${#psk} >= 8 )) || { echo "PSK must be 8+ chars" >&2; exit 1; }
-borg_pw=$(openssl rand -base64 30 | tr -d '\n')
+read -rsp "borg passphrase from the recovery sheet (rebuilding), or blank to generate one: " borg_pw; echo >&2
+new_borg=no
+if [[ -z "$borg_pw" ]]; then
+  borg_pw=$(openssl rand -base64 30 | tr -d '\n')
+  new_borg=yes
+fi
 
 umask 077
 cat > "$out" <<EOF
@@ -41,5 +46,7 @@ EOF
 
 echo
 echo "Wrote $out"
-echo "WRITE THIS DOWN and keep it with the backup drives (needed to restore backups):"
-echo "  borg passphrase: $borg_pw"
+if [[ "$new_borg" == yes ]]; then
+  echo "WRITE THIS DOWN on the recovery sheet (needed to restore backups; it isn't saved on the backup drives):"
+  echo "  borg passphrase: $borg_pw"
+fi
