@@ -11,9 +11,11 @@ apt-get update || echo "apt update failed (offline?); continuing with what's ins
 apt-get install -y ansible apache2-utils rsync openssl
 
 # Keep a copy of the repo on the box (it gets backed up and is used for rebuilds).
+# secrets.yml is excluded so a fresh copy from elsewhere never deletes it; losing
+# it would mean a new borg passphrase that no longer matches the backups.
 mkdir -p "$dest"
 if [[ "$here" != "$dest" ]]; then
-  rsync -a --delete --exclude .git "$here/" "$dest/"
+  rsync -a --delete --exclude .git --exclude /secrets.yml "$here/" "$dest/"
 fi
 
 if [[ ! -f "$dest/secrets.yml" ]]; then
