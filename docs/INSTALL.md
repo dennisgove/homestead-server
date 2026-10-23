@@ -28,9 +28,10 @@ Portable 5TB drives have historically been about $100–130. SMR drives are fine
 
 1. Install [Ventoy](https://www.ventoy.net) on the USB stick.
 2. Copy these to it: `ubuntu-26.04-desktop-amd64.iso`, `clonezilla-live-*-amd64.iso`, `memtest86+`, and this repo folder.
-3. Edit `autoinstall/autoinstall.yaml`: replace the password hash (`openssl passwd -6`) and timezone. Save it to the stick and set it as the Ubuntu ISO's auto-install template in Ventoy's `ventoy/ventoy.json`:
-   ```json
-   { "auto_install": [ { "image": "/ubuntu-26.04-desktop-amd64.iso", "template": "/homestead-server/autoinstall/autoinstall.yaml" } ] }
+3. Edit `autoinstall/autoinstall.yaml`: replace the password hash (`openssl passwd -6`) and timezone.
+4. Copy the `autoinstall/ventoy` folder to the top of the stick, so the stick has `/ventoy/ventoy.json` next to the ISOs. It makes `autoinstall.yaml` the Ubuntu ISO's auto-install template. If your Ubuntu ISO has a different filename, change `image` in `ventoy.json` to match.
+   ```bash
+   cp -R autoinstall/ventoy /Volumes/Ventoy/      # Mac; on Ubuntu: /media/$USER/Ventoy/
    ```
    (Without Ventoy: the Ubuntu desktop installer also offers "Automated install" and accepts the file from a URL or second USB stick.)
 

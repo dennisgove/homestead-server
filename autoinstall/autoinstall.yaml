@@ -1,7 +1,7 @@
 #cloud-config
 # Ubuntu 26.04 LTS Desktop unattended install for the OptiPlex 3060 Micro.
 # WIPES /dev/nvme0n1. Put this file at the root of the Ventoy stick as
-# autoinstall.yaml (or pass it with Ventoy's auto-install plugin); see docs/INSTALL.md.
+# autoinstall.yaml (or use Ventoy's auto-install plugin: autoinstall/ventoy/); see docs/INSTALL.md.
 #
 # Before use, replace the password hash below:   openssl passwd -6
 # (bootstrap.sh resets all passwords from secrets.yml afterwards anyway.)
