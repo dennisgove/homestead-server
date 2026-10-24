@@ -4,6 +4,16 @@
 {
 	auto_https off
 	admin localhost:2019
+	# Certificates for the HTTPS ports below come from Caddy's own local CA.
+	local_certs
+	pki {
+		ca local {
+			name "Homestead Local CA"
+		}
+	}
+	# Caddy can't add its CA to the OS trust store as the caddy user; don't try.
+	# (Only takes effect alongside the pki block above.)
+	skip_install_trust
 }
 
 (admin_auth) {
@@ -98,9 +108,35 @@
 :{{ public_ports.inventory }} {
 	reverse_proxy 127.0.0.1:{{ ports.homebox }}
 }
-# Vaultwarden ({{ ports.vaultwarden }}) and MeshCore Web ({{ ports.meshcore_web }}) aren't here: they
-# need HTTPS (WebCrypto / Web Serial), serve it themselves, and the firewall
-# lets them through directly.
+
+# --- Public, HTTPS ---------------------------------------------------------
+# Vaultwarden needs HTTPS for its encryption, MeshCore Web for Web Serial /
+# Bluetooth. Caddy's own local CA signs a certificate for whatever name the
+# browser used (homestead.local, library.lan, an IP), so expect a one-time
+# certificate warning. On-demand issuance is unrestricted, but it's only ever
+# Caddy's internal CA on a LAN, so there's nothing to abuse.
+(tls_local) {
+	tls {
+		on_demand
+	}
+}
+(https_backend) {
+	transport http {
+		tls_insecure_skip_verify
+	}
+}
+https://:{{ public_ports.passwords }} {
+	import tls_local
+	reverse_proxy https://127.0.0.1:{{ ports.vaultwarden }} {
+		import https_backend
+	}
+}
+https://:{{ public_ports.mesh }} {
+	import tls_local
+	reverse_proxy https://127.0.0.1:{{ ports.meshcore_web }} {
+		import https_backend
+	}
+}
 
 # --- Admin only (password) -------------------------------------------------
 :{{ public_ports.admin_nomad }} {

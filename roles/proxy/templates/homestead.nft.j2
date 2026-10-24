@@ -7,18 +7,10 @@ delete table inet homestead
 
 table inet homestead {
 	# Every backend (NOMAD, its apps, our add-ons, Ollama, DBs). Reached only
-	# through Caddy on 80/7000-7099. Except Vaultwarden ({{ ports.vaultwarden }}) and MeshCore
-	# Web ({{ ports.meshcore_web }}): they need HTTPS (WebCrypto / Web Serial), which the
-	# plain-HTTP proxy can't give them, so they serve it themselves and are
-	# reached directly.
+	# through Caddy on 80/7000-7099.
 	set backend_ports {
 		type inet_service; flags interval
-		elements = { 2019, 3306, 6333-6334, 6379, 8080-{{ ports.vaultwarden - 1 }}, {{ ports.vaultwarden + 1 }}-{{ ports.meshcore_web - 1 }}, {{ ports.meshcore_web + 1 }}-8999, 9999, 11434-11435 }
-	}
-	# The kiosk user gets the same exceptions.
-	set kiosk_blocked {
-		type inet_service; flags interval
-		elements = { 2019, 3306, 6333-6334, 6379, 8080-{{ ports.vaultwarden - 1 }}, {{ ports.vaultwarden + 1 }}-{{ ports.meshcore_web - 1 }}, {{ ports.meshcore_web + 1 }}-8999, 9999, 11434-11435 }
+		elements = { 2019, 3306, 6333-6334, 6379, 8080-8999, 9999, 11434-11435 }
 	}
 
 	# Runs before Docker's DNAT, so it also covers container-published ports.
@@ -33,7 +25,7 @@ table inet homestead {
 	# Local processes: the kiosk user can't skip the proxy (and its passwords).
 	chain output_guard {
 		type filter hook output priority -150; policy accept;
-		meta skuid "{{ kiosk_user }}" fib daddr type local tcp dport @kiosk_blocked reject with tcp reset
+		meta skuid "{{ kiosk_user }}" fib daddr type local tcp dport @backend_ports reject with tcp reset
 		meta skuid "{{ kiosk_user }}" ip daddr 172.16.0.0/12 reject
 	}
 

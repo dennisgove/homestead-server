@@ -47,10 +47,10 @@ ports:
   it_tools: 8430
   excalidraw: 8440
   homebox: 8470
-  vaultwarden: 8480      # HTTPS (own self-signed cert); reached directly, not through Caddy
+  vaultwarden: 8480      # serves HTTPS itself (self-signed)
   calibreweb: 8420
   jellyfin: 8490
-  meshcore_web: 8500     # HTTPS (own self-signed cert); reached directly, not through Caddy
+  meshcore_web: 8500     # serves HTTPS itself (self-signed)
   dozzle: 9999
   kiwix_core: 8601
   open_webui: 8610
@@ -76,6 +76,8 @@ public_ports:
   it_tools: 7013
   whiteboard: 7014
   inventory: 7015
+  passwords: 7016        # HTTPS (Vaultwarden)
+  mesh: 7017             # HTTPS (MeshCore Web)
   admin_nomad: 7090
   admin_pat: 7091
   admin_paperless: 7092
