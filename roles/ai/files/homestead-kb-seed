@@ -28,6 +28,12 @@ NAMES = {
 EXTS = (".pdf", ".txt", ".md", ".epub", ".docx")
 
 
+def empty_hint(text):
+    if "content provided is empty" in text:
+        return "no text in this file; probably a scanned PDF that needs OCR"
+    return text[:120]
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--token", required=True)
@@ -65,13 +71,16 @@ def main():
                     continue
                 path = os.path.join(root, fn)
                 print(f"[{name}] {fn} ...", end=" ", flush=True)
+                # Extract the text before replying; in the background (the default in newer
+                # Open WebUI) the file is still empty when it's added to the knowledge base.
                 with open(path, "rb") as fh:
-                    up = s.post(f"{api}/files/", files={"file": (fn, fh)}, timeout=3600)
+                    up = s.post(f"{api}/files/", params={"process_in_background": "false"},
+                                files={"file": (fn, fh)}, timeout=3600)
                 if not up.ok:
-                    print(f"upload failed ({up.status_code})")
+                    print(f"upload failed ({up.status_code}: {empty_hint(up.text)})")
                     continue
                 add = s.post(f"{api}/knowledge/{kb['id']}/file/add", json={"file_id": up.json()["id"]}, timeout=3600)
-                print("ok" if add.ok else f"index failed ({add.status_code}: {add.text[:120]})")
+                print("ok" if add.ok else f"index failed ({add.status_code}: {empty_hint(add.text)})")
                 existing.add(fn)
 
 
