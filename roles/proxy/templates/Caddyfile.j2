@@ -147,6 +147,18 @@ https://:{{ public_ports.meshtastic }} {
 	reverse_proxy 127.0.0.1:{{ ports.meshtastic_web }}
 }
 
+# --- This machine only (kiosk radio apps) ------------------------------------
+:{{ local_ports.meshcore }} {
+	bind 127.0.0.1
+	reverse_proxy https://127.0.0.1:{{ ports.meshcore_web }} {
+		import https_backend
+	}
+}
+:{{ local_ports.meshtastic }} {
+	bind 127.0.0.1
+	reverse_proxy 127.0.0.1:{{ ports.meshtastic_web }}
+}
+
 # --- Admin only (password) -------------------------------------------------
 :{{ public_ports.admin_nomad }} {
 	import admin_auth

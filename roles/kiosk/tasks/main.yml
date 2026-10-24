@@ -59,7 +59,7 @@
         color-shading-type='solid'
 
         [org/gnome/shell]
-        favorite-apps=['firefox_firefox.desktop', 'libreoffice-writer.desktop', 'libreoffice-calc.desktop', 'org.gnome.Nautilus.desktop', 'vlc.desktop', 'js8call.desktop', 'fldigi.desktop', 'gqrx.desktop']
+        favorite-apps=['firefox_firefox.desktop', 'homestead-meshcore.desktop', 'libreoffice-writer.desktop', 'libreoffice-calc.desktop', 'org.gnome.Nautilus.desktop', 'vlc.desktop', 'js8call.desktop', 'fldigi.desktop', 'gqrx.desktop']
         welcome-dialog-last-shown-version='999'
 
         [org/gnome/software]
@@ -175,3 +175,57 @@
     src: policies.json.j2
     dest: /etc/firefox/policies/policies.json
     mode: "0644"
+
+# Google Chrome, for the radio web apps: MeshCore/Meshtastic Web reach a radio
+# over Web Serial / Web Bluetooth, which Firefox doesn't support.
+- name: Chrome doesn't add its own apt source (it would clash with ours)
+  ansible.builtin.copy:
+    dest: /etc/default/google-chrome
+    content: |
+      repo_add_once="false"
+      repo_reenable_on_distupgrade="false"
+    mode: "0644"
+
+- name: Google Chrome apt repository
+  when: not offline
+  ansible.builtin.deb822_repository:
+    name: google-chrome
+    types: deb
+    uris: https://dl.google.com/linux/chrome/deb/
+    suites: stable
+    components: main
+    architectures: amd64
+    signed_by: https://dl.google.com/linux/linux_signing_key.pub
+
+- name: Google Chrome
+  ansible.builtin.apt:
+    name: google-chrome-stable
+    update_cache: "{{ not offline }}"
+
+- name: Chrome policy directory
+  ansible.builtin.file:
+    path: /etc/opt/chrome/policies/managed
+    state: directory
+    mode: "0755"
+
+- name: Chrome policies (no sign-in, sync, telemetry, devtools or extensions)
+  ansible.builtin.template:
+    src: chrome-policies.json.j2
+    dest: /etc/opt/chrome/policies/managed/homestead.json
+    mode: "0644"
+
+- name: Radio app launchers
+  ansible.builtin.copy:
+    dest: "/usr/share/applications/{{ item.f }}"
+    content: |
+      [Desktop Entry]
+      Type=Application
+      Name={{ item.name }}
+      Comment={{ item.comment }}
+      Exec=google-chrome --app=http://localhost:{{ item.port }}/
+      Icon=network-wireless
+      Categories=Network;HamRadio;
+    mode: "0644"
+  loop:
+    - { f: homestead-meshcore.desktop, name: MeshCore radio, comment: "Mesh text messages (MeshCore node on USB or Bluetooth)", port: "{{ local_ports.meshcore }}" }
+    - { f: homestead-meshtastic.desktop, name: Meshtastic radio, comment: "Mesh text messages (Meshtastic node on USB or Bluetooth)", port: "{{ local_ports.meshtastic }}" }

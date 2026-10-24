@@ -33,7 +33,7 @@ Weather satellites: **SatDump** decodes Meteor-M LRPT images (137 MHz, needs a V
 
 - Nodes: Heltec V3, RAK4631, LilyGo T-Deck, and similar. Flash **companion** firmware for handhelds paired to phones, **repeater** firmware for hilltop or roof relays, and **room server** firmware for a neighborhood bulletin board.
 - **Flash while online** from the MeshCore web flasher, and save the firmware .bin files for every board you own into `/srv/core/share/meshcore/`. Offline flashing: `esptool.py --chip esp32s3 write_flash 0x0 firmware.bin` (ESP32 boards). nRF boards (RAK) take a UF2 file drag-and-drop.
-- On the server: `meshcore-cli -s /dev/ttyUSB0 infos` (companion node on USB). MeshCore Web (NOMAD app, https://localhost:7017, or https://homestead.local:7017 from another computer) gives a chat UI in the browser via Web Serial.
+- On the server: `meshcore-cli -s /dev/ttyUSB0 infos` (companion node on USB). MeshCore Web (NOMAD app) gives a chat UI in the browser via Web Serial or Bluetooth. It needs Chrome or Edge (Firefox and Safari can't talk to radios). On the server's screen use the **MeshCore radio** launcher, which opens it in Chrome; from a laptop with Chrome, use https://homestead.local:7017. Meshtastic nodes: the **Meshtastic radio** launcher, or https://homestead.local:7018.
 - Phones: install the MeshCore app APK from the portal's Downloads.
 - Decide family channel names and keys now and write them on the recovery sheet.
 
