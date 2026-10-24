@@ -79,6 +79,7 @@ roles/
 
 ## Ports
 
-Public: 80 portal · 7000 NOMAD (read-only) · 7001 full library · 7002 essentials library · 7004 Kolibri · 7005 Calibre-Web · 7006 Jellyfin · 7007 AI · 7008 Grocy · 7009 Mealie · 7010 notes.
-Admin (password): 7090 NOMAD Command Center · 7091 Pat/Winlink · 7092 Paperless · 7093 logs.
-All backends (8080–8999, 11434–11435, databases) are blocked from the network and from the guest account.
+Public: 80 portal · 7000 NOMAD (read-only) · 7001 full library · 7002 essentials library · 7004 Kolibri · 7005 Calibre-Web · 7006 Jellyfin · 7007 AI · 7008 Grocy · 7009 Mealie · 7010 notes · 7011 Data Tools (CyberChef) · 7012 Stirling PDF · 7013 IT Tools · 7014 Excalidraw · 7015 Homebox.
+Public over HTTPS (self-signed; one browser warning): 8480 Vaultwarden · 8500 MeshCore Web.
+Admin (password): 7090 NOMAD Command Center · 7091 Pat/Winlink · 7092 Paperless · 7093 logs · 7094 File Browser.
+All other backends (8080–8999, 11434–11435, databases) are blocked from the network and from the guest account.

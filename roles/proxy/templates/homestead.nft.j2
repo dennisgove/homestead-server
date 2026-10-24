@@ -7,16 +7,18 @@ delete table inet homestead
 
 table inet homestead {
 	# Every backend (NOMAD, its apps, our add-ons, Ollama, DBs). Reached only
-	# through Caddy on 80/7000-7099.
+	# through Caddy on 80/7000-7099. Except Vaultwarden ({{ ports.vaultwarden }}) and MeshCore
+	# Web ({{ ports.meshcore_web }}): they need HTTPS (WebCrypto / Web Serial), which the
+	# plain-HTTP proxy can't give them, so they serve it themselves and are
+	# reached directly.
 	set backend_ports {
 		type inet_service; flags interval
-		elements = { 2019, 3306, 6333-6334, 6379, 8080-8999, 9999, 11434-11435 }
+		elements = { 2019, 3306, 6333-6334, 6379, 8080-{{ ports.vaultwarden - 1 }}, {{ ports.vaultwarden + 1 }}-{{ ports.meshcore_web - 1 }}, {{ ports.meshcore_web + 1 }}-8999, 9999, 11434-11435 }
 	}
-	# The kiosk user may still use MeshCore Web directly (it needs HTTPS for
-	# Web Serial, which the plain-HTTP proxy can't give it).
+	# The kiosk user gets the same exceptions.
 	set kiosk_blocked {
 		type inet_service; flags interval
-		elements = { 2019, 3306, 6333-6334, 6379, 8080-8499, 8501-8999, 9999, 11434-11435 }
+		elements = { 2019, 3306, 6333-6334, 6379, 8080-{{ ports.vaultwarden - 1 }}, {{ ports.vaultwarden + 1 }}-{{ ports.meshcore_web - 1 }}, {{ ports.meshcore_web + 1 }}-8999, 9999, 11434-11435 }
 	}
 
 	# Runs before Docker's DNAT, so it also covers container-published ports.

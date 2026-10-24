@@ -83,6 +83,24 @@
 :{{ public_ports.notes }} {
 	reverse_proxy 127.0.0.1:{{ ports.flatnotes }}
 }
+:{{ public_ports.data_tools }} {
+	reverse_proxy 127.0.0.1:{{ ports.cyberchef }}
+}
+:{{ public_ports.pdf_tools }} {
+	reverse_proxy 127.0.0.1:{{ ports.stirling_pdf }}
+}
+:{{ public_ports.it_tools }} {
+	reverse_proxy 127.0.0.1:{{ ports.it_tools }}
+}
+:{{ public_ports.whiteboard }} {
+	reverse_proxy 127.0.0.1:{{ ports.excalidraw }}
+}
+:{{ public_ports.inventory }} {
+	reverse_proxy 127.0.0.1:{{ ports.homebox }}
+}
+# Vaultwarden ({{ ports.vaultwarden }}) and MeshCore Web ({{ ports.meshcore_web }}) aren't here: they
+# need HTTPS (WebCrypto / Web Serial), serve it themselves, and the firewall
+# lets them through directly.
 
 # --- Admin only (password) -------------------------------------------------
 :{{ public_ports.admin_nomad }} {
@@ -100,4 +118,8 @@
 :{{ public_ports.admin_logs }} {
 	import admin_auth
 	reverse_proxy 127.0.0.1:{{ ports.dozzle }}
+}
+:{{ public_ports.admin_files }} {
+	import admin_auth
+	reverse_proxy 127.0.0.1:{{ ports.filebrowser }}
 }

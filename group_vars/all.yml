@@ -41,9 +41,16 @@ ports:
   kiwix: 8090
   kolibri: 8310
   flatnotes: 8200
+  cyberchef: 8100        # NOMAD "Data Tools"
+  stirling_pdf: 8400
+  filebrowser: 8410
+  it_tools: 8430
+  excalidraw: 8440
+  homebox: 8470
+  vaultwarden: 8480      # HTTPS (own self-signed cert); reached directly, not through Caddy
   calibreweb: 8420
   jellyfin: 8490
-  meshcore_web: 8500
+  meshcore_web: 8500     # HTTPS (own self-signed cert); reached directly, not through Caddy
   dozzle: 9999
   kiwix_core: 8601
   open_webui: 8610
@@ -64,10 +71,16 @@ public_ports:
   pantry: 7008
   recipes: 7009
   notes: 7010
+  data_tools: 7011
+  pdf_tools: 7012
+  it_tools: 7013
+  whiteboard: 7014
+  inventory: 7015
   admin_nomad: 7090
   admin_pat: 7091
   admin_paperless: 7092
   admin_logs: 7093
+  admin_files: 7094      # File Browser can delete library files, so admin only
 
 # --- Container images ---------------------------------------------------
 # Pin to the versions that worked on first install; `homestead-export-offline`
