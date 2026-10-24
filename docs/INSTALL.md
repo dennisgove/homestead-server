@@ -155,9 +155,14 @@ sudo ./bootstrap.sh              # continue; re-running is always safe
 ## 8. Inside the NOMAD Command Center (http://localhost:7090 on the server, or http://homestead.local:7090 from another computer; dennis + web password)
 
 1. Run the **Easy Setup** wizard. Pick Wikipedia "Complete (Full)" plus the **Comprehensive** tier (on the temporary internal library: the Essential/Standard tiers for now) of Medicine, Survival, Agriculture, DIY and Education. Our manifest skips anything NOMAD already downloaded.
+   **AI:** on the wizard's first step (Core Capabilities), select the **AI Assistant** card, check **Use remote Ollama instance** in the box that appears under it, and enter `http://host.docker.internal:11435`. NOMAD then uses our Ollama (already tuned for this CPU and loaded with the models) instead of installing a second one, which would double the RAM and disk the models use.
 2. **Maps**: download your state and the neighboring states (see `region_state`).
-3. Install from the app catalog (Supply Depot): **Kolibri, Calibre-Web, Jellyfin, FlatNotes, MeshCore Web, CyberChef, Stirling PDF**. Do **not** install NOMAD's own *AI Assistant/Ollama* container. Instead, go to **AI settings → remote Ollama URL = `http://host.docker.internal:11435`** (our tuned Ollama). If NOMAD insists on its own container, it can stay installed, but then point Open WebUI at whichever one you keep.
+3. Install from the app catalog (Supply Depot): **Kolibri, Calibre-Web, Jellyfin, FlatNotes, MeshCore Web, CyberChef, Stirling PDF**. Don't install NOMAD's own Ollama from there.
 4. In Kolibri, import channels: Khan Academy (English), CK-12, and whatever suits the kids' ages.
+
+**Setting the AI later, or changing it:** open http://homestead.local:7090/settings/models directly (the Settings menu hides this link until the AI is set up, and the page may warn that the AI's dependencies aren't installed; ignore that). Under **Remote Connection**, enter the URL in **Remote Ollama/OpenAI API URL** and click **Save & Test**.
+
+If it can't connect, use `http://172.17.0.1:11435` (the server's Docker address) instead. To check that our Ollama is running: `curl http://127.0.0.1:11435/api/version` on the server should print a version.
 
 ## 9. Content downloads (days; run in tmux)
 
