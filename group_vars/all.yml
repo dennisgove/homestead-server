@@ -3,8 +3,8 @@
 
 homestead_hostname: homestead
 offline: false                       # rebuild with no internet: ./bootstrap.sh -e offline=true
-timezone: America/Chicago            # CHANGE-ME: `timedatectl list-timezones`
-region_state: CHANGE-ME              # e.g. "Tennessee"; drives maps + extension-service docs
+timezone: America/New_York            # CHANGE-ME: `timedatectl list-timezones`
+region_state: Massachusetts              # e.g. "Tennessee"; drives maps + extension-service docs
 
 admin_user: dennis
 kiosk_user: guest
