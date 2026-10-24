@@ -108,10 +108,13 @@
 :{{ public_ports.inventory }} {
 	reverse_proxy 127.0.0.1:{{ ports.homebox }}
 }
+:{{ public_ports.translated_library }} {
+	reverse_proxy 127.0.0.1:{{ ports.translate }}
+}
 
 # --- Public, HTTPS ---------------------------------------------------------
-# Vaultwarden needs HTTPS for its encryption, MeshCore Web for Web Serial /
-# Bluetooth. Caddy's own local CA signs a certificate for whatever name the
+# Vaultwarden needs HTTPS for its encryption, MeshCore and Meshtastic Web for
+# Web Serial / Bluetooth. Caddy's own local CA signs a certificate for whatever name the
 # browser used (homestead.local, library.lan, an IP), so expect a one-time
 # certificate warning. On-demand issuance is unrestricted, but it's only ever
 # Caddy's internal CA on a LAN, so there's nothing to abuse.
@@ -136,6 +139,12 @@ https://:{{ public_ports.mesh }} {
 	reverse_proxy https://127.0.0.1:{{ ports.meshcore_web }} {
 		import https_backend
 	}
+}
+# Meshtastic Web serves plain HTTP; the HTTPS here is what lets the browser
+# use Web Serial / Bluetooth.
+https://:{{ public_ports.meshtastic }} {
+	import tls_local
+	reverse_proxy 127.0.0.1:{{ ports.meshtastic_web }}
 }
 
 # --- Admin only (password) -------------------------------------------------

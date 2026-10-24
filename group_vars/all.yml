@@ -46,6 +46,8 @@ ports:
   filebrowser: 8410
   it_tools: 8430
   excalidraw: 8440
+  meshtastic_web: 8450
+  translate: 8460        # NOMAD "Translated Library"
   homebox: 8470
   vaultwarden: 8480      # serves HTTPS itself (self-signed)
   calibreweb: 8420
@@ -78,11 +80,37 @@ public_ports:
   inventory: 7015
   passwords: 7016        # HTTPS (Vaultwarden)
   mesh: 7017             # HTTPS (MeshCore Web)
+  meshtastic: 7018       # HTTPS (Meshtastic Web; Web Serial/Bluetooth need it)
+  translated_library: 7019
   admin_nomad: 7090
   admin_pat: 7091
   admin_paperless: 7092
   admin_logs: 7093
   admin_files: 7094      # File Browser can delete library files, so admin only
+
+# NOMAD's own links to its apps point at their backend ports, which the
+# firewall blocks. homestead-nomad-links sets each installed app's custom URL
+# to its public port instead (at every playbook run and every 5 minutes, so
+# apps installed later from the Supply Depot get fixed too).
+# service name: [public_ports key, scheme]
+nomad_links:
+  nomad_kiwix_server: [library, http]
+  nomad_kolibri: [education, http]
+  nomad_kolibri_2: [education, http]
+  nomad_calibreweb: [books, http]
+  nomad_jellyfin: [videos, http]
+  nomad_flatnotes: [notes, http]
+  nomad_cyberchef: [data_tools, http]
+  nomad_stirling_pdf: [pdf_tools, http]
+  nomad_it_tools: [it_tools, http]
+  nomad_excalidraw: [whiteboard, http]
+  nomad_homebox: [inventory, http]
+  nomad_vaultwarden: [passwords, https]
+  nomad_meshcore_web: [mesh, https]
+  nomad_meshtastic_web: [meshtastic, https]
+  nomad_translate: [translated_library, http]
+  nomad_filebrowser: [admin_files, http]
+nomad_links_host: "{{ homestead_hostname }}.local"
 
 # --- Container images ---------------------------------------------------
 # Pin to the versions that worked on first install; `homestead-export-offline`

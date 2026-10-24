@@ -62,3 +62,51 @@
   retries: 10
   delay: 15
   until: health.status == 200
+
+- name: Link settings for homestead-nomad-links
+  ansible.builtin.template:
+    src: nomad-links.json.j2
+    dest: /etc/homestead/nomad-links.json
+    mode: "0644"
+
+- name: homestead-nomad-links
+  ansible.builtin.copy:
+    src: homestead-nomad-links
+    dest: /usr/local/sbin/homestead-nomad-links
+    mode: "0755"
+
+- name: Re-check NOMAD's links every 5 minutes (catches apps installed later)
+  ansible.builtin.copy:
+    dest: "/etc/systemd/system/{{ item.name }}"
+    mode: "0644"
+    content: "{{ item.content }}"
+  loop:
+    - name: homestead-nomad-links.service
+      content: |
+        [Unit]
+        Description=Point NOMAD's app links at their public ports
+        After=docker.service
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/local/sbin/homestead-nomad-links
+    - name: homestead-nomad-links.timer
+      content: |
+        [Unit]
+        Description=Point NOMAD's app links at their public ports every 5 minutes
+        [Timer]
+        OnBootSec=2min
+        OnUnitActiveSec=5min
+        [Install]
+        WantedBy=timers.target
+
+- name: NOMAD link timer on
+  ansible.builtin.systemd_service:
+    name: homestead-nomad-links.timer
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Set NOMAD's links now
+  ansible.builtin.command: /usr/local/sbin/homestead-nomad-links
+  register: links
+  changed_when: links.stdout | length > 0
