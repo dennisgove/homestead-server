@@ -75,8 +75,27 @@ def free_space(path):
 
 
 def existing(dest, name):
+    """Finished ZIMs only: a .zim with an .aria2 control file beside it is a partial download."""
     pat = re.compile(re.escape(name) + r"_\d{4}-\d{2}[a-z]?\.zim$")
-    return sorted(f for f in os.listdir(dest) if pat.match(f)) if os.path.isdir(dest) else []
+    if not os.path.isdir(dest):
+        return []
+    return sorted(f for f in os.listdir(dest)
+                  if pat.match(f) and not os.path.exists(os.path.join(dest, f + ".aria2")))
+
+
+def partials_dir(dest):
+    """ZIMs download here and move into dest only once complete, so kiwix never sees a partial file."""
+    return os.path.join(dest, ".partial")
+
+
+def adopt_partial(dest, fn):
+    """Move a partial left in dest by an older version of this script into .partial/ so it resumes."""
+    if os.path.exists(os.path.join(dest, fn + ".aria2")):
+        stage = partials_dir(dest)
+        os.makedirs(stage, exist_ok=True)
+        for f in (fn, fn + ".aria2"):
+            if os.path.exists(os.path.join(dest, f)):
+                os.replace(os.path.join(dest, f), os.path.join(stage, f))
 
 
 def aria2(url, dest, out=None):
@@ -139,13 +158,23 @@ def fetch_zims(items, update, dry):
             print(f"  ! skipping {fn}: needs {human(size)}, {human(free)} free")
             continue
         print(f"\n==> {fn} ({human(size)})")
-        if not aria2(url + ".meta4", dest):
+        adopt_partial(dest, fn)
+        stage = partials_dir(dest)
+        os.makedirs(stage, exist_ok=True)
+        if not aria2(url + ".meta4", stage) or os.path.exists(os.path.join(stage, fn + ".aria2")):
             print(f"  ! download failed: {fn} (re-run to resume)")
             continue
+        os.replace(os.path.join(stage, fn), os.path.join(dest, fn))
         for old in have:
             if old != fn:
                 os.remove(os.path.join(dest, old))
                 print(f"  removed older {old}")
+        # Partials of older releases of this ZIM are dead weight now.
+        # (Exact name match: wikipedia_en_all must not touch wikipedia_en_all_maxi.)
+        pat = re.compile(re.escape(z["kiwix"].split("/", 1)[1]) + r"_\d{4}-\d{2}[a-z]?\.zim(\.aria2)?$")
+        for f in os.listdir(stage):
+            if pat.match(f) and f.removesuffix(".aria2") != fn:
+                os.remove(os.path.join(stage, f))
         if dest == CORE_ZIM:
             core_changed = True
         else:
