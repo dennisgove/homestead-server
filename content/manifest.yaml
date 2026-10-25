@@ -114,6 +114,11 @@ docs:
   - { title: "TC 3-25.150: Combatives (US Army)", url: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/pdf/web/ARN3118_TC 3-25x150 FINAL WEB.pdf", file: us-army-tc-3-25.150-combatives.pdf, cat: defense, tier: 1 }
   - { title: "FM 3-11: Chemical, Biological, Radiological, and Nuclear Operations (US Army)", url: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN43472-FM_3-11-000-WEB-1.pdf", file: us-army-fm-3-11-chemical-biological-radiological-and-nuclear-operations.pdf, cat: defense, tier: 1 }
   - { title: "ATP 6-02.53: Techniques for Tactical Radios and Retransmission (US Army)", url: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN44497-ATP_6-02.53-000-WEB-1.pdf", file: us-army-atp-6-02.53-techniques-for-tactical-radios-and-retransmission.pdf, cat: comms, tier: 1 }
+  - { title: "ADP 3-37: Protection (US Army)", url: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN46285-ADP_3-37-000-WEB-2.pdf", file: us-army-adp-3-37-protection.pdf, cat: defense, tier: 1 }
+  - { title: "ATP 3-07.6: Protection of Civilians (US Army)", url: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN43965-ATP_3-07.6-001-WEB-3.pdf", file: us-army-atp-3-07.6-protection-of-civilians.pdf, cat: defense, tier: 1 }
+  - { title: "FM 3-98: Reconnaissance and Security Operations (US Army)", url: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN37194-FM_3-98-000-WEB-1.pdf", file: us-army-fm-3-98-reconnaissance-and-security-operations.pdf, cat: defense, tier: 1 }
+  # Historical (OSS, 1944; declassified 2008). Project Gutenberg has no PDF, so EPUB.
+  - { title: "Simple Sabotage Field Manual (OSS, 1944)", url: "https://www.gutenberg.org/cache/epub/26184/pg26184.epub", file: oss-simple-sabotage-field-manual-1944.epub, cat: defense, tier: 1 }
 
 manual:
   # Free, but behind landing pages or split into chapters that move around.
