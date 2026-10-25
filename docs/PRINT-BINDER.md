@@ -2,15 +2,96 @@
 
 The computer can fail. Print these and keep them in a binder next to it, with colored tabs. Reprint after changes.
 
-| Tab | Contents | Source |
+The links work from any browser on the home network or the hotspot (on the hotspot, `library.lan` works in place of `homestead.local`). There are two kinds of source:
+
+- **PDFs** in `/srv/core/docs/<category>/`. Open the link and print.
+- **ZIM libraries** in `/srv/core/zim/`. A ZIM holds a whole collection, so the links below are searches in the essentials library. Open the article you want and print it from the browser.
+
+Items marked **(get by hand)** aren't downloaded automatically: `fetch_content.py` lists them at the end of each run. Save them under the filename shown, and the link will work.
+
+## RED: MEDICAL
+
+| Item | Link | On disk |
 |---|---|---|
-| **RED: MEDICAL** | Bleeding control/tourniquet, CPR (adult/child/infant), choking, burns, fractures/splints, shock, hypothermia/heat, oral rehydration, wound care and infection signs, childbirth basics, family medication list and allergies | Stop the Bleed booklet; Where There Is No Doctor (key chapters); TCCC card; `/srv/core/docs/medical` |
-| **BLUE: WATER** | Disinfection (boil, bleach doses per liter/gallon, SODIS), filter maintenance, storage rotation | CDC / zimgit-water |
-| **GREEN: FOOD** | Canning times for your altitude, botulism warning signs, garden planting calendar for your county, food storage rotation list (export from Grocy) | USDA canning guide; state extension |
-| **BLACK: SECURITY** | Household watch roster template, rally points, maps of the area with routes marked, firearm safety rules and manuals | your plan; Army manuals |
-| **YELLOW: COMMS** | Family comms plan, frequencies, MeshCore channels, Winlink gateways, NOAA channel | COMMS.md |
-| **WHITE: THIS COMPUTER** | GRID-DOWN-RUNBOOK.md, RESTORE.md, POWER.md, the WiFi sign | `docs/` |
+| Emergency War Surgery (all chapters) | http://homestead.local/docs/medical/emergency-war-surgery/ | `/srv/core/docs/medical/emergency-war-surgery/` |
+| Where There Is No Doctor (get by hand: hesperian.org) | http://homestead.local/docs/medical/where-there-is-no-doctor.pdf | `/srv/core/docs/medical/where-there-is-no-doctor.pdf` |
+| Where There Is No Dentist (get by hand: hesperian.org) | http://homestead.local/docs/medical/where-there-is-no-dentist.pdf | `/srv/core/docs/medical/where-there-is-no-dentist.pdf` |
+| Where Women Have No Doctor (get by hand: hesperian.org) | http://homestead.local/docs/medical/where-women-have-no-doctor.pdf | `/srv/core/docs/medical/where-women-have-no-doctor.pdf` |
+| A Book for Midwives (get by hand: hesperian.org) | http://homestead.local/docs/medical/a-book-for-midwives.pdf | `/srv/core/docs/medical/a-book-for-midwives.pdf` |
+| Stop the Bleed booklet (get by hand: stopthebleed.org) | http://homestead.local/docs/medical/stop-the-bleed.pdf | `/srv/core/docs/medical/stop-the-bleed.pdf` |
+| TCCC guidelines + card (get by hand: deployedmedicine.com) | http://homestead.local/docs/medical/tccc-guidelines.pdf | `/srv/core/docs/medical/tccc-guidelines.pdf` |
+| Bleeding control / tourniquet | http://homestead.local:7002/search?pattern=tourniquet | `/srv/core/zim/` (zimgit-medicine, WikEM, WikiMed) |
+| CPR: adult, child, infant | http://homestead.local:7002/search?pattern=cardiopulmonary+resuscitation | `/srv/core/zim/` |
+| Choking | http://homestead.local:7002/search?pattern=choking+first+aid | `/srv/core/zim/` |
+| Burns | http://homestead.local:7002/search?pattern=burn+treatment | `/srv/core/zim/` |
+| Fractures and splints | http://homestead.local:7002/search?pattern=splint+fracture | `/srv/core/zim/` |
+| Shock | http://homestead.local:7002/search?pattern=shock+treatment | `/srv/core/zim/` |
+| Hypothermia / heat illness | http://homestead.local:7002/search?pattern=hypothermia | `/srv/core/zim/` |
+| Oral rehydration | http://homestead.local:7002/search?pattern=oral+rehydration+solution | `/srv/core/zim/` |
+| Wound care and infection signs | http://homestead.local:7002/search?pattern=wound+infection | `/srv/core/zim/` |
+| Childbirth basics | http://homestead.local:7002/search?pattern=childbirth | `/srv/core/zim/` |
+| Drug doses and interactions | http://homestead.local:7002/search?pattern=paracetamol (change the drug name) | `/srv/core/zim/` (NHS medicines A-Z) |
+| Family medication list and allergies | write it and keep it in the vault: http://homestead.local:7092 | vault (Paperless) |
 
-**Sealed envelope (not in the binder):** root password, dennis password, admin web password, borg passphrase, vault passphrase, BIOS password, Open WebUI admin, Paperless admin. Keep a copy with BACKUP-B.
+## BLUE: WATER
 
-Print the docs from the repo with: `libreoffice --headless --convert-to pdf docs/*.md`, or open them in the browser and print.
+| Item | Link | On disk |
+|---|---|---|
+| Boiling and bleach doses | http://homestead.local:7002/search?pattern=bleach+water+disinfection | `/srv/core/zim/` (zimgit-water, CDC) |
+| SODIS (solar disinfection) | http://homestead.local:7002/search?pattern=SODIS | `/srv/core/zim/` |
+| Filter maintenance | http://homestead.local:7002/search?pattern=water+filter | `/srv/core/zim/` |
+| Water storage and rotation (FEMA *Are You Ready?*) | http://homestead.local/docs/survival/fema-are-you-ready.pdf | `/srv/core/docs/survival/fema-are-you-ready.pdf` |
+
+## GREEN: FOOD
+
+| Item | Link | On disk |
+|---|---|---|
+| USDA Complete Guide to Home Canning (get by hand: nchfp.uga.edu) | http://homestead.local/docs/food/usda-home-canning-guide.pdf | `/srv/core/docs/food/usda-home-canning-guide.pdf` |
+| Canning times for your altitude | http://homestead.local:7002/search?pattern=canning+altitude | `/srv/core/zim/` (USDA 2015, food preparation) |
+| Botulism warning signs | http://homestead.local:7002/search?pattern=botulism | `/srv/core/zim/` |
+| Garden planting calendar (get by hand: your state extension) | http://homestead.local/docs/food/garden-calendar.pdf | `/srv/core/docs/food/garden-calendar.pdf` |
+| Where There Is No Animal Doctor (get by hand) | http://homestead.local/docs/food/where-there-is-no-animal-doctor.pdf | `/srv/core/docs/food/where-there-is-no-animal-doctor.pdf` |
+| Livestock and vet care | http://homestead.local:7002/search?pattern=livestock | `/srv/core/zim/` (WikiVet) |
+| Food storage rotation list | http://homestead.local:7008/stockoverview (print the page) | Grocy's database |
+
+## BLACK: SECURITY
+
+| Item | Link | On disk |
+|---|---|---|
+| FM 21-76 Survival | http://homestead.local:7002/search?pattern=FM+21-76 | `/srv/core/zim/` (Army publications) |
+| Ranger Handbook (TC 3-21.76) | http://homestead.local:7002/search?pattern=TC+3-21.76 | `/srv/core/zim/` |
+| Rifle marksmanship (TC 3-22.9) | http://homestead.local:7002/search?pattern=TC+3-22.9 | `/srv/core/zim/` |
+| Physical security (FM 3-19.30) | http://homestead.local:7002/search?pattern=FM+3-19.30 | `/srv/core/zim/` |
+| CBRN (FM 3-11) | http://homestead.local:7002/search?pattern=FM+3-11 | `/srv/core/zim/` |
+| Nuclear War Survival Skills | http://homestead.local/docs/survival/nuclear-war-survival-skills.pdf | `/srv/core/docs/survival/nuclear-war-survival-skills.pdf` |
+| CERT Basic Training manual (get by hand: fema.gov) | http://homestead.local/docs/survival/cert-basic-training.pdf | `/srv/core/docs/survival/cert-basic-training.pdf` |
+| Firearm safety rules and manuals for your guns and gear (get by hand: manufacturers) | http://homestead.local/docs/defense/ | `/srv/core/docs/defense/` |
+| Area maps with routes marked | http://homestead.local:7000/maps (print, then mark by hand) | NOMAD maps, on the library drive |
+| County topo maps (get by hand: ngmdb.usgs.gov/topoview) | http://homestead.local/docs/survival/ | `/srv/core/docs/survival/` |
+| Household watch roster, rally points | your plan; keep it in the vault: http://homestead.local:7092 | vault (Paperless) |
+
+## YELLOW: COMMS
+
+| Item | Link | On disk |
+|---|---|---|
+| Comms guide (MeshCore channels, Winlink, NOAA) | print `COMMS.md` (see below) | `/opt/homestead/repo/docs/COMMS.md` |
+| Band plan, ICS-213/214 forms, repeater list, ARES plan (get by hand: arrl.org, your county ARES) | http://homestead.local/docs/comms/ | `/srv/core/docs/comms/` |
+| Family comms plan and frequencies | write it and keep it in the vault: http://homestead.local:7092 | vault (Paperless) |
+
+## WHITE: THIS COMPUTER
+
+| Item | Link | On disk |
+|---|---|---|
+| Grid-down runbook | print `GRID-DOWN-RUNBOOK.md` (see below) | `/opt/homestead/repo/docs/GRID-DOWN-RUNBOOK.md` |
+| Backup and restore | print `RESTORE.md` | `/opt/homestead/repo/docs/RESTORE.md` |
+| Power | print `POWER.md` | `/opt/homestead/repo/docs/POWER.md` |
+| WiFi sign with QR code | http://homestead.local/share/print/wifi-sign.html | `/srv/core/share/print/wifi-sign.html` |
+
+To print the repo docs, turn them into PDFs on the server, then print from `~/print`:
+```bash
+cd /opt/homestead/repo/docs && libreoffice --headless --convert-to pdf --outdir ~/print *.md
+```
+
+## Sealed envelope (not in the binder)
+
+Root password, dennis password, admin web password, borg passphrase, vault passphrase, BIOS password, Open WebUI admin, Paperless admin. Keep a copy with BACKUP-B.
