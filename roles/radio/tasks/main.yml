@@ -83,7 +83,7 @@
 - name: Install SatDump .deb for this Ubuntu release (falls back to newest Ubuntu build)
   vars:
     debs: "{{ satdump_rel.json.assets | selectattr('name', 'search', 'ubuntu.*amd64\\.deb$') | map(attribute='browser_download_url') | list }}"
-    mine: "{{ debs | select('search', ansible_distribution_version) | list }}"
+    mine: "{{ debs | select('search', ansible_facts['distribution_version']) | list }}"
   ansible.builtin.apt:
     deb: "{{ (mine or (debs | sort))[-1] }}"
   when: satdump_rel.status | default(0) == 200 and debs | length > 0
