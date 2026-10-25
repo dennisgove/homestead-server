@@ -84,18 +84,27 @@ def existing(dest, name):
 
 
 def partials_dir(dest):
-    """ZIMs download here and move into dest only once complete, so kiwix never sees a partial file."""
-    return os.path.join(dest, ".partial")
+    """ZIMs download here and move into dest only once complete, so kiwix never sees a partial file.
+
+    A sibling of dest, not inside it: NOMAD scans its zim folder recursively and would try
+    to index partial files. Same filesystem (and mount) as dest, so the final move is a rename.
+    """
+    return os.path.join(os.path.dirname(dest), ".homestead-partial", os.path.basename(dest))
 
 
 def adopt_partial(dest, fn):
-    """Move a partial left in dest by an older version of this script into .partial/ so it resumes."""
-    if os.path.exists(os.path.join(dest, fn + ".aria2")):
-        stage = partials_dir(dest)
-        os.makedirs(stage, exist_ok=True)
-        for f in (fn, fn + ".aria2"):
-            if os.path.exists(os.path.join(dest, f)):
-                os.replace(os.path.join(dest, f), os.path.join(stage, f))
+    """Move a partial left by an older version of this script (in dest, or dest/.partial/) so it resumes."""
+    stage = partials_dir(dest)
+    for old in (dest, os.path.join(dest, ".partial")):
+        if os.path.exists(os.path.join(old, fn + ".aria2")):
+            os.makedirs(stage, exist_ok=True)
+            for f in (fn, fn + ".aria2"):
+                if os.path.exists(os.path.join(old, f)):
+                    os.replace(os.path.join(old, f), os.path.join(stage, f))
+    try:
+        os.rmdir(os.path.join(dest, ".partial"))  # only if now empty
+    except OSError:
+        pass
 
 
 def aria2(url, dest, out=None):
