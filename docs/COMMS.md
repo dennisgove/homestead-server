@@ -2,6 +2,14 @@
 
 The server is a radio workstation: **receive** weather and news, **send** email over radio (Winlink), keyboard-to-keyboard chat (JS8Call/Fldigi), and run **MeshCore** LoRa text messaging for family and neighbors. Transmitting on ham bands needs a license (Technician for VHF/UHF, General for most HF). Listening and MeshCore (license-free ISM band) don't.
 
+## Web radio receiver (OpenWebRX+)
+
+http://homestead.local:7020 (or the **Radio receiver** tile on the portal): a radio receiver in the browser, for anyone on the WiFi. Pick a band from the profile list (NOAA weather, 2m/70cm ham repeaters, APRS, FRS/GMRS, marine, airband, FM, aircraft ADS-B map, shortwave and 40m/80m ham), then click a signal in the waterfall or a bookmark. Several people can listen at once, to different signals inside the band on screen.
+
+Settings (bands, gain, bookmarks, background decoders): the gear icon, then the admin web password, then OpenWebRX's own login, user `dennis`, password from `sudo cat /etc/homestead/openwebrx-admin`.
+
+It holds the dongle while it runs. The desktop radio apps below take the dongle when you start them (the web receiver goes offline) and give it back about 15 seconds after you close them. `homestead-sdr status` shows who has it.
+
 ## NOAA weather radio (RTL-SDR)
 
 Plug in the RTL-SDR and put the antenna up high, by a window at least.

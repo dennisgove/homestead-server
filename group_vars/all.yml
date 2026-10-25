@@ -60,6 +60,7 @@ ports:
   mealie: 8630
   paperless: 8640
   pat: 8650
+  openwebrx: 8660
   ollama: 11435
 
 public_ports:
@@ -82,6 +83,7 @@ public_ports:
   mesh: 7017             # HTTPS (MeshCore Web)
   meshtastic: 7018       # HTTPS (Meshtastic Web; Web Serial/Bluetooth need it)
   translated_library: 7019
+  sdr: 7020              # OpenWebRX+ (its settings pages need the admin password)
   admin_nomad: 7090
   admin_pat: 7091
   admin_paperless: 7092
@@ -130,6 +132,11 @@ images:
   mealie: ghcr.io/mealie-recipes/mealie:latest
   paperless: ghcr.io/paperless-ngx/paperless-ngx:latest
   redis: redis:7-alpine
+  openwebrx: slechev/openwebrxplus:1.2.126
+
+# --- Web SDR (OpenWebRX+) -------------------------------------------------
+# Location shown on its map (ADS-B, APRS). Rough is fine; CHANGE-ME to your town.
+sdr_gps: { lat: 42.3, lon: -71.8 }
 
 # --- AI ------------------------------------------------------------------
 # CPU-only (i7-8700T, 32GB). Revisit names at install time for newer releases

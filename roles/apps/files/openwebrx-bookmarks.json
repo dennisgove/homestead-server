@@ -1,0 +1,17 @@
+[
+  { "name": "NOAA WX1", "frequency": 162550000, "modulation": "nfm" },
+  { "name": "NOAA WX2", "frequency": 162400000, "modulation": "nfm" },
+  { "name": "NOAA WX3", "frequency": 162475000, "modulation": "nfm" },
+  { "name": "NOAA WX4", "frequency": 162425000, "modulation": "nfm" },
+  { "name": "NOAA WX5", "frequency": 162450000, "modulation": "nfm" },
+  { "name": "NOAA WX6", "frequency": 162500000, "modulation": "nfm" },
+  { "name": "NOAA WX7", "frequency": 162525000, "modulation": "nfm" },
+  { "name": "2m calling", "frequency": 146520000, "modulation": "nfm" },
+  { "name": "APRS", "frequency": 144390000, "modulation": "packet" },
+  { "name": "70cm calling", "frequency": 446000000, "modulation": "nfm" },
+  { "name": "GMRS 20 (emergency)", "frequency": 462675000, "modulation": "nfm" },
+  { "name": "FRS/GMRS 1", "frequency": 462562500, "modulation": "nfm" },
+  { "name": "Marine 16 (distress)", "frequency": 156800000, "modulation": "nfm" },
+  { "name": "Air guard", "frequency": 121500000, "modulation": "am" },
+  { "name": "WWV 10 MHz", "frequency": 10000000, "modulation": "am" }
+]

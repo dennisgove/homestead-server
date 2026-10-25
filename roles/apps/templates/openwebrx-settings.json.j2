@@ -1,0 +1,35 @@
+{
+  "version": 8,
+  "receiver_name": "Homestead SDR",
+  "receiver_location": "{{ region_state }}",
+  "receiver_admin": "",
+  "receiver_gps": { "lat": {{ sdr_gps.lat }}, "lon": {{ sdr_gps.lon }} },
+  "photo_title": "",
+  "photo_desc": "",
+  "max_clients": 10,
+  "wfm_deemphasis_tau": 7.5e-05,
+  "wfm_rds_rbds": true,
+  "sdrs": {
+    "rtlsdr": {
+      "name": "RTL-SDR Blog V4",
+      "type": "rtl_sdr",
+      "rf_gain": 30,
+      "direct_sampling": 0,
+      "profiles": {
+        "noaa": { "name": "NOAA Weather (all 7 channels)", "center_freq": 162475000, "samp_rate": 2400000, "start_freq": 162550000, "start_mod": "nfm", "tuning_step": "25000" },
+        "2m": { "name": "2m ham repeaters", "center_freq": 146100000, "samp_rate": 2400000, "start_freq": 146520000, "start_mod": "nfm", "tuning_step": "5000" },
+        "aprs": { "name": "2m APRS + simplex", "center_freq": 144600000, "samp_rate": 2400000, "start_freq": 144390000, "start_mod": "packet", "tuning_step": "5000" },
+        "70cm": { "name": "70cm ham repeaters", "center_freq": 446000000, "samp_rate": 2400000, "start_freq": 446000000, "start_mod": "nfm", "tuning_step": "5000" },
+        "gmrs": { "name": "FRS / GMRS", "center_freq": 462600000, "samp_rate": 2400000, "start_freq": 462562500, "start_mod": "nfm", "tuning_step": "12500" },
+        "marine": { "name": "Marine VHF", "center_freq": 156800000, "samp_rate": 2400000, "start_freq": 156800000, "start_mod": "nfm", "tuning_step": "25000" },
+        "air": { "name": "Airband", "center_freq": 121500000, "samp_rate": 2400000, "start_freq": 121500000, "start_mod": "am", "tuning_step": "25000" },
+        "fm": { "name": "FM broadcast", "center_freq": 97500000, "samp_rate": 2400000, "start_freq": 96700000, "start_mod": "wfm", "tuning_step": "100000" },
+        "adsb": { "name": "Aircraft (ADS-B 1090 MHz)", "center_freq": 1090000000, "samp_rate": 2400000, "start_freq": 1090000000, "start_mod": "adsb", "tuning_step": "25000" },
+        "sw31": { "name": "Shortwave 31m + WWV 10 MHz", "center_freq": 9750000, "samp_rate": 1024000, "start_freq": 10000000, "start_mod": "am", "tuning_step": "5000" },
+        "sw49": { "name": "Shortwave 49m", "center_freq": 6050000, "samp_rate": 1024000, "start_freq": 6000000, "start_mod": "am", "tuning_step": "5000" },
+        "40m": { "name": "40m ham", "center_freq": 7150000, "samp_rate": 1024000, "start_freq": 7200000, "start_mod": "lsb", "tuning_step": "500" },
+        "80m": { "name": "80m ham", "center_freq": 3800000, "samp_rate": 1024000, "start_freq": 3900000, "start_mod": "lsb", "tuning_step": "500" }
+      }
+    }
+  }
+}

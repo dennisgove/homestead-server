@@ -98,6 +98,54 @@
     PIPX_GLOBAL_BIN_DIR: /usr/local/bin
   failed_when: false
 
+# One dongle, several programs: the web SDR (OpenWebRX+) holds it normally, and
+# each desktop radio app takes it while it runs (see homestead-sdr).
+- name: Dongle hand-off command
+  ansible.builtin.copy:
+    src: homestead-sdr
+    dest: /usr/local/sbin/homestead-sdr
+    mode: "0755"
+
+- name: Anyone at the desktop may hand the dongle over (and nothing else)
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/homestead-sdr
+    content: |
+      # Managed by Ansible (roles/radio).
+      ALL ALL=(root) NOPASSWD: /usr/local/sbin/homestead-sdr release, /usr/local/sbin/homestead-sdr reclaim
+    mode: "0440"
+    validate: visudo -cf %s
+
+- name: Dongle lock file, writable by the desktop apps
+  ansible.builtin.copy:
+    dest: /etc/tmpfiles.d/homestead-sdr.conf
+    content: "f /run/homestead-sdr.lock 0666 root root -\n"
+    mode: "0644"
+  register: sdr_tmpfiles
+
+- name: Create the lock file now
+  ansible.builtin.command: systemd-tmpfiles --create /etc/tmpfiles.d/homestead-sdr.conf
+  when: sdr_tmpfiles.changed
+
+- name: Homestead helper directory
+  ansible.builtin.file:
+    path: /usr/local/lib/homestead
+    state: directory
+    mode: "0755"
+
+- name: Wrapper for desktop SDR apps
+  ansible.builtin.copy:
+    src: sdr-wrap
+    dest: /usr/local/lib/homestead/sdr-wrap
+    mode: "0755"
+
+- name: Desktop SDR apps go through the wrapper (/usr/local/bin is ahead of /usr/bin)
+  ansible.builtin.file:
+    src: /usr/local/lib/homestead/sdr-wrap
+    dest: "/usr/local/bin/{{ item }}"
+    state: link
+    force: true
+  loop: [gqrx, rtl_fm, rtl_power, rtl_sdr, rtl_tcp, rtl_test, rtl_433, satdump, satdump-ui]
+
 - name: NOAA weather radio script
   ansible.builtin.copy:
     src: noaa-weather

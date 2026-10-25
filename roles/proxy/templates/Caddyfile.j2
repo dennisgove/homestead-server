@@ -111,6 +111,17 @@
 :{{ public_ports.translated_library }} {
 	reverse_proxy 127.0.0.1:{{ ports.translate }}
 }
+# Web SDR: anyone can listen; its settings pages need the admin password too.
+:{{ public_ports.sdr }} {
+	@sdradmin path /settings* /login* /logout* /generalsettings* /sdrsettings* /bookmarks* /decoding* /backgrounddecoding* /reporting* /features* /logs* /clients* /files*
+	handle @sdradmin {
+		import admin_auth
+		reverse_proxy 127.0.0.1:{{ ports.openwebrx }}
+	}
+	handle {
+		reverse_proxy 127.0.0.1:{{ ports.openwebrx }}
+	}
+}
 
 # --- Public, HTTPS ---------------------------------------------------------
 # Vaultwarden needs HTTPS for its encryption, MeshCore and Meshtastic Web for

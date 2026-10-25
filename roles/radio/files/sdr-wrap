@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Installed as /usr/local/bin/<app> for each desktop radio app: takes the dongle
+# from the web SDR, runs the real /usr/bin/<app>, and hands the dongle back when
+# it exits. Managed by Ansible (roles/radio).
+app=$(basename "$0")
+real=$(PATH=/usr/bin:/bin:/usr/sbin:/sbin command -v "$app") || { echo "$app isn't installed" >&2; exit 127; }
+
+# Shared lock = "a desktop app is using the dongle"; homestead-sdr reclaim waits for none.
+exec 9>>/run/homestead-sdr.lock
+flock -s 9
+sudo -n /usr/local/sbin/homestead-sdr release 2>/dev/null || true
+"$real" "$@"
+rc=$?
+exec 9>&-
+setsid sudo -n /usr/local/sbin/homestead-sdr reclaim >/dev/null 2>&1 < /dev/null &
+exit $rc

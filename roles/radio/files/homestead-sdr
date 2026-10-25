@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Share the one RTL-SDR dongle between the web SDR (OpenWebRX+) and the desktop
+# radio apps. Only one program can open the dongle at a time.
+#   homestead-sdr release   stop the web SDR so a desktop app can use the dongle
+#   homestead-sdr reclaim   start it again once no desktop app is using it
+#   homestead-sdr status
+# The desktop apps (gqrx, rtl_fm, rtl_433, satdump, ...) call release/reclaim
+# themselves through /usr/local/lib/homestead/sdr-wrap. Managed by Ansible (roles/radio).
+set -euo pipefail
+C=homestead-openwebrx
+LOCK=/run/homestead-sdr.lock
+
+running() { [[ "$(docker inspect -f '{{.State.Running}}' "$C" 2>/dev/null)" == true ]]; }
+
+case "${1:-status}" in
+  release)
+    if running; then
+      docker stop -t 5 "$C" >/dev/null
+      sleep 1   # let the USB device settle
+    fi
+    ;;
+  reclaim)
+    # Wait a bit: apps like noaa-weather open the dongle several times in a row.
+    sleep 15
+    exec 9>>"$LOCK"
+    flock -n -x 9 || exit 0           # a desktop app still holds it
+    running || docker start "$C" >/dev/null
+    ;;
+  status)
+    if running; then echo "web SDR: running (owns the dongle)"; else echo "web SDR: stopped"; fi
+    ;;
+  *) echo "usage: $0 release|reclaim|status" >&2; exit 2 ;;
+esac

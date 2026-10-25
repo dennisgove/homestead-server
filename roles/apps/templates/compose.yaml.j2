@@ -73,6 +73,23 @@ services:
     volumes:
       - {{ homestead_data }}/mealie:/app/data
 
+  # Web SDR receiver. Owns the RTL-SDR dongle while running; the desktop radio
+  # apps stop it and start it again when they're done (homestead-sdr).
+  openwebrx:
+    image: {{ images.openwebrx }}
+    container_name: homestead-openwebrx
+    restart: unless-stopped
+    ports: ["{{ ports.openwebrx }}:8073"]
+    devices: ["/dev/bus/usb:/dev/bus/usb"]
+    tmpfs: ["/tmp:mode=1777"]
+    environment:
+      TZ: {{ timezone }}
+      OPENWEBRX_ADMIN_USER: {{ admin_user }}
+      OPENWEBRX_ADMIN_PASSWORD: {{ openwebrx_admin_password }}
+    volumes:
+      - {{ homestead_data }}/openwebrx/var:/var/lib/openwebrx
+      - {{ homestead_data }}/openwebrx/etc:/etc/openwebrx
+
   # Vault apps: started only by `homestead-vault open` (data is on the LUKS volume).
   paperless-redis:
     image: {{ images.redis }}
