@@ -126,6 +126,36 @@
   ansible.builtin.command: systemd-tmpfiles --create /etc/tmpfiles.d/homestead-sdr.conf
   when: sdr_tmpfiles.changed
 
+- name: Web SDR goes back to NOAA when nobody's listening
+  ansible.builtin.copy:
+    dest: "/etc/systemd/system/{{ item.name }}"
+    mode: "0644"
+    content: "{{ item.content }}"
+  loop:
+    - name: homestead-sdr-reset.service
+      content: |
+        [Unit]
+        Description=Return the web SDR to NOAA once nobody is listening
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/local/sbin/homestead-sdr idle-reset
+    - name: homestead-sdr-reset.timer
+      content: |
+        [Unit]
+        Description=Return the web SDR to NOAA once nobody is listening (check every 2 minutes)
+        [Timer]
+        OnBootSec=5min
+        OnUnitActiveSec=2min
+        [Install]
+        WantedBy=timers.target
+
+- name: NOAA reset timer on
+  ansible.builtin.systemd_service:
+    name: homestead-sdr-reset.timer
+    enabled: true
+    state: started
+    daemon_reload: true
+
 - name: Homestead helper directory
   ansible.builtin.file:
     path: /usr/local/lib/homestead

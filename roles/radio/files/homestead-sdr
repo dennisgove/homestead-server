@@ -4,6 +4,7 @@
 #   homestead-sdr release   stop the web SDR so a desktop app can use the dongle
 #   homestead-sdr reclaim   start it again once no desktop app is using it
 #   homestead-sdr status
+#   homestead-sdr idle-reset  (timer) back to the first band, NOAA, once nobody's listening
 # The desktop apps (gqrx, rtl_fm, rtl_433, satdump, ...) call release/reclaim
 # themselves through /usr/local/lib/homestead/sdr-wrap. Managed by Ansible (roles/radio).
 set -euo pipefail
@@ -11,6 +12,13 @@ C=homestead-openwebrx
 LOCK=/run/homestead-sdr.lock
 
 running() { [[ "$(docker inspect -f '{{.State.Running}}' "$C" 2>/dev/null)" == true ]]; }
+
+# Open connections to the receiver's web port (8073, hex 1F89) inside the container.
+# Each listener holds a websocket, so 0 means nobody has the page open.
+listeners() {
+  docker exec "$C" cat /proc/net/tcp /proc/net/tcp6 2>/dev/null \
+    | awk '$2 ~ /:1F89$/ && $4 == "01" {n++} END {print n+0}'
+}
 
 case "${1:-status}" in
   release)
@@ -27,7 +35,23 @@ case "${1:-status}" in
     running || docker start "$C" >/dev/null
     ;;
   status)
-    if running; then echo "web SDR: running (owns the dongle)"; else echo "web SDR: stopped"; fi
+    if running; then echo "web SDR: running (owns the dongle), $(listeners) listener connection(s)"; else echo "web SDR: stopped"; fi
     ;;
-  *) echo "usage: $0 release|reclaim|status" >&2; exit 2 ;;
+  idle-reset)
+    # Someone may have switched bands. Once it's been used and then left alone for
+    # 5 minutes, restart it: it always starts on the first profile (NOAA).
+    used=/run/homestead-sdr.used idle=/run/homestead-sdr.idle
+    running || exit 0                  # a desktop app has the dongle
+    if (( $(listeners) > 0 )); then
+      touch "$used"; rm -f "$idle"
+    elif [[ -e "$used" ]]; then
+      if [[ ! -e "$idle" ]]; then
+        touch "$idle"
+      elif [[ -n "$(find "$idle" -mmin +5)" ]]; then
+        docker restart -t 5 "$C" >/dev/null
+        rm -f "$used" "$idle"
+      fi
+    fi
+    ;;
+  *) echo "usage: $0 release|reclaim|status|idle-reset" >&2; exit 2 ;;
 esac

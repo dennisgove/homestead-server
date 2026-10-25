@@ -10,6 +10,8 @@ Settings (bands, gain, bookmarks, background decoders): the gear icon, then the 
 
 It holds the dongle while it runs. The desktop radio apps below take the dongle when you start them (the web receiver goes offline) and give it back about 15 seconds after you close them. `homestead-sdr status` shows who has it.
 
+The band is shared: if someone switches to FM, it stays on FM for everyone. Once nobody has the page open for about 5 minutes, it goes back to NOAA by itself.
+
 ## NOAA weather radio (RTL-SDR)
 
 Plug in the RTL-SDR and put the antenna up high, by a window at least.
