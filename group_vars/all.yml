@@ -143,16 +143,23 @@ sdr_gps: { lat: 42.3, lon: -71.8 }
 # --- AI ------------------------------------------------------------------
 # CPU-only (i7-8700T, 32GB). Revisit names at install time for newer releases
 # in the same size classes.
+# Non-thinking models answer straight away; on this CPU a thinking model spends
+# minutes reasoning first, so it's a separate pick for hard planning questions.
 ai_models:
-  planner: qwen3:30b-a3b             # MoE ~30B total / 3B active, ~19GB RAM
-  fast: qwen3:4b
+  planner: qwen3:30b-instruct        # Qwen3-30B-A3B-Instruct-2507: MoE 30B / 3B active, ~19GB RAM
+  thinker: qwen3:30b-thinking        # Thinking-2507 version of the same model, ~19GB RAM
+  fast: qwen3:4b-instruct            # titles and search rewrites for Open WebUI
   vision: gemma3:4b
   embed: nomic-embed-text
 ai_context: 8192
-# Chat model + the small embedding model stay loaded together, so knowledge-base
-# indexing doesn't evict the chat model mid-answer (it reloads 19GB from disk).
-ai_max_loaded_models: 2
+# Chat model + the fast task model + the small embedding model stay loaded together,
+# so titles and knowledge-base indexing don't evict the chat model mid-answer
+# (reloading it means reading 19GB from disk). ~22GB together.
+ai_max_loaded_models: 3
 ai_keep_alive: 30m
+ai_personas:
+  - { name: homestead-planner, base: "{{ ai_models.planner }}", temperature: 0.4 }
+  - { name: homestead-thinker, base: "{{ ai_models.thinker }}", temperature: 0.6 }
 
 # --- Power (Victron VE.Direct) ------------------------------------------
 power_eco_soc: 35                    # % : stop AI + video

@@ -25,16 +25,22 @@
   loop_control: { label: "{{ item.item }}" }
   when: item.rc is defined and item.rc != 0
 
-- name: Planner persona Modelfile
+# Same persona on both: homestead-planner answers directly (the default), and
+# homestead-thinker reasons step by step first (slower; for hard planning questions).
+- name: Persona Modelfiles
   ansible.builtin.template:
     src: Modelfile.planner.j2
-    dest: "{{ homestead_data }}/ollama/Modelfile.planner"
+    dest: "{{ homestead_data }}/ollama/Modelfile.{{ persona.name }}"
     mode: "0644"
-  register: modelfile
+  loop: "{{ ai_personas }}"
+  loop_control: { loop_var: persona, label: "{{ persona.name }}" }
+  register: modelfiles
 
-- name: Build homestead-planner model
-  ansible.builtin.command: docker exec homestead-ollama ollama create homestead-planner -f /root/.ollama/Modelfile.planner
-  when: modelfile.changed or 'homestead-planner' not in have.stdout
+- name: Build the persona models
+  ansible.builtin.command: docker exec homestead-ollama ollama create {{ item.persona.name }} -f /root/.ollama/Modelfile.{{ item.persona.name }}
+  loop: "{{ modelfiles.results }}"
+  loop_control: { label: "{{ item.persona.name }}" }
+  when: item.changed or item.persona.name not in have.stdout
 
 - name: Knowledge-base seeding tool
   ansible.builtin.copy:

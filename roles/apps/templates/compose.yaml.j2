@@ -37,6 +37,14 @@ services:
       RAG_EMBEDDING_ENGINE: ollama
       RAG_EMBEDDING_MODEL: {{ ai_models.embed }}
       DEFAULT_MODELS: homestead-planner
+      # Background jobs (titles, search rewrites) on the small model; follow-up and
+      # tag suggestions off. Each one otherwise runs the big model for minutes on a CPU.
+      # (First-run defaults: after that Open WebUI keeps them in its own settings.)
+      TASK_MODEL: {{ ai_models.fast }}
+      ENABLE_FOLLOW_UP_GENERATION: "false"
+      ENABLE_TAGS_GENERATION: "false"
+      ENABLE_SEARCH_QUERY_GENERATION: "false"
+      ENABLE_AUTOCOMPLETE_GENERATION: "false"
       ENABLE_COMMUNITY_SHARING: "false"
       ENABLE_VERSION_UPDATE_CHECK: "false"
     volumes:

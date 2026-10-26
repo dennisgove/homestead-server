@@ -183,7 +183,7 @@ With the temporary internal library, run `--tier 1` and NOMAD's Essential/Standa
 1. Open http://localhost:7007 and create the first account. **It becomes the Open WebUI admin, so make it dennis.**
 2. Admin Panel → Settings → enable API keys. Then profile → Settings → Account → create an API key.
 3. `homestead-kb-seed --token <key>` uploads the essentials PDFs into knowledge bases (Medical, Food & Agriculture, ...).
-4. In Workspace → Models, edit `homestead-planner` and attach the knowledge bases. Family members sign up, and dennis approves them (Admin → Users).
+4. In Workspace → Models, edit `homestead-planner` (answers directly, the default) and `homestead-thinker` (reasons step by step first: slower, for hard planning questions) and attach the knowledge bases. Family members sign up, and dennis approves them (Admin → Users).
 
 ## 11. Vault
 
