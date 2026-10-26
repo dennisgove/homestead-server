@@ -7,7 +7,7 @@ Do the whole thing **while the internet still works**. Allow a weekend for setup
 | Item | Notes |
 |---|---|
 | OptiPlex 3060 Micro, i7-8700T, 32GB, 1TB NVMe, AX210 | the server |
-| **LIBRARY drive**: USB 3 portable HDD, **2TB minimum** (4–5TB if you'll add video) | measured Oct 2026: essentials 67GB on the NVMe, full library ~750GB + NOMAD collections + maps |
+| **LIBRARY drive**: USB 3 portable HDD, **2TB minimum** (4–5TB if you'll add video) | measured Oct 2026: essentials 67GB on the NVMe; the full library about 800GB on the USB drive |
 | **BACKUP-A, BACKUP-B**: USB 3 portable HDD, **4–5TB each** | each one holds the library mirror + encrypted system backups + Clonezilla images. Start with one; add the second later. |
 | 32GB+ USB stick | Ventoy rescue/installer stick |
 | Victron SmartShunt (or MPPT) + VE.Direct USB cable | battery-aware shutdown |
@@ -96,7 +96,7 @@ The NVMe gets this layout:
 |---|---|---|
 | lv_root | 120G | / |
 | lv_home | 60G | /home |
-| lv_opt | 250G | /opt (NOMAD, apps, AI models) |
+| lv_opt | 250G | /opt (apps, the Hub, AI models) |
 | lv_core | 150G | /srv/core (essentials library) |
 | lv_swap | 16G | swap |
 | lv_vault | 50G | encrypted vault (set up later) |
@@ -135,7 +135,7 @@ It asks for:
 - the root password (break-glass, goes on the recovery sheet)
 - the dennis password (replaces the temporary one)
 - the guest password (simple; it will be posted)
-- the admin web password (Command Center, Paperless, Pat)
+- the admin web password (Library manager, vault documents, Winlink, logs, file browser, radio receiver settings)
 - your SSH public key (on the Mac: `cat ~/.ssh/id_ed25519.pub`; blank to skip)
 - the hotspot WiFi password
 - the borg passphrase: **leave it blank on a first install**, and it generates one. On a rebuild, type the one from the recovery sheet.
@@ -146,34 +146,35 @@ After the first run, the firewall allows SSH only from **wired ethernet** (never
 
 To update the server from the Mac later, copy the folder again and re-run `bootstrap.sh`. That keeps the existing passwords and passphrase (`/opt/homestead/repo/secrets.yml`).
 
-The playbook stops at the NOMAD step on purpose:
+The first run takes a while (container images, AI models). Everything after it happens in the background: the library download, the maps, the books library and the AI's knowledge bases. Watch it on the **Library manager** page.
+
+**Upgrading an older install that used Project NOMAD?** Run `sudo scripts/migrate-from-nomad.sh` once, before this step. It moves NOMAD's ZIMs, courses, videos and app data into the new layout (renames on the same disk, so it's quick) and retires NOMAD.
+
+## 8. The Library manager (http://homestead.local/library; dennis + admin web password)
+
+Everything about the library's content, from a web page:
+- **Overview:** what's downloaded, disk space (including whether pending downloads will fit), the jobs and their progress, with **Run now** buttons.
+- **Add from Kiwix:** search Kiwix's online catalog (needs internet) and add an item in one click: category, tier, and which disk (essentials on the NVMe, or the USB drive).
+- **Add a document:** by link, or upload a file (the by-hand items). Choose its category, and whether the AI uses it and it goes in the printed binder.
+- **All items:** change category, tier or disk, switch "use in AI", "in binder" and "updates" per item, download or remove (optionally deleting the files).
+- **Updates:** newer releases of what you have (checked weekly, or **Check now**).
+- **Health & checklist:** what isn't downloaded yet, duplicates, unfinished downloads, files on disk that aren't in the catalog (**Adopt** them), and the list of things to get by hand.
+- **Export my changes:** your edits as a YAML patch for `content/catalog.yaml`, so a rebuild starts from them too. (They're also backed up.)
+
+## 9. Content and maps (automatic; days)
+
+`bootstrap.sh` indexes what's on disk, then starts the download in the background, and it repeats weekly to resume and pick up new releases. It fetches tiers 1–3 (`content_tier` in `group_vars/all.yml`) and skips anything that won't fit, so it's safe with the temporary internal library too. The **maps** are built once in the background (needs internet; refreshed quarterly):
+- **detailed:** your state and its neighbors (`region_state`), every street, building and trail;
+- **wide:** the contiguous US and southern Canada, towns and highways;
+- **world:** countries and major cities;
+
+plus offline place search. Open them at http://homestead.local/maps.
+
 ```bash
-sudo homestead-install-nomad     # read and accept the NOMAD license when asked
-sudo ./bootstrap.sh              # continue; re-running is always safe
+systemctl status homestead-fetch homestead-maps   # or the Library manager's Overview
 ```
 
-## 8. Inside the NOMAD Command Center (http://localhost:7090 on the server, or http://homestead.local:7090 from another computer; dennis + web password)
-
-1. Run the **Easy Setup** wizard. Pick Wikipedia "Complete (Full)" plus the **Comprehensive** tier (on the temporary internal library: the Essential/Standard tiers for now) of Medicine, Survival, Agriculture, DIY and Education. Our manifest skips anything NOMAD already downloaded.
-   **AI:** on the wizard's first step (Core Capabilities), select the **AI Assistant** card, check **Use remote Ollama instance** in the box that appears under it, and enter `http://host.docker.internal:11435`. NOMAD then uses our Ollama (already tuned for this CPU and loaded with the models) instead of installing a second one, which would double the RAM and disk the models use.
-2. **Maps**: download your state and the neighboring states (see `region_state`).
-3. Install from the app catalog (Supply Depot): **Kolibri, Calibre-Web, Jellyfin, FlatNotes, MeshCore Web, CyberChef, Stirling PDF**. Don't install NOMAD's own Ollama from there.
-4. In Kolibri, import channels: Khan Academy (English), CK-12, and whatever suits the kids' ages.
-
-**Setting the AI later, or changing it:** open http://homestead.local:7090/settings/models directly (the Settings menu hides this link until the AI is set up, and the page may warn that the AI's dependencies aren't installed; ignore that). Under **Remote Connection**, enter the URL in **Remote Ollama/OpenAI API URL** and click **Save & Test**.
-
-If it can't connect, use `http://172.17.0.1:11435` (the server's Docker address) instead. To check that our Ollama is running: `curl http://127.0.0.1:11435/api/version` on the server should print a version.
-
-## 9. Content downloads (automatic; days)
-
-`bootstrap.sh` starts the download in the background (`homestead-fetch` service), and it repeats weekly to resume and pick up anything new. It fetches tiers 1–3 (`content_tier` in `group_vars/all.yml`) and skips anything that won't fit on the drive, so it's safe with the temporary internal library too.
-
-```bash
-systemctl status homestead-fetch           # running? (journalctl -u homestead-fetch -f to follow)
-sudo scripts/fetch_content.py --list --tier 3   # what's left, with sizes
-```
-
-Some items have no download link. The end of each run lists them (`journalctl -u homestead-fetch | tail -30`): get them by hand into `/srv/core/docs/<category>/`, and the next daily AI sync picks them up.
+Some documents have no download link: **Health & checklist** lists them. Upload them there once you have them.
 
 Phone apps (Kiwix, Organic Maps + map files, MeshCore, F-Droid) go into `/srv/core/share/apps/`.
 
@@ -182,7 +183,8 @@ Phone apps (Kiwix, Organic Maps + map files, MeshCore, F-Droid) go into `/srv/co
 Nothing to click. `bootstrap.sh`:
 - creates the Open WebUI admin on a fresh install: user `dennis@homestead.local`, password from `sudo cat /etc/homestead/openwebui-admin`. If you'd already made an account, that account stays the admin.
 - applies the settings that keep chat fast on this CPU (built-in tools off, background jobs on the small model) and sets up the model menu;
-- loads every PDF in `/srv/core/docs` into knowledge bases by category and attaches them to the planner and thinker (`homestead-kb-sync`; hours the first time). It runs again daily and after each content download, so new PDFs are added on their own.
+- installs the **library search**: before the planner or thinker answers, it searches every ZIM in the library for the question and adds the best passages, so answers cite library articles (nothing has to be indexed);
+- loads every PDF in `/srv/core/docs` into knowledge bases by category and attaches them to the planner and thinker (`homestead-kb-sync`; hours the first time). It runs again daily and after each content download. The Library manager's **use in AI** switch leaves a document out.
 
 ```bash
 systemctl status homestead-kb-sync         # journalctl -u homestead-kb-sync -f to follow
@@ -209,16 +211,16 @@ See [COMMS.md](COMMS.md): `pat configure` (callsign, grid), Digirig audio levels
 1. Plug in BACKUP-A. The first backup starts automatically and takes many hours. Then do BACKUP-B. (No backup drive yet? The portal shows "Last backup never". The daily desktop reminder only starts after the first backup. Until then you have **no backup**.)
 2. Make the first **Clonezilla image** (RESTORE.md §Clonezilla).
 3. Do the **restore drill** (RESTORE.md §Drill) before you rely on it.
-4. Print the binder ([PRINT-BINDER.md](PRINT-BINDER.md)) and the WiFi sign (`/srv/core/share/print/wifi-sign.html`).
+4. Print the binder: http://homestead.local/binder lists everything marked **in binder** in the Library manager, by tab ([PRINT-BINDER.md](PRINT-BINDER.md)). Also the WiFi sign (`/srv/core/share/print/wifi-sign.html`).
 5. Test `sudo homestead-mode griddown` with a phone, then `gridup`.
 
 ## Adding the drives later
 
-**Library drive** (moves the temporary internal library onto it; NOMAD is down only for the final copy pass):
+**Library drive** (moves the temporary internal library onto it; the library apps are down only for the final copy pass):
 ```bash
 lsblk                                         # find the new USB drive, e.g. /dev/sda
 sudo homestead-library-migrate /dev/sdX       # erases it, copies, swaps labels
-# check the portal and the Command Center, then free the NVMe space:
+# check the portal and the Library manager, then free the NVMe space:
 sudo lvremove vg_sys/lv_library
 sudo systemctl start --no-block homestead-fetch   # now download the rest (also happens weekly on its own)
 ```

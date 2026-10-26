@@ -31,7 +31,24 @@ JOB_LABELS = {"fetch": "Download library", "fetch-plan": "Check sizes & updates"
 
 app = FastAPI(title="Homestead Hub", docs_url="/api/docs", redoc_url=None)
 app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
-templates = Jinja2Templates(directory=HERE / "templates")
+
+# Hub modules: each folder in web/modules/ with an __init__.py that defines
+# `router` (a FastAPI APIRouter) becomes part of the Hub. Optional: `menu =
+# {"label": ..., "href": ...}` for the top bar, and a templates/ folder.
+import importlib
+import pkgutil
+
+from . import modules as _modules
+
+MODULES = []
+_template_dirs = [HERE / "templates"]
+for _m in pkgutil.iter_modules(_modules.__path__):
+    mod = importlib.import_module(f"{_modules.__name__}.{_m.name}")
+    if getattr(mod, "enabled", True) and hasattr(mod, "router"):
+        MODULES.append(mod)
+        if (Path(mod.__file__).parent / "templates").is_dir():
+            _template_dirs.append(Path(mod.__file__).parent / "templates")
+templates = Jinja2Templates(directory=[str(d) for d in _template_dirs])
 templates.env.filters["human"] = human
 templates.env.filters["ago"] = lambda t: "never" if not t else time.strftime("%b %d %H:%M", time.localtime(t))
 
@@ -54,7 +71,8 @@ def app_url(request: Request, a: dict) -> str:
 def ctx(request: Request, **kw) -> dict:
     cfg = config.load()
     return {"request": request, "site": cfg["site"], "cfg": cfg, "app_url": lambda a: app_url(request, a),
-            "apps": cfg["apps"], "cats": catalog.merged().get("categories", {}), **kw}
+            "apps": cfg["apps"], "cats": catalog.merged().get("categories", {}),
+            "module_menu": [m.menu for m in MODULES if getattr(m, "menu", None)], **kw}
 
 
 def page(request: Request, name: str, **kw) -> HTMLResponse:
@@ -435,3 +453,8 @@ def library_job(request: Request, job: str):
 def library_jobs_partial(request: Request):
     require_admin(request)
     return page(request, "library/_jobs.html", jobs={j: read_status(j) for j in JOB_UNITS}, job_labels=JOB_LABELS)
+
+
+# Modules last, so they can use page() and the helpers above.
+for _mod in MODULES:
+    app.include_router(_mod.router)

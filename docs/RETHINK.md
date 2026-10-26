@@ -1,6 +1,6 @@
 # Rethink: is there a better way to build this?
 
-Status: **decided** (option C, see [Decisions](#decisions)). Plan only, on branch `plan/rethink-stack`; nothing here is built yet. This is the base that later apps and pages build on, so it's designed to be extended (see [Extending it](#extending-it)).
+Status: **built** (option C) on branch `plan/rethink-stack`. The plan below is kept as the record of why. This is the base that later apps and pages build on, so it's designed to be extended (see [Extending it](#extending-it)).
 
 ## What we're actually trying to do
 

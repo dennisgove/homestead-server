@@ -7,7 +7,7 @@ The links work from any browser on the home network or the hotspot (on the hotsp
 - **PDFs** in `/srv/core/docs/<category>/`. Open the link and print.
 - **ZIM libraries** in `/srv/core/zim/`. A ZIM holds a whole collection, so the links below are searches in the essentials library. Open the article you want and print it from the browser.
 
-Items marked **(get by hand)** aren't downloaded automatically: `fetch_content.py` lists them at the end of each run. Save them under the filename shown, and the link will work. Books published chapter by chapter link to their folder.
+Items marked **(get by hand)** aren't downloaded automatically: the Library manager's **Health & checklist** lists them, and its **Upload a file** puts them in the right place. Save them under the filename shown, and the link will work. Books published chapter by chapter link to their folder.
 
 ## RED: MEDICAL
 
@@ -66,7 +66,7 @@ Items marked **(get by hand)** aren't downloaded automatically: `fetch_content.p
 | Nuclear War Survival Skills | http://homestead.local/docs/survival/nuclear-war-survival-skills.pdf | `/srv/core/docs/survival/nuclear-war-survival-skills.pdf` |
 | CERT Basic Training manual | http://homestead.local/docs/survival/cert-basic-training.pdf | `/srv/core/docs/survival/cert-basic-training.pdf` |
 | Firearm safety rules and manuals for your guns and gear (get by hand: manufacturers) | http://homestead.local/docs/defense/ | `/srv/core/docs/defense/` |
-| Area maps with routes marked | http://homestead.local:7000/maps (print, then mark by hand) | NOMAD maps, on the library drive |
+| Area maps with routes marked | http://homestead.local/maps (find the place, **Print this view**, then mark by hand) | `/srv/core/maps/` |
 | County topo maps (get by hand: ngmdb.usgs.gov/topoview) | http://homestead.local/docs/survival/ | `/srv/core/docs/survival/` |
 | Household watch roster, rally points | your plan; keep it in the vault: http://homestead.local:7092 | vault (Paperless) |
 

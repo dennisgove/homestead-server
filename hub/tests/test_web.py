@@ -69,3 +69,16 @@ def test_places(site):
     con.close()
     r = client().get("/api/places", params={"q": "conc"})
     assert r.json()[0]["name"] == "Concord"
+
+
+def test_example_module_loads_when_enabled(site, monkeypatch):
+    import importlib
+    import homestead.web.modules.example as ex
+    monkeypatch.setattr(ex, "enabled", True)
+    import homestead.web.app as web
+    web = importlib.reload(web)
+    from fastapi.testclient import TestClient
+    c = TestClient(web.app)
+    assert c.get("/api/example").json() == {"ok": True}
+    assert "Hello from a Hub module." in c.get("/example").text
+    assert ">Example<" in c.get("/").text

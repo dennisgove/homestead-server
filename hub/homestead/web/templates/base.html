@@ -15,7 +15,8 @@
   <a href="/maps">🗺️ Maps</a>
   <a href="/binder" {% if request.url.path == '/binder' %}class="here"{% endif %}>🖨️ Binder</a>
   <a href="/status" {% if request.url.path == '/status' %}class="here"{% endif %}>Status</a>
-  <a href="/library" {% if request.url.path.startswith('/library') %}class="here"{% endif %}>Library manager</a>
+  {% for m in module_menu %}<a href="{{ m.href }}" {% if request.url.path.startswith(m.href) %}class="here"{% endif %}>{{ m.label }}</a>
+  {% endfor %}<a href="/library" {% if request.url.path.startswith('/library') %}class="here"{% endif %}>Library manager</a>
 </nav>
 {% block body %}{% endblock %}
 </body>

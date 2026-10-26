@@ -36,7 +36,7 @@ sudo homestead-restore BACKUP-A list                                  # pick an 
 sudo homestead-restore BACKUP-A files system-2026-11-02T10:00 home/guest/Documents
 # restored under /restore/home/guest/Documents - copy back what you need
 ```
-App databases: stop the app, copy its folder back from `/restore/opt/homestead/data/<app>` (or use the consistent copy in `/restore/var/lib/homestead/dumps/sqlite/`), then start it again. NOMAD's database: `sudo homestead-restore BACKUP-A mysql`.
+App databases: stop the app, copy its folder back from `/restore/opt/homestead/data/<app>` (or use the consistent copy in `/restore/var/lib/homestead/dumps/sqlite/`), then start it again. Or let the tool do it: `sudo homestead-restore BACKUP-A app grocy` (any folder name in `/opt/homestead/data`).
 
 ## Scenario 2: the NVMe died, or the system won't boot
 
@@ -49,7 +49,6 @@ App databases: stop the app, copy its folder back from `/restore/opt/homestead/d
    sudo homestead-restore BACKUP-A all system-<newest>
    sudo rsync -a /restore/home/ /home/
    sudo rsync -a /restore/opt/homestead/data/ /opt/homestead/data/   # stop apps first: docker compose -f /opt/homestead/compose.yaml stop
-   sudo homestead-restore BACKUP-A mysql
    ```
 5. Vault newer than the image? `sudo homestead-restore BACKUP-A vault vault-<newest>`.
 
@@ -58,9 +57,9 @@ App databases: stop the app, copy its folder back from `/restore/opt/homestead/d
 The essentials (medical, water, food, Army manuals, all of Wikipedia as text) are on the NVMe and keep working. To bring back the full library:
 ```bash
 sudo homestead-library-format /dev/sdX                 # the new drive
-sudo homestead-restore BACKUP-A library               # copies library/ back (hours), restarts NOMAD
+sudo homestead-restore BACKUP-A library               # copies library/ back (hours), restarts the library apps
 ```
-No spare drive yet? Any laptop with Kiwix desktop can open the backup drive's `library/nomad/zim/*.zim` files directly.
+No spare drive yet? Any laptop with Kiwix desktop can open the backup drive's `library/zim/*.zim` files directly.
 
 ## Scenario 4: the whole computer is gone
 
@@ -71,10 +70,10 @@ Any 64-bit PC with ≥16GB RAM (32GB for the big AI model):
   2. `cp -a /mnt/offline/repo ~/homestead-server`. It has no `secrets.yml`; `bootstrap.sh` asks for the passwords again in step 6. When it asks for the borg passphrase, type the one from the recovery sheet.
   3. `sudo apt install /mnt/offline/debs/*.deb` installs Docker, Ansible, borg and the rest from the saved packages.
   4. Load the container images: `for f in /mnt/offline/images/*.tar.zst; do zstd -dc "$f" | sudo docker load; done`
-  5. Restore /opt (NOMAD's install, app data, AI models) from borg, as root:
+  5. Restore /opt (the Hub, app data, AI models) from borg, as root:
      `cd / && BORG_REPO=/mnt/borg borg extract ::system-<newest> opt`, then `sudo umount /mnt`.
   6. Prepare a new LIBRARY drive and restore it (Scenario 3), then `cd ~/homestead-server && sudo ./bootstrap.sh -e offline=true`.
-  7. `sudo homestead-restore BACKUP-A mysql`, then `homestead-restore ... vault` if you use the vault.
+  7. `homestead-restore ... vault` if you use the vault. The library catalog edits and job status came back with /var/lib/homestead in step 5's archive.
 
 ## Scenario 5: bad edit to settings
 
