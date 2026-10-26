@@ -11,6 +11,7 @@ Resumable: run it again after an interruption. ZIMs are checksum-verified by
 aria2c from the Kiwix metalink. Run it inside tmux; tier 3 is several TB.
 """
 import argparse
+import fcntl
 import html.parser
 import json
 import os
@@ -287,6 +288,13 @@ def main():
         return
     if os.geteuid() != 0 and not args.list:
         sys.exit("run with sudo")
+    if not args.list:
+        # One download at a time: the homestead-fetch service may already be running.
+        lock = open("/run/homestead-fetch.lock", "w")
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            sys.exit("another download is already running (see: systemctl status homestead-fetch)")
     if shutil.which("aria2c") is None and not args.list:
         sys.exit("aria2c not installed (sudo apt install aria2)")
 

@@ -1,0 +1,44 @@
+# Library downloads run as a background service: started by every playbook run
+# (it resumes and skips what's done) and weekly after that. The AI's knowledge
+# bases are refreshed when it finishes.
+
+- name: Library download service and weekly timer
+  ansible.builtin.copy:
+    dest: "/etc/systemd/system/{{ item.name }}"
+    mode: "0644"
+    content: "{{ item.content }}"
+  loop:
+    - name: homestead-fetch.service
+      content: |
+        [Unit]
+        Description=Download or resume the offline library (content/manifest.yaml)
+        After=network-online.target docker.service
+        Wants=network-online.target
+        [Service]
+        Type=oneshot
+        Nice=10
+        IOSchedulingClass=idle
+        ExecStart={{ repo_dir }}/scripts/fetch_content.py --tier {{ content_tier }}
+        ExecStartPost=/usr/bin/systemctl start --no-block homestead-kb-sync.service
+    - name: homestead-fetch.timer
+      content: |
+        [Unit]
+        Description=Download or resume the offline library (weekly)
+        [Timer]
+        OnCalendar=weekly
+        RandomizedDelaySec=6h
+        Persistent=true
+        [Install]
+        WantedBy=timers.target
+
+- name: Library download timer on
+  ansible.builtin.systemd_service:
+    name: homestead-fetch.timer
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Start (or resume) the library download in the background
+  ansible.builtin.command: systemctl start --no-block homestead-fetch.service
+  when: not offline
+  changed_when: false

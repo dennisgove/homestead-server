@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Apply Homestead's Open WebUI settings (they live in Open WebUI's own database).
 
-    homestead-webui-setup --token <Open WebUI admin API key> [--url http://127.0.0.1:8610]
+    homestead-webui-setup [--token <Open WebUI admin API key>] [--url http://127.0.0.1:8610]
+    (homestead-kb-sync runs this with a key read from Open WebUI's database)
 
 - Background jobs: titles and search rewrites on the small model; follow-ups,
   tags, web-search and autocomplete off. Each one otherwise runs the big model.
@@ -17,6 +18,7 @@ Safe to re-run. Settings are read from /etc/homestead/webui.json (roles/ai).
 """
 import argparse
 import json
+import os
 import sys
 import urllib.error
 import urllib.request
@@ -27,10 +29,13 @@ PUBLIC = [{"principal_type": "user", "principal_id": "*", "permission": "read"}]
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--token", required=True)
+    ap.add_argument("--token", default=os.environ.get("OPENWEBUI_TOKEN"),
+                    help="Open WebUI admin API key (default: $OPENWEBUI_TOKEN)")
     ap.add_argument("--url", default="http://127.0.0.1:8610")
     ap.add_argument("--config", default=CONF)
     args = ap.parse_args()
+    if not args.token:
+        ap.error("no API key: pass --token or set OPENWEBUI_TOKEN (homestead-kb-sync does this for you)")
     with open(args.config) as f:
         conf = json.load(f)
     base = args.url.rstrip("/")

@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Load new PDFs from /srv/core/docs into Open WebUI's knowledge bases and attach
+# them to the models. Runs daily and after each content download
+# (homestead-kb-sync.service). Managed by Ansible (roles/ai).
+set -euo pipefail
+exec 9>/run/homestead-kb-sync.lock
+flock -n 9 || { echo "already running"; exit 0; }
+# A hand-started homestead-kb-seed would upload the same files twice; let it finish.
+while pgrep -f "bin/homestead-kb-seed" >/dev/null; do sleep 60; done
+
+for _ in $(seq 1 30); do curl -sf http://127.0.0.1:{{ ports.open_webui }}/health >/dev/null && break; sleep 10; done
+OPENWEBUI_TOKEN=$(/usr/local/sbin/homestead-webui-token)
+export OPENWEBUI_TOKEN
+/usr/local/bin/homestead-webui-setup
+/usr/local/bin/homestead-kb-seed
+/usr/local/bin/homestead-webui-setup   # attach any knowledge bases that seeding just created

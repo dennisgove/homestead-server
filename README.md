@@ -71,8 +71,9 @@ roles/
 | `sudo homestead-backup BACKUP-A` | backup (also starts by itself when the drive is plugged in) |
 | `sudo homestead-restore BACKUP-A list` | see RESTORE.md |
 | `sudo homestead-vault open` / `close` | unlock the family document vault |
-| `sudo scripts/fetch_content.py --tier 3` | download or resume the library |
-| `homestead-kb-seed --token …` | load PDFs into the AI's knowledge bases |
+| `sudo scripts/fetch_content.py --list --tier 3` | what's left to download, with sizes |
+| `sudo systemctl start homestead-kb-sync` | load new PDFs into the AI's knowledge bases now (also runs daily) |
+| `systemctl status homestead-fetch` | library download progress (runs in the background, weekly) |
 | `noaa-weather` | NOAA weather radio through the SDR |
 | `sudo homestead-library-format /dev/sdX [LABEL]` | prepare a LIBRARY or BACKUP drive |
 | `sudo homestead-library-migrate /dev/sdX` | move the temporary internal library onto a new external drive |

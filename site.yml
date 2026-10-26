@@ -20,6 +20,7 @@
     - { role: kiosk,   tags: kiosk }
     - { role: network, tags: network }
     - { role: ai,      tags: ai }
+    - { role: content, tags: content }
     - { role: radio,   tags: radio }
     - { role: power,   tags: power }
     - { role: backup,  tags: backup }

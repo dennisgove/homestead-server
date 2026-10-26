@@ -164,26 +164,31 @@ sudo ./bootstrap.sh              # continue; re-running is always safe
 
 If it can't connect, use `http://172.17.0.1:11435` (the server's Docker address) instead. To check that our Ollama is running: `curl http://127.0.0.1:11435/api/version` on the server should print a version.
 
-## 9. Content downloads (days; run in tmux)
+## 9. Content downloads (automatic; days)
+
+`bootstrap.sh` starts the download in the background (`homestead-fetch` service), and it repeats weekly to resume and pick up anything new. It fetches tiers 1–3 (`content_tier` in `group_vars/all.yml`) and skips anything that won't fit on the drive, so it's safe with the temporary internal library too.
 
 ```bash
-tmux new -s fetch
-sudo scripts/fetch_content.py --list --tier 3     # see sizes first
-sudo scripts/fetch_content.py --tier 1            # critical content first
-sudo scripts/fetch_content.py --tier 3            # then everything else
+systemctl status homestead-fetch           # running? (journalctl -u homestead-fetch -f to follow)
+sudo scripts/fetch_content.py --list --tier 3   # what's left, with sizes
 ```
-Then fetch the **manual** items it lists (Hesperian books, TCCC, the canning guide, your state extension guides, manuals for your own gear) into `/srv/core/docs/<category>/` and run `sudo scripts/fetch_content.py --docs-index`.
+
+Some items have no download link. The end of each run lists them (`journalctl -u homestead-fetch | tail -30`): get them by hand into `/srv/core/docs/<category>/`, and the next daily AI sync picks them up.
 
 Phone apps (Kiwix, Organic Maps + map files, MeshCore, F-Droid) go into `/srv/core/share/apps/`.
 
-With the temporary internal library, run `--tier 1` and NOMAD's Essential/Standard tiers for now. The downloader skips anything that won't fit, so nothing breaks. Run `--tier 3` after the external drive is in.
+## 10. AI (automatic)
 
-## 10. AI
+Nothing to click. `bootstrap.sh`:
+- creates the Open WebUI admin on a fresh install: user `dennis@homestead.local`, password from `sudo cat /etc/homestead/openwebui-admin`. If you'd already made an account, that account stays the admin.
+- applies the settings that keep chat fast on this CPU (built-in tools off, background jobs on the small model) and sets up the model menu;
+- loads every PDF in `/srv/core/docs` into knowledge bases by category and attaches them to the planner and thinker (`homestead-kb-sync`; hours the first time). It runs again daily and after each content download, so new PDFs are added on their own.
 
-1. Open http://localhost:7007 and create the first account. **It becomes the Open WebUI admin, so make it dennis.**
-2. Admin Panel → Settings → enable API keys. Then profile → Settings → Account → create an API key.
-3. `homestead-webui-setup --token <key>` applies the settings that keep chat fast on this CPU (built-in tools off, background jobs on the small model) and sets up the model menu. **Without it, every message waits minutes before an answer starts.** Then `homestead-kb-seed --token <key>` uploads the essentials PDFs into knowledge bases (Medical, Food & Agriculture, ...; hours on this CPU), and `homestead-webui-setup --token <key>` once more attaches them to the planner and thinker.
-4. The model menu: **Homestead planner** (answers directly, the default; searches the library), **Homestead thinker** (reasons step by step first: slower, for hard planning questions; searches the library), **Homestead quick** (small and fast; no library search), and **Photo helper**. Family members sign up, and dennis approves them (Admin → Users).
+```bash
+systemctl status homestead-kb-sync         # journalctl -u homestead-kb-sync -f to follow
+```
+
+The model menu at http://homestead.local:7007: **Homestead planner** (answers directly, the default; searches the library), **Homestead thinker** (reasons step by step first: slower, for hard planning questions; searches the library), **Homestead quick** (small and fast; no library search), and **Photo helper**. Family members sign up, and dennis approves them (Admin → Users).
 
 ## 11. Vault
 
@@ -215,7 +220,7 @@ lsblk                                         # find the new USB drive, e.g. /de
 sudo homestead-library-migrate /dev/sdX       # erases it, copies, swaps labels
 # check the portal and the Command Center, then free the NVMe space:
 sudo lvremove vg_sys/lv_library
-tmux new -s fetch 'sudo /opt/homestead/repo/scripts/fetch_content.py --tier 3'   # now download the rest
+sudo systemctl start --no-block homestead-fetch   # now download the rest (also happens weekly on its own)
 ```
 
 **Backup drive:**

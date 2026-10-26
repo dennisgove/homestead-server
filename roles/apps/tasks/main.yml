@@ -5,6 +5,16 @@
     mode: "0755"
   loop: [ollama, open-webui, grocy, mealie, openwebrx/var, openwebrx/etc]
 
+- name: Open WebUI admin password (generated once; `sudo cat /etc/homestead/openwebui-admin`)
+  ansible.builtin.set_fact:
+    openwebui_admin_password: "{{ lookup('ansible.builtin.password', '/etc/homestead/openwebui-admin', chars=['ascii_letters', 'digits'], length=20) }}"
+  no_log: true
+
+- name: Open WebUI admin password file is root-only
+  ansible.builtin.file:
+    path: /etc/homestead/openwebui-admin
+    mode: "0600"
+
 - name: OpenWebRX+ admin password (generated once; `sudo cat /etc/homestead/openwebrx-admin`)
   ansible.builtin.set_fact:
     openwebrx_admin_password: "{{ lookup('ansible.builtin.password', '/etc/homestead/openwebrx-admin', chars=['ascii_letters', 'digits'], length=20) }}"

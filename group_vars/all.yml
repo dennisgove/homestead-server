@@ -152,6 +152,9 @@ ai_models:
   vision: gemma3:4b
   embed: nomic-embed-text
 ai_context: 8192
+# Library tiers the download service fetches (1 = critical, 2 = sustainability,
+# 3 = everything). It skips anything that won't fit on the drive.
+content_tier: 3
 # Chat model + the fast task model + the small embedding model stay loaded together,
 # so titles and knowledge-base indexing don't evict the chat model mid-answer
 # (reloading it means reading 19GB from disk). ~22GB together.

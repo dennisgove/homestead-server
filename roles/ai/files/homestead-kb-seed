@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Load the essentials PDFs into Open WebUI knowledge bases, one per category.
 
-    homestead-kb-seed --token <Open WebUI API key> [--url http://127.0.0.1:8610]
+    homestead-kb-seed [--token <Open WebUI API key>] [--url http://127.0.0.1:8610]
+    (homestead-kb-sync runs this automatically, daily and after content downloads)
 
 Create the API key in Open WebUI: profile picture > Settings > Account > API keys
 (an admin may need to enable API keys under Admin Panel > Settings > General).
@@ -36,9 +37,12 @@ def empty_hint(text):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--token", required=True)
+    ap.add_argument("--token", default=os.environ.get("OPENWEBUI_TOKEN"),
+                    help="Open WebUI admin API key (default: $OPENWEBUI_TOKEN)")
     ap.add_argument("--url", default="http://127.0.0.1:8610")
     args = ap.parse_args()
+    if not args.token:
+        ap.error("no API key: pass --token or set OPENWEBUI_TOKEN (homestead-kb-sync does this for you)")
 
     s = requests.Session()
     s.headers["Authorization"] = f"Bearer {args.token}"

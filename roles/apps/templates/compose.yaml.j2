@@ -37,6 +37,12 @@ services:
       RAG_EMBEDDING_ENGINE: ollama
       RAG_EMBEDDING_MODEL: {{ ai_models.embed }}
       DEFAULT_MODELS: homestead-planner
+      # Fresh install: create the admin account, so the playbook can set things up
+      # with no clicking (ignored once any account exists).
+      WEBUI_ADMIN_NAME: {{ admin_user }}
+      WEBUI_ADMIN_EMAIL: {{ admin_user }}@{{ homestead_hostname }}.local
+      WEBUI_ADMIN_PASSWORD: {{ openwebui_admin_password }}
+      ENABLE_API_KEYS: "true"
       # Background jobs (titles, search rewrites) on the small model; follow-up and
       # tag suggestions off. Each one otherwise runs the big model for minutes on a CPU.
       # (First-run defaults: after that Open WebUI keeps them in its own settings.)

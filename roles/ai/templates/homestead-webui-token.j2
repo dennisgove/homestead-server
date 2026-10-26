@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+"""Print an Open WebUI admin API key, creating one if the admin has none.
+
+Reads Open WebUI's own database, so nobody has to make and paste a key by hand.
+Run as root. Managed by Ansible (roles/ai).
+"""
+import secrets
+import sqlite3
+import sys
+import time
+
+DB = "{{ homestead_data }}/open-webui/webui.db"
+
+db = sqlite3.connect(DB, timeout=30)
+row = db.execute("SELECT id FROM user WHERE role = 'admin' ORDER BY created_at LIMIT 1").fetchone()
+if not row:
+    sys.exit("Open WebUI has no admin account yet")
+uid = row[0]
+key = db.execute("SELECT key FROM api_key WHERE user_id = ?", (uid,)).fetchone()
+if key:
+    print(key[0])
+else:
+    new = "sk-" + secrets.token_hex(16)
+    now = int(time.time())
+    db.execute("INSERT INTO api_key (id, user_id, key, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+               (f"key_{uid}", uid, new, now, now))
+    db.commit()
+    print(new)
