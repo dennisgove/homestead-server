@@ -50,9 +50,11 @@ def main():
             with urllib.request.urlopen(req, timeout=60) as r:
                 return json.load(r)
         except urllib.error.HTTPError as e:
-            if e.code == 404:
+            body = e.read().decode()
+            # Open WebUI answers "not found" with 404, or 401 and "could not find" for functions.
+            if e.code == 404 or (e.code == 401 and "could not find" in body):
                 return None
-            sys.exit(f"{path}: HTTP {e.code} {e.read().decode()[:200]}")
+            sys.exit(f"{path}: HTTP {e.code} {body[:200]}")
 
     tasks = call("/api/v1/tasks/config")
     tasks.update(conf["tasks"])

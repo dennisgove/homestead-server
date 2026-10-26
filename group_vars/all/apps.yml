@@ -158,6 +158,7 @@ homestead_apps:
         depends_on: [ollama]
         ports: ["8610:8080"]
         extra_hosts: ["host.docker.internal:host-gateway"]   # reaches the Hub's library search
+        ulimits: { nofile: { soft: 65536, hard: 65536 } }    # loading hundreds of PDFs ran out of files
         environment:
           OLLAMA_BASE_URL: http://ollama:11434
           WEBUI_NAME: Homestead AI

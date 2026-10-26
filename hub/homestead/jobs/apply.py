@@ -61,16 +61,16 @@ def rebuild_kiwix_library(job: Job):
     # Build a fresh file next to the live one, then swap it in; kiwix-serve
     # (--monitorLibrary) picks up the change by itself.
     tmp_in_container = "/library/library.xml.new"
-    subprocess.run(["docker", "exec", container, "rm", "-f", tmp_in_container], check=False)
+    subprocess.run(["docker", "exec", "-u", "0", container, "rm", "-f", tmp_in_container], check=False)
     ok = 0
     for cpath, _host in zims:
-        r = subprocess.run(["docker", "exec", container, "kiwix-manage", tmp_in_container, "add", cpath],
+        r = subprocess.run(["docker", "exec", "-u", "0", container, "kiwix-manage", tmp_in_container, "add", cpath],
                            capture_output=True, text=True)
         if r.returncode == 0:
             ok += 1
         else:
             job.log(f"couldn't add {cpath}: {r.stderr.strip()[:200]}")
-    subprocess.run(["docker", "exec", container, "mv", "-f", tmp_in_container, "/library/library.xml"], check=True)
+    subprocess.run(["docker", "exec", "-u", "0", container, "mv", "-f", tmp_in_container, "/library/library.xml"], check=True)
     job.item("kiwix-library", state="done", zims=ok)
 
 
