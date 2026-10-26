@@ -17,8 +17,13 @@ from .common import Job, is_mounted
 EXTS = (".pdf", ".epub", ".mobi", ".azw3", ".djvu", ".txt", ".docx", ".odt")
 
 
+CALIBRE_WEB_UID = 1000  # Calibre-Web runs as this user and must be able to write the library
+
+
 def calibredb(lib: Path, *args) -> subprocess.CompletedProcess:
-    return subprocess.run(["calibredb", *args, "--library-path", str(lib)], capture_output=True, text=True)
+    # As Calibre-Web's user: a root-owned metadata.db makes Calibre-Web refuse the library.
+    return subprocess.run(["calibredb", *args, "--library-path", str(lib)], capture_output=True, text=True,
+                          user=CALIBRE_WEB_UID, group=CALIBRE_WEB_UID, env={**os.environ, "HOME": str(lib)})
 
 
 def sources() -> list[tuple[Path, str, str]]:
@@ -58,6 +63,12 @@ def main(argv=None):
             job.log("LIBRARY drive not mounted; books wait for it")
             return
         lib.mkdir(parents=True, exist_ok=True)
+        fresh = not (lib / "metadata.db").exists()
+        for p in [lib, *lib.rglob("*")]:  # earlier runs (as root) left root-owned files
+            try:
+                os.chown(p, CALIBRE_WEB_UID, CALIBRE_WEB_UID)
+            except OSError:
+                pass
         known = job.status["items"]  # path -> {"id": calibre id, "mtime": ...}
         want = sources()
         job.status["total"] = len(want)
@@ -83,12 +94,8 @@ def main(argv=None):
             calibredb(lib, "remove", ",".join(str(known[k]["id"]) for k in gone))
             for k in gone:
                 del job.status["items"][k]
-        # Calibre-Web runs as uid 1000 inside its container
-        for p in [lib, *lib.rglob("*")]:
-            try:
-                os.chown(p, 1000, 1000)
-            except OSError:
-                pass
+        if fresh:  # Calibre-Web only looks for a new library when it starts
+            subprocess.run(["docker", "restart", "homestead-calibreweb"], capture_output=True)
         job.status["done"] = len(want)
         job.log(f"{len(want)} documents in the books library ({len(gone)} removed)")
 

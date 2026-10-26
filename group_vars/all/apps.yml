@@ -108,8 +108,17 @@ homestead_apps:
   - id: videos
     title: Videos
     icon: "🎬"
-    hint: How-to videos
+    hint: How-to videos, no login
     section: library
+    access: public
+    port: 80
+    path: /videos           # the Hub's page; plays files straight from the video folder
+
+  - id: jellyfin
+    title: Jellyfin (video server)
+    icon: "🎞️"
+    hint: Needs an account; for managing the collection
+    section: admin
     access: public
     port: 7006
     backend: 8490
@@ -232,6 +241,7 @@ homestead_apps:
     section: tools
     access: public
     port: 7009
+    path: /g/home           # the public recipe collection (no login; homestead-mealie-setup)
     backend: 8630
     dirs: ["{{ homestead_data }}/mealie"]
     services:

@@ -10,7 +10,7 @@ def client():
 
 def test_pages_render(site):
     c = client()
-    for path in ["/", "/emergency", "/maps", "/binder", "/status", "/library", "/library/items", "/library/add",
+    for path in ["/", "/emergency", "/maps", "/binder", "/status", "/videos", "/library", "/library/items", "/library/add",
                  "/library/health", "/library/updates", "/api/apps", "/api/catalog", "/api/status"]:
         r = c.get(path)
         assert r.status_code == 200, (path, r.text[:500])
@@ -82,3 +82,13 @@ def test_example_module_loads_when_enabled(site, monkeypatch):
     assert c.get("/api/example").json() == {"ok": True}
     assert "Hello from a Hub module." in c.get("/example").text
     assert ">Example<" in c.get("/").text
+
+
+def test_videos_page(site):
+    d = site["lib"] / "video" / "Repair"
+    d.mkdir(parents=True)
+    (d / "fix_a_leak.mp4").write_bytes(b"x")
+    c = client()
+    assert "fix a leak" in c.get("/videos").text
+    r = c.get("/videos", params={"play": "Repair/fix_a_leak.mp4"})
+    assert "<video" in r.text and "/videos/files/Repair/fix_a_leak.mp4" in r.text

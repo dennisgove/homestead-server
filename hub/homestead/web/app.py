@@ -148,6 +148,33 @@ def maps(request: Request):
     return page(request, "maps.html", info=info, layers=layers)
 
 
+VIDEO_EXTS = (".mp4", ".m4v", ".webm", ".mkv", ".mov", ".ogv", ".mp3", ".m4a", ".ogg", ".opus", ".flac", ".wav")
+
+
+def videos_on_disk() -> dict[str, list[dict]]:
+    root = config.path("video")
+    out: dict[str, list[dict]] = {}
+    if not root.is_dir():
+        return out
+    for f in sorted(root.rglob("*")):
+        if f.is_file() and f.suffix.lower() in VIDEO_EXTS and not f.name.startswith("."):
+            rel = f.relative_to(root)
+            group = str(rel.parent) if rel.parent != Path(".") else "Videos"
+            out.setdefault(group, []).append({"title": re.sub(r"[_.-]+", " ", f.stem).strip(), "rel": str(rel),
+                                              "audio": f.suffix.lower() in (".mp3", ".m4a", ".ogg", ".opus", ".flac", ".wav"),
+                                              "size": f.stat().st_size})
+    return out
+
+
+@app.get("/videos", response_class=HTMLResponse)
+def videos(request: Request, play: str = ""):
+    groups = videos_on_disk()
+    current = None
+    if play:
+        current = next((v for vs in groups.values() for v in vs if v["rel"] == play), None)
+    return page(request, "videos.html", groups=groups, current=current)
+
+
 @app.get("/binder", response_class=HTMLResponse)
 def binder(request: Request):
     items = [i for i in catalog.items() if i.get("binder")]

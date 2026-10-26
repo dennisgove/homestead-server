@@ -46,6 +46,11 @@
 		root * {{ core_dir }}/share
 		file_server browse
 	}
+	# Video files for the Hub's Videos page (no login; range requests for seeking).
+	handle_path /videos/files/* {
+		root * {{ library_mount }}/video
+		file_server browse
+	}
 	# Map tiles, fonts and icons: static files with range requests (PMTiles).
 	handle_path /maps/data/* {
 		root * {{ core_dir }}/maps

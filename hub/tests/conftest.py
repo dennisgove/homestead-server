@@ -23,7 +23,7 @@ def site(tmp_path, monkeypatch):
         "paths": {"core": str(core), "library": str(lib), "state": str(state), "status": str(state / "status"),
                   "hub_state": str(state / "hub"), "docs": str(core / "docs"), "zim_core": str(core / "zim"),
                   "zim_library": str(lib / "zim"), "books": str(lib / "books" / "calibre"),
-                  "books_incoming": str(lib / "books" / "incoming"), "maps": str(core / "maps"),
+                  "books_incoming": str(lib / "books" / "incoming"), "maps": str(core / "maps"), "video": str(lib / "video"),
                   "catalog_base": str(state / "catalog.yaml"), "catalog_local": str(state / "hub" / "catalog.local.yaml")},
         "site": {"hostname": "homestead", "lan_name": "library.lan", "ssid": "HOMESTEAD", "region_state": "Massachusetts"},
         "apps": [{"id": "library", "title": "Full library", "icon": "📚", "section": "library", "port": 7001, "scheme": "http",

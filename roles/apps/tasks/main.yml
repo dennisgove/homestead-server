@@ -28,14 +28,14 @@
 - name: Generated admin passwords (made once; `sudo cat /etc/homestead/<name>-admin`)
   ansible.builtin.set_fact:
     "{{ item }}_admin_password": "{{ lookup('ansible.builtin.password', '/etc/homestead/' ~ item ~ '-admin', chars=['ascii_letters', 'digits'], length=20) }}"
-  loop: [openwebui, openwebrx, calibreweb]
+  loop: [openwebui, openwebrx, calibreweb, mealie]
   no_log: true
 
 - name: Generated admin password files are root-only
   ansible.builtin.file:
     path: "/etc/homestead/{{ item }}-admin"
     mode: "0600"
-  loop: [openwebui, openwebrx, calibreweb]
+  loop: [openwebui, openwebrx, calibreweb, mealie]
 
 # Starting points only: after the first run these files belong to OpenWebRX+'s
 # own settings pages, so they're never overwritten.
@@ -79,4 +79,34 @@
     CALIBREWEB_PASSWORD: "{{ calibreweb_admin_password }}"
   register: cw
   changed_when: "'changed' in cw.stdout"
+  no_log: true
+
+# --- Reading never needs a login --------------------------------------------------
+
+- name: Courses open without signing in (Kolibri guest access, opens on Learn)
+  ansible.builtin.command: >-
+    docker exec homestead-kolibri kolibri manage shell -c
+    "from kolibri.core.device.models import DeviceSettings as D;
+    d = D.objects.first();
+    c = d is not None and (not d.allow_guest_access or d.landing_page != 'learn');
+    (setattr(d, 'allow_guest_access', True), setattr(d, 'landing_page', 'learn'), d.save()) if c else None;
+    print('changed' if c else ('ok' if d else 'not set up yet'))"
+  register: kolibri_guest
+  changed_when: "'changed' in kolibri_guest.stdout"
+  failed_when: false
+
+- name: Mealie setup tool
+  ansible.builtin.copy:
+    src: homestead-mealie-setup
+    dest: /usr/local/sbin/homestead-mealie-setup
+    mode: "0700"
+
+- name: Recipes readable without logging in (Mealie public group and household)
+  ansible.builtin.command: /usr/local/sbin/homestead-mealie-setup
+  environment:
+    MEALIE_URL: "http://127.0.0.1:{{ apps_by_id.recipes.backend }}"
+    MEALIE_PASSWORD: "{{ mealie_admin_password }}"
+  register: mealie_pub
+  changed_when: "'changed' in mealie_pub.stdout"
+  failed_when: false
   no_log: true
