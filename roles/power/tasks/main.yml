@@ -2,7 +2,7 @@
   ansible.builtin.copy:
     dest: /etc/homestead/power.conf
     content: |
-      # Managed by Ansible (roles/power). Values from group_vars/all.yml.
+      # Managed by Ansible (roles/power). Values from group_vars/all/settings.yml.
       [power]
       device = /dev/victron
       interval = 20

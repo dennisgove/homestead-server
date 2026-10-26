@@ -32,7 +32,7 @@ hotspot_ip: 10.42.0.1
 hotspot_channel: 6
 lan_name: library.lan
 
-# Apps, their ports and containers: group_vars/apps.yml (the app registry).
+# Apps, their ports and containers: group_vars/all/apps.yml (the app registry).
 apps_by_id: "{{ dict(homestead_apps | map(attribute='id') | zip(homestead_apps)) }}"
 hub_port: 8700                       # the Hub's backend (portal, Library manager, API); public on port 80
 # Caddy adds this header to requests that passed the admin password; the Hub trusts nothing else.

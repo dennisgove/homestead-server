@@ -8,7 +8,7 @@
     - name: Refuse to run with unedited settings
       ansible.builtin.assert:
         that: region_state != 'CHANGE-ME'
-        fail_msg: Edit group_vars/all.yml (region_state, timezone) first.
+        fail_msg: Edit group_vars/all/settings.yml (region_state, timezone) first.
   roles:
     - { role: base,    tags: base }
     - { role: users,   tags: users }

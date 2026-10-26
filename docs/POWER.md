@@ -25,7 +25,7 @@ Double the battery for a whole household (lights, radios, phone charging).
 
 ## How the server uses it
 
-- `homestead-power` reads the Victron over `/dev/victron` every 20s. Values are in `/etc/homestead/power.conf` (from `group_vars/all.yml`).
+- `homestead-power` reads the Victron over `/dev/victron` every 20s. Values are in `/etc/homestead/power.conf` (from `group_vars/all/settings.yml`).
   - SOC ≤ 35% → **eco**: AI, Open WebUI, Jellyfin and Kolibri stop
   - SOC ≥ 45% → back to normal
   - SOC ≤ 15% for 3 readings → clean shutdown

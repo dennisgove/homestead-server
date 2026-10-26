@@ -46,12 +46,12 @@ The external drives can come later. Without a LIBRARY drive, the install uses a 
 - **The catalog** (`content/catalog.yaml`): every ZIM, document and course the library should hold. The Library manager's edits go on top of it, in `/var/lib/homestead/hub/catalog.local.yaml` (backed up), and **Export my changes** turns them into a patch for this file.
 - **The library jobs** (`hub/homestead/jobs`, run as systemd units): `fetch` downloads (resumable, checksum-verified), `fetch-plan` checks sizes and new releases, `catalog-apply` rebuilds the Kiwix library index, `books` fills Calibre, `maps` builds the map extracts, `kb-sync` loads PDFs into the AI.
 - **The AI** (Ollama + Open WebUI): the planner model answers with **live library search** (every ZIM, at question time, nothing to index) plus **knowledge bases** built from the PDFs, and cites its sources.
-- **The app registry** (`group_vars/apps.yml`): every app in one list. The containers, proxy sites, firewall, portal tiles, kiosk bookmarks, status checks and power-saving list are all generated from it.
+- **The app registry** (`group_vars/all/apps.yml`): every app in one list. The containers, proxy sites, firewall, portal tiles, kiosk bookmarks, status checks and power-saving list are all generated from it.
 
 ## Adding things
 
 - **Content:** the Library manager (http://homestead.local/library): search Kiwix's catalog, add a document by link, or upload a file.
-- **An app:** one entry in `group_vars/apps.yml` (with its container definition), then `sudo ./bootstrap.sh`. It gets a port, a portal tile, a status check and backups.
+- **An app:** one entry in `group_vars/all/apps.yml` (with its container definition), then `sudo ./bootstrap.sh`. It gets a port, a portal tile, a status check and backups.
 - **A page:** a Hub module, a folder in `hub/homestead/web/modules/` (copy `example/`). It gets the Hub's look, settings, catalog and API.
 
 ## Layout
@@ -98,4 +98,4 @@ roles/
 Public: 80 Hub (portal, maps, binder, status) · 7001 full library · 7002 essentials library · 7004 Kolibri (+7034) · 7005 books · 7006 videos · 7007 AI · 7008 pantry · 7009 recipes · 7010 notes · 7011 data tools · 7012 PDF tools · 7013 IT tools · 7014 whiteboard · 7015 inventory · 7020 radio receiver.
 HTTPS (local certificate; one browser warning): 7016 passwords · 7017 MeshCore · 7018 Meshtastic. This machine only: 7027, 7028 (kiosk radio launchers).
 Admin (password): `/library` on port 80 (Library manager) · 7091 Winlink · 7092 vault documents · 7093 logs · 7094 file browser.
-All backends (8080–8999, 11434–11435, databases) are blocked from the network and from the guest account. The full list is `group_vars/apps.yml`.
+All backends (8080–8999, 11434–11435, databases) are blocked from the network and from the guest account. The full list is `group_vars/all/apps.yml`.

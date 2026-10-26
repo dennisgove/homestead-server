@@ -169,7 +169,7 @@ The rule: **adding an app or page means adding one entry and, if needed, one rol
 
 ### The app registry
 
-`group_vars/apps.yml` lists every app in one place. One entry declares:
+`group_vars/all/apps.yml` lists every app in one place. One entry declares:
 
 ```yaml
 apps:

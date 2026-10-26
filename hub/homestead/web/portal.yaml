@@ -1,5 +1,5 @@
 # Portal content that isn't an app: emergency shortcuts and topic searches.
-# (Apps and their tiles come from the app registry, group_vars/apps.yml.)
+# (Apps and their tiles come from the app registry, group_vars/all/apps.yml.)
 emergency:
   - { icon: "🩸", label: "Severe bleeding", hint: "Tourniquet, wound packing, pressure", q: "tourniquet hemorrhage control" }
   - { icon: "❤️", label: "CPR", hint: "Not breathing / no pulse", q: "cardiopulmonary resuscitation" }

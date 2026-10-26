@@ -112,7 +112,7 @@ Or from the Mac: `scp -r ~/dev/homestead-server dennis@homestead.local:` (or use
 
 ## 6. Prepare the external drives (optional now)
 
-**No drives yet? Skip this step.** With no LIBRARY drive attached, the playbook creates a 180GB temporary library volume in the NVMe's spare space (`library_temp_size` in `group_vars/all.yml`), and everything installs and works. The portal shows "Library on internal disk (temporary)" until you move it. See [Adding the drives later](#adding-the-drives-later).
+**No drives yet? Skip this step.** With no LIBRARY drive attached, the playbook creates a 180GB temporary library volume in the NVMe's spare space (`library_temp_size` in `group_vars/all/settings.yml`), and everything installs and works. The portal shows "Library on internal disk (temporary)" until you move it. See [Adding the drives later](#adding-the-drives-later).
 
 Log in as dennis, plug in each drive **one at a time**, and use `lsblk` to identify it (for example `/dev/sda`). Make sure it's the USB drive and not the NVMe.
 
@@ -128,7 +128,7 @@ Leave LIBRARY plugged in permanently, and unplug the backup drives.
 
 ```bash
 cd ~/homestead-server
-nano group_vars/all.yml          # timezone, region_state, hotspot name...
+nano group_vars/all/settings.yml          # timezone, region_state, hotspot name...
 sudo ./bootstrap.sh              # asks for passwords, writes secrets.yml, runs Ansible
 ```
 It asks for:
@@ -163,7 +163,7 @@ Everything about the library's content, from a web page:
 
 ## 9. Content and maps (automatic; days)
 
-`bootstrap.sh` indexes what's on disk, then starts the download in the background, and it repeats weekly to resume and pick up new releases. It fetches tiers 1–3 (`content_tier` in `group_vars/all.yml`) and skips anything that won't fit, so it's safe with the temporary internal library too. The **maps** are built once in the background (needs internet; refreshed quarterly):
+`bootstrap.sh` indexes what's on disk, then starts the download in the background, and it repeats weekly to resume and pick up new releases. It fetches tiers 1–3 (`content_tier` in `group_vars/all/settings.yml`) and skips anything that won't fit, so it's safe with the temporary internal library too. The **maps** are built once in the background (needs internet; refreshed quarterly):
 - **detailed:** your state and its neighbors (`region_state`), every street, building and trail;
 - **wide:** the contiguous US and southern Canada, towns and highways;
 - **world:** countries and major cities;

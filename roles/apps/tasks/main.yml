@@ -1,4 +1,4 @@
-# Containers for every app in the registry (group_vars/apps.yml).
+# Containers for every app in the registry (group_vars/all/apps.yml).
 
 - name: App folders (from the registry's `dirs`)
   ansible.builtin.file:
