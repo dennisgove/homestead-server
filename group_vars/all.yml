@@ -119,6 +119,8 @@ nomad_links:
   nomad_meshtastic_web: [meshtastic, https]
   nomad_translate: [translated_library, http]
   nomad_filebrowser: [admin_files, http]
+  # NOMAD's own AI chat unloads the models Open WebUI is using; send its tile to Open WebUI instead.
+  nomad_ollama: [ai, http]
 nomad_links_host: "{{ homestead_hostname }}.local"
 
 # --- Container images ---------------------------------------------------
