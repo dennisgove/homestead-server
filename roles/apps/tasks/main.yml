@@ -35,7 +35,7 @@
   ansible.builtin.file:
     path: "/etc/homestead/{{ item }}"
     mode: "0600"
-  loop: [openwebui-admin, openwebrx-admin, calibreweb-admin, mealie-admin, homebox-pepper]
+  loop: [openwebui-admin, openwebrx-admin, calibreweb-admin, mealie-admin, homebox-pepper, homebox-family]
 
 # Starting points only: after the first run these files belong to OpenWebRX+'s
 # own settings pages, so they're never overwritten.
@@ -126,3 +126,34 @@
     owner: "1000"
     group: "1000"
     mode: "0644"
+
+- name: Homebox setup tool
+  ansible.builtin.copy:
+    src: homestead-homebox-setup
+    dest: /usr/local/sbin/homestead-homebox-setup
+    mode: "0700"
+
+- name: Inventory's shared family account (password on the WiFi sign)
+  ansible.builtin.command: /usr/local/sbin/homestead-homebox-setup
+  environment:
+    HOMEBOX_URL: "http://127.0.0.1:{{ apps_by_id.inventory.backend }}"
+    HOMEBOX_EMAIL: "{{ homebox_family_email }}"
+    HOMEBOX_PASSWORD: "{{ homebox_family_password }}"
+    HOMEBOX_MARKER: /etc/homestead/homebox-family-created
+  register: homebox_family
+  changed_when: "'changed' in homebox_family.stdout"
+  failed_when: false
+  no_log: true
+
+- name: Close Homebox registration now the family account exists
+  when: homebox_family is changed
+  block:
+    - name: Compose file again (registration off)
+      ansible.builtin.template:
+        src: compose.yaml.j2
+        dest: "{{ homestead_dir }}/compose.yaml"
+        mode: "0600"
+        validate: docker compose -f %s config -q
+    - name: Restart Homebox with registration closed
+      ansible.builtin.command: docker compose -f {{ homestead_dir }}/compose.yaml up -d homebox
+      changed_when: true

@@ -78,6 +78,7 @@
     <h1>Homestead Library WiFi</h1>
     <p>Network: <b>{{ hotspot_ssid }}</b><br>Password: <b>{{ hotspot_psk }}</b></p>
     <img src="wifi-qr.svg" alt="WiFi QR"><p>Then open <b>http://{{ lan_name }}</b></p>
+    <p style="font-size:60%">Inventory login: <b>{{ homebox_family_email }}</b> / <b>{{ homebox_family_password }}</b></p>
     <img src="portal-qr.svg" alt="Portal QR">
     EOF
   args:

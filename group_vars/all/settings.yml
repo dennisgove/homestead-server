@@ -39,6 +39,11 @@ hub_port: 8700                       # the Hub's backend (portal, Library manage
 hub_admin_header: "{{ lookup('ansible.builtin.password', '/etc/homestead/hub-admin-header', chars=['ascii_letters', 'digits'], length=32) }}"
 # Homebox won't start without this; made once, never rotated (that would void its API keys).
 homebox_api_key_pepper: "{{ lookup('ansible.builtin.password', '/etc/homestead/homebox-pepper', chars=['ascii_letters', 'digits'], length=64) }}"
+# The inventory's one shared family login (Homebox can't be browsed without one); printed on the WiFi sign.
+homebox_family_email: family@homestead.local
+homebox_family_password: "{{ lookup('ansible.builtin.password', '/etc/homestead/homebox-family', chars=['ascii_lowercase', 'digits'], length=12) }}"
+# Registration stays open until the family account exists, then closes.
+homebox_registration: "{{ 'false' if lookup('ansible.builtin.fileglob', '/etc/homestead/homebox-family-created') else 'true' }}"
 ollama_port: 11435                   # host port of the AI engine (backend; Caddy and containers only)
 
 # --- Container images ---------------------------------------------------
