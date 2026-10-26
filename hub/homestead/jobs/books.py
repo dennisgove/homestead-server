@@ -9,6 +9,7 @@ import os
 import re
 import shutil
 import subprocess
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -27,7 +28,7 @@ def calibreweb_unconfigured() -> bool:
         return False
     try:
         r = urllib.request.urlopen(app["health"].rsplit("/", 1)[0] + "/", timeout=10)
-        return "/admin/dbconfig" in r.url
+        return "dbconfig" in urllib.parse.unquote(r.url)
     except OSError:
         return False
 
