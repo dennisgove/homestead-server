@@ -31,6 +31,12 @@
   loop: [openwebui, openwebrx, calibreweb, mealie]
   no_log: true
 
+- name: Make the other generated secrets (each file is created the first time it's read)
+  ansible.builtin.assert:
+    that: [homebox_api_key_pepper | length > 0, homebox_family_password | length > 0]
+    quiet: true
+  no_log: true
+
 - name: Generated admin password files are root-only
   ansible.builtin.file:
     path: "/etc/homestead/{{ item }}"
