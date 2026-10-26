@@ -147,6 +147,9 @@ ai_models:
   vision: gemma3:4b
   embed: nomic-embed-text
 ai_context: 8192
+# Chat model + the small embedding model stay loaded together, so knowledge-base
+# indexing doesn't evict the chat model mid-answer (it reloads 19GB from disk).
+ai_max_loaded_models: 2
 ai_keep_alive: 30m
 
 # --- Power (Victron VE.Direct) ------------------------------------------

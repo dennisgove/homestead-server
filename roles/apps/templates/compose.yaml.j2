@@ -13,7 +13,7 @@ services:
     ports: ["{{ ports.ollama }}:11434"]
     environment:
       OLLAMA_HOST: 0.0.0.0
-      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_MAX_LOADED_MODELS: "{{ ai_max_loaded_models }}"
       OLLAMA_NUM_PARALLEL: "1"
       OLLAMA_KEEP_ALIVE: {{ ai_keep_alive }}
       OLLAMA_CONTEXT_LENGTH: "{{ ai_context }}"
