@@ -58,7 +58,7 @@
 
       [Service]
       User={{ admin_user }}
-      ExecStart=/usr/bin/pat http --addr 127.0.0.1:{{ ports.pat }}
+      ExecStart=/usr/bin/pat http --addr 127.0.0.1:{{ apps_by_id.winlink.backend }}
       Restart=on-failure
 
       [Install]

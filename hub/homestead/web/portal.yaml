@@ -1,0 +1,26 @@
+# Portal content that isn't an app: emergency shortcuts and topic searches.
+# (Apps and their tiles come from the app registry, group_vars/apps.yml.)
+emergency:
+  - { icon: "🩸", label: "Severe bleeding", hint: "Tourniquet, wound packing, pressure", q: "tourniquet hemorrhage control" }
+  - { icon: "❤️", label: "CPR", hint: "Not breathing / no pulse", q: "cardiopulmonary resuscitation" }
+  - { icon: "😮", label: "Choking", hint: "Heimlich, infants", q: "choking abdominal thrusts" }
+  - { icon: "🔥", label: "Burns", hint: "Cooling, dressing, fluids", q: "burn first aid" }
+  - { icon: "🦴", label: "Fractures & sprains", hint: "Splinting", q: "splint fracture first aid" }
+  - { icon: "🥶", label: "Shock & hypothermia", hint: "Keep warm, legs up", q: "shock hypothermia treatment" }
+  - { icon: "💧", label: "Dehydration / diarrhea", hint: "Oral rehydration", q: "oral rehydration solution" }
+  - { icon: "🐍", label: "Bites & stings", hint: "Snake, spider, allergic", q: "snakebite first aid anaphylaxis" }
+  - { icon: "🤒", label: "Infection & fever", hint: "Wound infection, sepsis", q: "wound infection sepsis" }
+  - { icon: "🤰", label: "Childbirth", hint: "Emergency delivery", q: "emergency childbirth delivery" }
+  - { icon: "💊", label: "Medicines", hint: "Doses, interactions", q: "drug dosage" }
+  - { icon: "🦷", label: "Dental", hint: "Toothache, abscess", q: "dental abscess" }
+topics:
+  - { icon: "💧", label: "Water", hint: "Find, filter, disinfect, store", q: "water purification" }
+  - { icon: "🌱", label: "Food & garden", hint: "Growing, seeds, soil, foraging", q: "vegetable garden" }
+  - { icon: "🥫", label: "Preserving food", hint: "Canning, drying, smoking, root cellar", q: "home canning" }
+  - { icon: "🐔", label: "Livestock", hint: "Chickens, goats, rabbits, vet care", q: "poultry husbandry" }
+  - { icon: "🛡️", label: "Defense & security", hint: "Army manuals, perimeter, tactics", q: "physical security" }
+  - { icon: "🏕️", label: "Survival & shelter", hint: "Fire, shelter, navigation, knots", q: "survival shelter" }
+  - { icon: "⚡", label: "Power & energy", hint: "Solar, batteries, generators", q: "solar panel battery" }
+  - { icon: "🔧", label: "Repair & build", hint: "Tools, engines, plumbing, wiring", q: "repair" }
+  - { icon: "☢️", label: "CBRN & disasters", hint: "Fallout, pandemic, storms", q: "fallout shelter" }
+  - { icon: "🧼", label: "Sanitation & hygiene", hint: "Latrines, soap, waste", q: "latrine sanitation" }

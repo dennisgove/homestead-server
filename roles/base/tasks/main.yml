@@ -103,7 +103,6 @@
     - "{{ core_dir }}/zim"
     - "{{ core_dir }}/docs"
     - "{{ core_dir }}/share"
-    - "{{ portal_dir }}"
 
 - name: SMART monitoring of all disks
   ansible.builtin.copy:

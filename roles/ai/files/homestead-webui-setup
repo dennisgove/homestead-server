@@ -24,6 +24,8 @@ import urllib.error
 import urllib.request
 
 CONF = "/etc/homestead/webui.json"
+FILTER = "/usr/local/share/homestead/homestead_library_filter.py"
+FILTER_ID = "homestead_library_search"
 PUBLIC = [{"principal_type": "user", "principal_id": "*", "permission": "read"}]
 
 
@@ -64,6 +66,18 @@ def main():
                      for k in kbs if (k.get("description") or "").startswith("Homestead ")]
     print("knowledge bases:", ", ".join(k["name"] for k in homestead_kbs) or "none yet (run homestead-kb-seed first)")
 
+    # The library-search filter: searches every ZIM before the model answers.
+    with open(conf.get("filter_path", FILTER)) as f:
+        code = f.read()
+    form = {"id": FILTER_ID, "name": "Homestead library search", "content": code,
+            "meta": {"description": "Adds passages from the offline library to each question."}}
+    existing = call(f"/api/v1/functions/id/{FILTER_ID}")
+    fn = call(f"/api/v1/functions/id/{FILTER_ID}/update", form) if existing else call("/api/v1/functions/create", form)
+    if not (fn or {}).get("is_active"):
+        call(f"/api/v1/functions/id/{FILTER_ID}/toggle", {})
+    call(f"/api/v1/functions/id/{FILTER_ID}/valves/update", {"hub_url": conf["hub_url"], "articles": 3, "min_words": 3})
+    print("library-search filter installed")
+
     shown = {m["id"]: m for m in conf["models"]}
     for m in call("/api/models")["data"]:
         mid = m["id"]
@@ -80,8 +94,10 @@ def main():
             meta["description"] = want["description"]
             if want.get("knowledge"):
                 meta["knowledge"] = homestead_kbs
+                meta["filterIds"] = [FILTER_ID]
             else:
                 meta.pop("knowledge", None)
+                meta["filterIds"] = []
         params = dict(cur.get("params") or {}, function_calling="legacy")
         form = {"id": mid, "base_model_id": None, "name": want["name"] if want else (cur.get("name") or mid),
                 "meta": meta, "params": params, "access_grants": PUBLIC, "is_active": True}

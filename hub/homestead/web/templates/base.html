@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Homestead Library{% endblock %}</title>
+<link rel="stylesheet" href="/static/style.css">
+<script src="/static/vendor/htmx.min.js" defer></script>
+{% block head %}{% endblock %}
+</head>
+<body class="{% block bodyclass %}{% endblock %}">
+<nav class="bar noprint">
+  <a href="/" {% if request.url.path == '/' %}class="here"{% endif %}>Home</a>
+  <a href="/emergency" {% if request.url.path == '/emergency' %}class="here"{% endif %}>🚑 Emergency</a>
+  <a href="/maps">🗺️ Maps</a>
+  <a href="/binder" {% if request.url.path == '/binder' %}class="here"{% endif %}>🖨️ Binder</a>
+  <a href="/status" {% if request.url.path == '/status' %}class="here"{% endif %}>Status</a>
+  <a href="/library" {% if request.url.path.startswith('/library') %}class="here"{% endif %}>Library manager</a>
+</nav>
+{% block body %}{% endblock %}
+</body>
+</html>

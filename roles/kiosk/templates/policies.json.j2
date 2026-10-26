@@ -1,15 +1,9 @@
 {%- set h = 'http://' ~ lan_name -%}
-{%- set marks = [
-  ('🚑 Emergency', h ~ '/emergency.html'),
-  ('Library', h ~ '/'),
-  ('Encyclopedia', h ~ ':' ~ public_ports.core_library ~ '/'),
-  ('AI', h ~ ':' ~ public_ports.ai ~ '/'),
-  ('Maps', h ~ ':' ~ public_ports.nomad_readonly ~ '/maps'),
-  ('Books', h ~ ':' ~ public_ports.books ~ '/'),
-  ('Learn', h ~ ':' ~ public_ports.education ~ '/'),
-  ('Pantry', h ~ ':' ~ public_ports.pantry ~ '/'),
-  ('Notes', h ~ ':' ~ public_ports.notes ~ '/'),
-] -%}
+{%- set marks = [('🚑 Emergency', h ~ '/emergency'), ('Home', h ~ '/'), ('Maps', h ~ '/maps')] -%}
+{%- for id in ['core-library', 'library', 'ai', 'books', 'learn', 'pantry', 'notes'] if id in apps_by_id -%}
+{%- set a = apps_by_id[id] -%}
+{%- set _ = marks.append((a.title, a.scheme | default('http') ~ '://' ~ lan_name ~ ':' ~ a.port ~ a.path | default('/'))) -%}
+{%- endfor -%}
 {
   "policies": {
     "Homepage": { "URL": "{{ h }}/", "Locked": true, "StartPage": "homepage" },
@@ -25,7 +19,7 @@
       "Add": [
         {
           "Name": "Homestead Library",
-          "URLTemplate": "{{ h }}:{{ public_ports.core_library }}/search?pattern={searchTerms}",
+          "URLTemplate": "{{ h }}:{{ apps_by_id['core-library'].port }}/search?pattern={searchTerms}",
           "Method": "GET",
           "Alias": "lib"
         }

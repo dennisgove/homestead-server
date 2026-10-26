@@ -45,7 +45,9 @@
   ansible.builtin.template:
     src: Caddyfile.j2
     dest: /etc/caddy/Caddyfile
-    mode: "0644"
+    owner: root
+    group: caddy
+    mode: "0640"   # holds the Hub's admin header
     validate: caddy validate --adapter caddyfile --config %s
   notify: reload caddy
 

@@ -1,44 +1,86 @@
-# Library downloads run as a background service: started by every playbook run
-# (it resumes and skips what's done) and weekly after that. The AI's knowledge
-# bases are refreshed when it finishes.
+# The library jobs (hub/homestead/jobs). Each is a systemd oneshot; the Hub's
+# Library manager starts them, timers repeat them, and they chain:
+#   fetch -> catalog-apply -> books + kb-sync
+# Status for the Hub's pages: {{ state_dir }}/status/<job>.json
 
-- name: Library download service and weekly timer
+- name: Tools the jobs use
+  ansible.builtin.apt:
+    name: [aria2, calibre, sqlite3]
+    update_cache: "{{ not offline }}"
+    install_recommends: false
+
+- name: Library folders on the USB drive (when it's mounted)
+  ansible.builtin.file:
+    path: "{{ library_mount }}/{{ item }}"
+    state: directory
+    mode: "0755"
+  loop: [zim, books, books/calibre, books/incoming, video, kolibri]
+  when: library_is_mounted | default(false)
+
+- name: Essentials folders on the NVMe
+  ansible.builtin.file:
+    path: "{{ core_dir }}/{{ item }}"
+    state: directory
+    mode: "0755"
+  loop: [zim, maps, share, share/apps]
+
+- name: Job units
   ansible.builtin.copy:
-    dest: "/etc/systemd/system/{{ item.name }}"
+    dest: "/etc/systemd/system/homestead-{{ item.name }}.service"
     mode: "0644"
-    content: "{{ item.content }}"
+    content: |
+      [Unit]
+      Description={{ item.desc }}
+      After=network-online.target docker.service
+      Wants=network-online.target
+      [Service]
+      Type=oneshot
+      Nice=10
+      IOSchedulingClass=idle
+      Environment=PYTHONPATH={{ hub_dir }}
+      Environment=HOMESTEAD_CONFIG=/etc/homestead/hub.json
+      ExecStart=/usr/bin/python3 -m homestead.jobs.{{ item.module }} {{ item.args | default('') }}
   loop:
-    - name: homestead-fetch.service
-      content: |
-        [Unit]
-        Description=Download or resume the offline library (content/manifest.yaml)
-        After=network-online.target docker.service
-        Wants=network-online.target
-        [Service]
-        Type=oneshot
-        Nice=10
-        IOSchedulingClass=idle
-        ExecStart={{ repo_dir }}/scripts/fetch_content.py --tier {{ content_tier }}
-        ExecStartPost=/usr/bin/systemctl start --no-block homestead-kb-sync.service
-    - name: homestead-fetch.timer
-      content: |
-        [Unit]
-        Description=Download or resume the offline library (weekly)
-        [Timer]
-        OnCalendar=weekly
-        RandomizedDelaySec=6h
-        Persistent=true
-        [Install]
-        WantedBy=timers.target
+    - { name: fetch, module: fetch, desc: "Download or resume the offline library (catalog)" }
+    - { name: fetch-plan, module: fetch, args: "--plan", desc: "Check library sizes and newer releases" }
+    - { name: catalog-apply, module: apply, desc: "Apply the catalog: removals, Kiwix library index" }
+    - { name: books, module: books, desc: "Keep the Calibre books library in step with the documents" }
+    - { name: maps, module: maps, desc: "Build the offline maps (needs internet)" }
+  loop_control: { label: "{{ item.name }}" }
 
-- name: Library download timer on
+- name: Job timers
+  ansible.builtin.copy:
+    dest: "/etc/systemd/system/homestead-{{ item.name }}.timer"
+    mode: "0644"
+    content: |
+      [Unit]
+      Description={{ item.desc }}
+      [Timer]
+      OnCalendar={{ item.when }}
+      RandomizedDelaySec=6h
+      Persistent=true
+      [Install]
+      WantedBy=timers.target
+  loop:
+    - { name: fetch, when: weekly, desc: "Download or resume the library (weekly)" }
+    - { name: fetch-plan, when: "Sun 03:00", desc: "Check for newer library releases (weekly)" }
+    - { name: maps, when: quarterly, desc: "Refresh the offline maps (quarterly)" }
+  loop_control: { label: "{{ item.name }}" }
+
+- name: Job timers on
   ansible.builtin.systemd_service:
-    name: homestead-fetch.timer
+    name: "homestead-{{ item }}.timer"
     enabled: true
     state: started
     daemon_reload: true
+  loop: [fetch, fetch-plan, maps]
 
-- name: Start (or resume) the library download in the background
-  ansible.builtin.command: systemctl start --no-block homestead-fetch.service
-  when: not offline
+- name: Index what's on disk now, then start (or resume) the download in the background
+  ansible.builtin.command: "systemctl start --no-block homestead-catalog-apply.service {{ '' if offline else 'homestead-fetch.service' }}"
   changed_when: false
+
+- name: Build the maps the first time (background; needs internet)
+  ansible.builtin.command: systemctl start --no-block homestead-maps.service
+  args:
+    creates: "{{ core_dir }}/maps/maps.json"
+  when: not offline

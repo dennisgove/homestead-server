@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Medical Emergency{% endblock %}
+{% block body %}
+<header class="top">
+  <h1>Medical Emergency</h1>
+  <p class="sub"><b>Scene safe? Then: massive bleeding → airway → breathing → circulation → hypothermia.</b>
+  If there is any way to reach a medic or 911, do that first.</p>
+</header>
+<main>
+  <div class="grid">{% for t in p.emergency %}{% with href=search(t.q) %}{% include "_tile.html" %}{% endwith %}{% endfor %}</div>
+  <section><h2>Field medicine guides</h2><div class="docs">{% with open_all=True %}{% include "_guides.html" %}{% endwith %}</div></section>
+  <section class="card"><h2>If the computer is down</h2>
+  <p>The printed binder (red tab: MEDICAL) has the same first pages: bleeding control, CPR, choking, burns,
+  fractures, shock, dehydration (oral rehydration: 1 L clean water + 6 level tsp sugar + ½ level tsp salt).</p></section>
+</main>
+{% endblock %}

@@ -227,5 +227,5 @@
       Categories=Network;HamRadio;
     mode: "0644"
   loop:
-    - { f: homestead-meshcore.desktop, name: MeshCore radio, comment: "Mesh text messages (MeshCore node on USB or Bluetooth)", port: "{{ local_ports.meshcore }}" }
-    - { f: homestead-meshtastic.desktop, name: Meshtastic radio, comment: "Mesh text messages (Meshtastic node on USB or Bluetooth)", port: "{{ local_ports.meshtastic }}" }
+    - { f: homestead-meshcore.desktop, name: MeshCore radio, comment: "Mesh text messages (MeshCore node on USB or Bluetooth)", port: "{{ apps_by_id['mesh-local'].port }}" }
+    - { f: homestead-meshtastic.desktop, name: Meshtastic radio, comment: "Mesh text messages (Meshtastic node on USB or Bluetooth)", port: "{{ apps_by_id['meshtastic-local'].port }}" }

@@ -1,5 +1,5 @@
-# External LIBRARY drive (or a temporary internal volume until it arrives) +
-# NOMAD storage bind, the essentials library on the NVMe, and the LUKS vault. Every mountpoint is made immutable while it's
+# External LIBRARY drive (or a temporary internal volume until it arrives),
+# the essentials library on the NVMe, and the LUKS vault. Every mountpoint is made immutable while it's
 # unmounted, so a missing drive makes things fail loudly instead of silently
 # filling the NVMe.
 
@@ -21,13 +21,13 @@
     path: "{{ item }}"
     state: directory
     mode: "0755"
-  loop: ["{{ library_mount }}", "{{ nomad_dir }}", "{{ nomad_storage }}", "{{ vault_mount }}"]
+  loop: ["{{ library_mount }}", "{{ vault_mount }}"]
 
 - name: Lock empty mountpoints (only while nothing is mounted on them)
   ansible.builtin.shell: |
     mountpoint -q {{ item }} && exit 0
     if [ -z "$(ls -A {{ item }})" ]; then chattr +i {{ item }}; echo locked; fi
-  loop: ["{{ library_mount }}", "{{ nomad_storage }}", "{{ vault_mount }}"]
+  loop: ["{{ library_mount }}", "{{ vault_mount }}"]
   register: lock
   changed_when: "'locked' in lock.stdout"
 
@@ -39,13 +39,10 @@
     opts: defaults,noatime,nofail,x-systemd.device-timeout=15s
     state: present
 
-- name: fstab - NOMAD storage lives on the library drive
+- name: fstab - no NOMAD storage bind any more (homestead-migrate-from-nomad moved its data)
   ansible.posix.mount:
-    path: "{{ nomad_storage }}"
-    src: "{{ library_mount }}/nomad"
-    fstype: none
-    opts: bind,nofail,x-systemd.requires-mounts-for={{ library_mount }}
-    state: present
+    path: /opt/project-nomad/storage
+    state: absent
 
 - name: Is the library drive attached?
   ansible.builtin.command: blkid -L {{ library_label }}
@@ -79,18 +76,20 @@
   changed_when: false
   failed_when: false
 
-- name: Mount library drive and NOMAD bind
+- name: Mount the library drive
+  ansible.builtin.command: mount {{ library_mount }}
+  args: { creates: "{{ library_mount }}/lost+found" }
   when: libnow.rc == 0
-  block:
-    - ansible.builtin.command: mount {{ library_mount }}
-      args: { creates: "{{ library_mount }}/lost+found" }
-    - ansible.builtin.file:
-        path: "{{ library_mount }}/{{ item }}"
-        state: directory
-        mode: "0755"
-      loop: [nomad, nomad/zim, nomad/books, nomad/media, extra]
-    - ansible.builtin.shell: mountpoint -q {{ nomad_storage }} || mount {{ nomad_storage }}
-      changed_when: false
+
+- name: Is the library drive mounted? (later roles only make folders on it if so)
+  ansible.builtin.command: mountpoint -q {{ library_mount }}
+  register: libmounted
+  changed_when: false
+  failed_when: false
+
+- name: Remember it
+  ansible.builtin.set_fact:
+    library_is_mounted: "{{ libmounted.rc == 0 }}"
 
 - name: Warn when the library drive is missing
   ansible.builtin.debug:
@@ -110,12 +109,12 @@
     dest: /etc/systemd/system/docker.service.d/10-homestead-mounts.conf
     content: |
       [Unit]
-      Wants=srv-library.mount opt-project\x2dnomad-storage.mount
-      After=srv-library.mount opt-project\x2dnomad-storage.mount srv-core.mount
+      Wants=srv-library.mount
+      After=srv-library.mount srv-core.mount
     mode: "0644"
   notify: reload systemd
 
-- name: Library drive hot-plug brings NOMAD back up; desktops don't automount it
+- name: Library drive hot-plug brings the library apps back up; desktops don't automount it
   ansible.builtin.copy:
     dest: /etc/udev/rules.d/90-homestead-library.rules
     content: |
@@ -129,7 +128,7 @@
     dest: /etc/systemd/system/homestead-library-online.service
     content: |
       [Unit]
-      Description=Mount the LIBRARY drive and (re)start Project NOMAD
+      Description=Mount the LIBRARY drive and (re)start the apps that use it
       After=docker.service
 
       [Service]

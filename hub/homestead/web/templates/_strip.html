@@ -1,0 +1,10 @@
+{%- set p = s.power.reading -%}
+{%- if p and p.soc is not none %}<span class="pill {{ 'bad' if p.soc < cfg.power.shutdown else 'warn' if p.soc < cfg.power.eco else 'good' }}">Battery {{ p.soc }}%</span>
+{%- elif p and p.volts is not none %}<span class="pill">Battery {{ '%.2f' % p.volts }} V</span>{% endif %}
+{% if s.power.eco %}<span class="pill warn">Power saving: AI &amp; video paused</span>{% endif %}
+{% if s.library.temporary %}<span class="pill warn">Library on internal disk (temporary)</span>
+{% elif s.library.mounted %}<span class="pill good">Full library online</span>
+{% else %}<span class="pill bad">Full library drive missing: essentials only</span>{% endif %}
+{% if s.wifi is not none %}<span class="pill">{{ s.wifi }} on WiFi</span>{% endif %}
+<span class="pill {{ 'warn' if s.backup.stale else '' }}">Last backup {{ s.backup.when | ago }}</span>
+<span class="pill">Up {{ s.uptime }}</span>

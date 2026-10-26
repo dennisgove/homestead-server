@@ -1,2 +1,4 @@
 secrets.yml
 *.retry
+__pycache__/
+.pytest_cache/

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Updates{% endblock %}
+{% block body %}
+<main>
+<h1>Updates</h1>
+{% include "library/_nav.html" %}
+<p>{% if plan %}Last checked {{ plan.finished | ago }}.{% else %}Not checked yet.{% endif %}
+<form method="post" action="/library/jobs/fetch-plan" class="inline"><button>Check now</button></form></p>
+{% if rows %}<form method="post" action="/library/jobs/fetch"><button class="primary">Update all ({{ rows | length }})</button></form>{% endif %}
+<table class="items"><tr><th>Item</th><th>Have</th><th>Newest</th><th>Size</th><th></th></tr>
+{% for r in rows %}<tr><td>{{ r.title }}</td><td class="small">{{ r.status.have | join(', ') }}</td><td class="small">{{ r.status.latest }}</td>
+<td>{{ r.status.size | human }}</td><td><form method="post" action="/library/items/{{ r.id }}/fetch"><button>Update</button></form>
+<form method="post" action="/library/items/{{ r.id }}"><input type="hidden" name="field" value="update"><input type="hidden" name="value" value="0"><button class="link">keep current</button></form></td></tr>
+{% else %}<tr><td colspan="5" class="muted">Everything is up to date (as of the last check).</td></tr>{% endfor %}
+</table>
+</main>
+{% endblock %}

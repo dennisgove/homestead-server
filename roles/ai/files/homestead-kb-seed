@@ -35,6 +35,19 @@ def empty_hint(text):
     return text[:120]
 
 
+def ai_off_files() -> set[str]:
+    """Files of catalog items whose "use in AI" switch is off (Library manager)."""
+    try:
+        from homestead import catalog  # the Hub's code (PYTHONPATH set by homestead-kb-sync)
+    except ImportError:
+        return set()
+    off = set()
+    for it in catalog.items():
+        if it["type"] in ("doc", "docpage") and not it.get("ai", True):
+            off.update(str(p) for p in catalog.item_files(it))
+    return off
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--token", default=os.environ.get("OPENWEBUI_TOKEN"),
@@ -55,6 +68,7 @@ def main():
         kbs = kbs.get("items", [])
     by_name = {k["name"]: k for k in kbs}
 
+    skip = ai_off_files()
     for cat in sorted(os.listdir(DOCS)):
         folder = os.path.join(DOCS, cat)
         if cat not in NAMES or not os.path.isdir(folder):
@@ -71,9 +85,9 @@ def main():
 
         for root, _, files in os.walk(folder):
             for fn in sorted(files):
-                if not fn.lower().endswith(EXTS) or fn in existing:
-                    continue
                 path = os.path.join(root, fn)
+                if not fn.lower().endswith(EXTS) or fn in existing or path in skip or "/.homestead-partial" in path:
+                    continue
                 print(f"[{name}] {fn} ...", end=" ", flush=True)
                 # Extract the text before replying; in the background (the default in newer
                 # Open WebUI) the file is still empty when it's added to the knowledge base.

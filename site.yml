@@ -13,10 +13,9 @@
     - { role: base,    tags: base }
     - { role: users,   tags: users }
     - { role: storage, tags: storage }
-    - { role: nomad,   tags: nomad }
     - { role: apps,    tags: apps }
     - { role: proxy,   tags: proxy }
-    - { role: portal,  tags: portal }
+    - { role: hub,     tags: hub }
     - { role: kiosk,   tags: kiosk }
     - { role: network, tags: network }
     - { role: ai,      tags: ai }

@@ -1,6 +1,6 @@
 - name: Ollama is up
   ansible.builtin.uri:
-    url: http://127.0.0.1:{{ ports.ollama }}/api/version
+    url: http://127.0.0.1:{{ ollama_port }}/api/version
   register: ov
   retries: 10
   delay: 6
@@ -48,7 +48,13 @@
     dest: /etc/homestead/webui.json
     mode: "0644"
 
-- name: Open WebUI setup tool (run once with an admin API key; see docs/INSTALL.md)
+- name: Library-search filter for Open WebUI (installed into it by homestead-webui-setup)
+  ansible.builtin.copy:
+    src: homestead_library_filter.py
+    dest: /usr/local/share/homestead/
+    mode: "0644"
+
+- name: Open WebUI setup tool (homestead-kb-sync runs it with a key from Open WebUI's database)
   ansible.builtin.copy:
     src: homestead-webui-setup
     dest: /usr/local/bin/homestead-webui-setup

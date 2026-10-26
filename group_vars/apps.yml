@@ -1,0 +1,519 @@
+# The app registry: every app the server runs or links to, in one place.
+#
+# Adding an app means adding an entry here (and a role only if it isn't a
+# container). From this list the playbook generates: the compose file, Caddy's
+# sites, the firewall, the Hub's portal tiles and /api/apps, the kiosk's
+# bookmarks, the status page, and the power-saving stop list. App data under
+# {{ homestead_data }} is backed up automatically (SQLite files are dumped first).
+#
+# Fields
+#   id        stable name                     title, icon, hint   portal tile
+#   section   library | tools | radio | admin | hidden (no tile)
+#   access    public | admin (admin password at Caddy) | local (this machine only, on 127.0.0.1)
+#   scheme    http | https (https = Caddy's local certificate; for apps needing a secure context)
+#   port      public port, 7000-7099 (assigned once, never reused); 80 = the Hub itself
+#   path      where the tile points (default /)
+#   backend   host port the app listens on (8080-8999; firewalled, Caddy only)
+#   health    path checked by the status page (default /)
+#   services  compose services: {name: definition}. Omit for apps run some other way (Hub, Pat).
+#   dirs      folders to create before starting (owner uid 1000 unless `root` is set)
+#   power     eco-stop = stopped in power-saving mode (AI, video, courses)
+#   library   true = data on the LIBRARY drive: restarted when the drive is plugged back in
+#   admin_paths  extra paths of a public app that need the admin password
+#   extra_ports  more public ports for the same app: [{port, backend}]
+
+homestead_apps:
+  # --- Libraries ---------------------------------------------------------------------
+  - id: library
+    title: Full library
+    icon: "📚"
+    hint: Everything (big external drive)
+    section: library
+    access: public
+    port: 7001
+    backend: 8090
+    library: true
+    services:
+      kiwix:
+        image: "{{ images.kiwix }}"
+        container_name: homestead-kiwix
+        restart: unless-stopped
+        command: ["--library", "/library/library.xml", "--monitorLibrary", "--threads", "4"]
+        ports: ["8090:8080"]
+        volumes:
+          - "{{ core_dir }}/zim:/data/core:ro"
+          - "{{ library_mount }}/zim:/data/library:ro"
+          - "{{ state_dir }}/kiwix:/library"
+
+  - id: core-library
+    title: Essentials library
+    icon: "📖"
+    hint: Medical, water, food, Army manuals, all of Wikipedia (text). Works without the USB drive.
+    section: library
+    access: public
+    port: 7002
+    backend: 8601
+    services:
+      kiwix-core:
+        image: "{{ images.kiwix }}"
+        container_name: homestead-kiwix-core
+        restart: unless-stopped
+        command: ["*.zim"]
+        ports: ["8601:8080"]
+        volumes: ["{{ core_dir }}/zim:/data:ro"]
+
+  - id: books
+    title: Book library
+    icon: "📕"
+    hint: Manuals, PDFs, ebooks
+    section: library
+    access: public
+    port: 7005
+    backend: 8420
+    library: true
+    dirs: ["{{ homestead_data }}/calibreweb", "{{ library_mount }}/books/calibre", "{{ library_mount }}/books/incoming"]
+    services:
+      calibreweb:
+        image: "{{ images.calibreweb }}"
+        container_name: homestead-calibreweb
+        restart: unless-stopped
+        ports: ["8420:8083"]
+        environment: { PUID: "1000", PGID: "1000", TZ: "{{ timezone }}" }
+        volumes:
+          - "{{ homestead_data }}/calibreweb:/config"
+          - "{{ library_mount }}/books/calibre:/books"
+
+  - id: learn
+    title: Learn
+    icon: "🎓"
+    hint: Khan Academy & school courses
+    section: library
+    access: public
+    port: 7004
+    backend: 8310
+    extra_ports: [{ port: 7034, backend: 8311 }]   # Kolibri's interactive-content server
+    power: eco-stop
+    library: true
+    dirs: ["{{ library_mount }}/kolibri"]
+    services:
+      kolibri:
+        image: "{{ images.kolibri }}"
+        container_name: homestead-kolibri
+        restart: unless-stopped
+        # Kolibri's content server port must match what the browser uses (Caddy's 7034).
+        environment: { KOLIBRI_ZIP_CONTENT_PORT: "7034" }
+        ports: ["8310:8080", "8311:7034"]
+        volumes: ["{{ library_mount }}/kolibri:/kolibri"]
+
+  - id: videos
+    title: Videos
+    icon: "🎬"
+    hint: How-to videos
+    section: library
+    access: public
+    port: 7006
+    backend: 8490
+    health: /health
+    power: eco-stop
+    library: true
+    dirs: ["{{ homestead_data }}/jellyfin/config", "{{ homestead_data }}/jellyfin/cache", "{{ library_mount }}/video"]
+    services:
+      jellyfin:
+        image: "{{ images.jellyfin }}"
+        container_name: homestead-jellyfin
+        restart: unless-stopped
+        user: "1000:1000"
+        ports: ["8490:8096"]
+        volumes:
+          - "{{ homestead_data }}/jellyfin/config:/config"
+          - "{{ homestead_data }}/jellyfin/cache:/cache"
+          - "{{ library_mount }}/video:/media:ro"
+
+  - id: maps
+    title: Maps
+    icon: "🗺️"
+    hint: Offline street maps, place search, print
+    section: library
+    access: public
+    port: 80
+    path: /maps
+
+  # --- Tools ---------------------------------------------------------------------------
+  - id: ai
+    title: Ask the AI
+    icon: "🤖"
+    hint: Planning, questions, checklists; searches the library
+    section: tools
+    access: public
+    port: 7007
+    backend: 8610
+    health: /health
+    power: eco-stop
+    dirs: ["{{ homestead_data }}/open-webui"]
+    services:
+      open-webui:
+        image: "{{ images.open_webui }}"
+        container_name: homestead-open-webui
+        restart: unless-stopped
+        depends_on: [ollama]
+        ports: ["8610:8080"]
+        extra_hosts: ["host.docker.internal:host-gateway"]   # reaches the Hub's library search
+        environment:
+          OLLAMA_BASE_URL: http://ollama:11434
+          WEBUI_NAME: Homestead AI
+          ENABLE_SIGNUP: "true"
+          DEFAULT_USER_ROLE: pending          # dennis approves each family member
+          ENABLE_OPENAI_API: "false"
+          OFFLINE_MODE: "true"
+          HF_HUB_OFFLINE: "1"
+          RAG_EMBEDDING_ENGINE: ollama
+          RAG_EMBEDDING_MODEL: "{{ ai_models.embed }}"
+          DEFAULT_MODELS: homestead-planner
+          # Fresh install: create the admin account (ignored once any account exists).
+          WEBUI_ADMIN_NAME: "{{ admin_user }}"
+          WEBUI_ADMIN_EMAIL: "{{ admin_user }}@{{ homestead_hostname }}.local"
+          WEBUI_ADMIN_PASSWORD: "{{ openwebui_admin_password | default('') }}"
+          ENABLE_API_KEYS: "true"
+          # Background jobs on the small model; extras that each cost minutes on a CPU, off.
+          # (First-run defaults: homestead-webui-setup keeps them that way afterwards.)
+          TASK_MODEL: "{{ ai_models.fast }}"
+          ENABLE_FOLLOW_UP_GENERATION: "false"
+          ENABLE_TAGS_GENERATION: "false"
+          ENABLE_SEARCH_QUERY_GENERATION: "false"
+          ENABLE_AUTOCOMPLETE_GENERATION: "false"
+          ENABLE_COMMUNITY_SHARING: "false"
+          ENABLE_VERSION_UPDATE_CHECK: "false"
+        volumes: ["{{ homestead_data }}/open-webui:/app/backend/data"]
+
+  - id: ollama
+    title: Ollama (AI engine)
+    section: hidden
+    access: admin
+    backend: 11435
+    power: eco-stop
+    dirs: ["{{ homestead_data }}/ollama"]
+    services:
+      ollama:
+        image: "{{ images.ollama }}"
+        container_name: homestead-ollama
+        restart: unless-stopped
+        ports: ["11435:11434"]
+        environment:
+          OLLAMA_HOST: 0.0.0.0
+          OLLAMA_MAX_LOADED_MODELS: "{{ ai_max_loaded_models }}"
+          OLLAMA_NUM_PARALLEL: "1"
+          OLLAMA_KEEP_ALIVE: "{{ ai_keep_alive }}"
+          OLLAMA_CONTEXT_LENGTH: "{{ ai_context }}"
+        volumes: ["{{ homestead_data }}/ollama:/root/.ollama"]
+
+  - id: pantry
+    title: Pantry
+    icon: "🥫"
+    hint: Food storage & expiry
+    section: tools
+    access: public
+    port: 7008
+    backend: 8620
+    dirs: ["{{ homestead_data }}/grocy"]
+    services:
+      grocy:
+        image: "{{ images.grocy }}"
+        container_name: homestead-grocy
+        restart: unless-stopped
+        ports: ["8620:80"]
+        environment: { PUID: "1000", PGID: "1000", TZ: "{{ timezone }}" }
+        volumes: ["{{ homestead_data }}/grocy:/config"]
+
+  - id: recipes
+    title: Recipes
+    icon: "🍲"
+    hint: Cooking from storage
+    section: tools
+    access: public
+    port: 7009
+    backend: 8630
+    dirs: ["{{ homestead_data }}/mealie"]
+    services:
+      mealie:
+        image: "{{ images.mealie }}"
+        container_name: homestead-mealie
+        restart: unless-stopped
+        ports: ["8630:9000"]
+        environment:
+          ALLOW_SIGNUP: "false"
+          TZ: "{{ timezone }}"
+          BASE_URL: "http://{{ lan_name }}:7009"
+        volumes: ["{{ homestead_data }}/mealie:/app/data"]
+
+  - id: notes
+    title: Notes
+    icon: "📝"
+    hint: Shared notes
+    section: tools
+    access: public
+    port: 7010
+    backend: 8200
+    dirs: ["{{ homestead_data }}/flatnotes"]
+    services:
+      flatnotes:
+        image: "{{ images.flatnotes }}"
+        container_name: homestead-flatnotes
+        restart: unless-stopped
+        ports: ["8200:8080"]
+        environment: { FLATNOTES_AUTH_TYPE: none, PUID: "1000", PGID: "1000" }
+        volumes: ["{{ homestead_data }}/flatnotes:/data"]
+
+  - id: inventory
+    title: Inventory
+    icon: "📦"
+    hint: Track everything you own
+    section: tools
+    access: public
+    port: 7015
+    backend: 8470
+    dirs: ["{{ homestead_data }}/homebox"]
+    services:
+      homebox:
+        image: "{{ images.homebox }}"
+        container_name: homestead-homebox
+        restart: unless-stopped
+        ports: ["8470:7745"]
+        environment: { HBOX_OPTIONS_ALLOW_REGISTRATION: "true" }
+        volumes: ["{{ homestead_data }}/homebox:/data"]
+
+  - id: passwords
+    title: Passwords
+    icon: "🔐"
+    hint: Family password manager (Bitwarden apps work too)
+    section: tools
+    access: public
+    scheme: https
+    port: 7016
+    backend: 8480
+    health: /alive
+    dirs: ["{{ homestead_data }}/vaultwarden"]
+    services:
+      vaultwarden:
+        image: "{{ images.vaultwarden }}"
+        container_name: homestead-vaultwarden
+        restart: unless-stopped
+        ports: ["8480:80"]
+        environment: { WEBSOCKET_ENABLED: "true", SIGNUPS_ALLOWED: "true" }
+        volumes: ["{{ homestead_data }}/vaultwarden:/data"]
+
+  - id: pdf-tools
+    title: PDF tools
+    icon: "🧾"
+    hint: Merge, split, convert, OCR
+    section: tools
+    access: public
+    port: 7012
+    backend: 8400
+    dirs: ["{{ homestead_data }}/stirling-pdf/configs", "{{ homestead_data }}/stirling-pdf/logs"]
+    services:
+      stirling-pdf:
+        image: "{{ images.stirling_pdf }}"
+        container_name: homestead-stirling-pdf
+        restart: unless-stopped
+        ports: ["8400:8080"]
+        environment: { SECURITY_ENABLELOGIN: "false", LANGS: en_US }
+        volumes:
+          - "{{ homestead_data }}/stirling-pdf/configs:/configs"
+          - "{{ homestead_data }}/stirling-pdf/logs:/logs"
+
+  - id: data-tools
+    title: Data tools
+    icon: "🧪"
+    hint: Decode, convert, encrypt (CyberChef)
+    section: tools
+    access: public
+    port: 7011
+    backend: 8100
+    services:
+      cyberchef:
+        image: "{{ images.cyberchef }}"
+        container_name: homestead-cyberchef
+        restart: unless-stopped
+        ports: ["8100:80"]
+
+  - id: it-tools
+    title: IT tools
+    icon: "🧰"
+    hint: Network, text and date utilities
+    section: tools
+    access: public
+    port: 7013
+    backend: 8430
+    services:
+      it-tools:
+        image: "{{ images.it_tools }}"
+        container_name: homestead-it-tools
+        restart: unless-stopped
+        ports: ["8430:80"]
+
+  - id: whiteboard
+    title: Whiteboard
+    icon: "✏️"
+    hint: Sketch plans and diagrams
+    section: tools
+    access: public
+    port: 7014
+    backend: 8440
+    services:
+      excalidraw:
+        image: "{{ images.excalidraw }}"
+        container_name: homestead-excalidraw
+        restart: unless-stopped
+        ports: ["8440:80"]
+
+  # --- Radio -------------------------------------------------------------------------
+  - id: sdr
+    title: Radio receiver
+    icon: "📻"
+    hint: NOAA weather, scanner, shortwave
+    section: radio
+    access: public
+    port: 7020
+    backend: 8660
+    admin_paths: [/settings*, /login*, /logout*, /generalsettings*, /sdrsettings*, /bookmarks*, /decoding*,
+                  /backgrounddecoding*, /reporting*, /features*, /logs*, /clients*, /files*]
+    dirs: ["{{ homestead_data }}/openwebrx/var", "{{ homestead_data }}/openwebrx/etc"]
+    services:
+      openwebrx:
+        image: "{{ images.openwebrx }}"
+        container_name: homestead-openwebrx
+        restart: unless-stopped
+        ports: ["8660:8073"]
+        devices: ["/dev/bus/usb:/dev/bus/usb"]
+        tmpfs: ["/tmp:mode=1777"]
+        environment:
+          TZ: "{{ timezone }}"
+          OPENWEBRX_ADMIN_USER: "{{ admin_user }}"
+          OPENWEBRX_ADMIN_PASSWORD: "{{ openwebrx_admin_password | default('') }}"
+        volumes:
+          - "{{ homestead_data }}/openwebrx/var:/var/lib/openwebrx"
+          - "{{ homestead_data }}/openwebrx/etc:/etc/openwebrx"
+
+  - id: mesh
+    title: MeshCore
+    icon: "📡"
+    hint: Mesh text messages (needs Chrome or Edge)
+    section: radio
+    access: public
+    scheme: https
+    port: 7017
+    backend: 8500
+    services:
+      meshcore-web:
+        image: "{{ images.meshcore_web }}"
+        container_name: homestead-meshcore-web
+        restart: unless-stopped
+        ports: ["8500:80"]
+
+  - id: meshtastic
+    title: Meshtastic
+    icon: "📶"
+    hint: Meshtastic nodes (needs Chrome or Edge)
+    section: radio
+    access: public
+    scheme: https
+    port: 7018
+    backend: 8450
+    services:
+      meshtastic-web:
+        image: "{{ images.meshtastic_web }}"
+        container_name: homestead-meshtastic-web
+        restart: unless-stopped
+        ports: ["8450:8080"]
+
+  # Plain-HTTP copies for the server's own screen: browsers treat localhost as
+  # secure, so Web Serial works with no certificate warning (kiosk launchers).
+  - { id: mesh-local, title: MeshCore (this screen), section: hidden, access: local, port: 7027, backend: 8500 }
+  - { id: meshtastic-local, title: Meshtastic (this screen), section: hidden, access: local, port: 7028, backend: 8450 }
+
+  # --- Admin (admin password) ----------------------------------------------------------
+  - id: winlink
+    title: Winlink (Pat)
+    icon: "✉️"
+    section: admin
+    access: admin
+    port: 7091
+    backend: 8650      # run by roles/radio (pat-http.service)
+
+  - id: vault
+    title: Vault documents
+    icon: "🗄️"
+    hint: Open the vault first (homestead-vault open)
+    section: admin
+    access: admin
+    port: 7092
+    backend: 8640
+    health: ""         # only up while the vault is open
+    services:
+      paperless-redis:
+        image: "{{ images.redis }}"
+        container_name: homestead-paperless-redis
+        profiles: [vault]
+        restart: "no"
+      paperless:
+        image: "{{ images.paperless }}"
+        container_name: homestead-paperless
+        profiles: [vault]
+        restart: "no"
+        depends_on: [paperless-redis]
+        ports: ["8640:8000"]
+        environment:
+          PAPERLESS_REDIS: redis://paperless-redis:6379
+          PAPERLESS_TIME_ZONE: "{{ timezone }}"
+          PAPERLESS_OCR_LANGUAGE: eng
+          PAPERLESS_URL: "http://{{ lan_name }}:7092"
+          USERMAP_UID: "1000"
+          USERMAP_GID: "1000"
+        volumes:
+          - "{{ vault_mount }}/paperless/data:/usr/src/paperless/data"
+          - "{{ vault_mount }}/paperless/media:/usr/src/paperless/media"
+          - "{{ vault_mount }}/paperless/consume:/usr/src/paperless/consume"
+          - "{{ vault_mount }}/paperless/export:/usr/src/paperless/export"
+
+  - id: logs
+    title: Logs
+    icon: "📜"
+    section: admin
+    access: admin
+    port: 7093
+    backend: 9999
+    services:
+      dozzle:
+        image: "{{ images.dozzle }}"
+        container_name: homestead-dozzle
+        restart: unless-stopped
+        ports: ["9999:8080"]
+        volumes: ["/var/run/docker.sock:/var/run/docker.sock:ro"]
+
+  - id: files
+    title: File browser
+    icon: "🗂️"
+    hint: Can delete library files; admin only
+    section: admin
+    access: admin
+    port: 7094
+    backend: 8410
+    dirs: ["{{ homestead_data }}/filebrowser"]
+    root: true
+    services:
+      filebrowser:
+        image: "{{ images.filebrowser }}"
+        container_name: homestead-filebrowser
+        restart: unless-stopped
+        user: "0:0"
+        command: ["--root", "/srv", "--database", "/db/filebrowser.db"]
+        ports: ["8410:80"]
+        # First run only: login = dennis + the admin web password ($ doubled for compose).
+        environment:
+          FB_USERNAME: "{{ admin_user }}"
+          FB_PASSWORD: "{{ admin_basic_auth_hash | regex_replace('^[$]2y[$]', '$2a$') | replace('$', '$$') }}"
+        volumes:
+          - "{{ homestead_data }}/filebrowser:/db"
+          - "{{ core_dir }}/docs:/srv/essentials-docs"
+          - "{{ library_mount }}/books/incoming:/srv/my-books"
+          - "{{ library_mount }}/video:/srv/videos"

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Maps{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/vendor/maplibre-gl.css">
+<script src="/static/vendor/maplibre-gl.js"></script><script src="/static/vendor/pmtiles.js"></script><script src="/static/vendor/basemaps.js"></script>{% endblock %}
+{% block body %}
+{% if not (layers.detailed or layers.wide or layers.world) %}
+<main><h1>Maps</h1><p>The maps haven't been built yet. They're made by the <b>Build maps</b> job in the
+<a href="/library">Library manager</a> (needs internet; takes a while).</p></main>
+{% else %}
+<div id="map"></div>
+<div class="map-ui">
+  <div class="box"><a href="/">← Home</a></div>
+  <div class="box"><form id="find"><input id="place" type="search" placeholder="Find a place: town, road, hospital…" size="30" autocomplete="off"></form><ul id="hits"></ul></div>
+  <div class="box"><button type="button" onclick="window.print()">🖨️ Print this view</button></div>
+  <div class="box small muted">{% if info %}Detailed: {{ info.states | join(', ') }} · map data {{ info.build[:8] }}{% endif %}</div>
+</div>
+<script>
+window.HOMESTEAD_MAPS = {{ {"layers": layers, "info": info} | tojson }};
+</script>
+<script src="/static/maps.js"></script>
+{% endif %}
+{% endblock %}

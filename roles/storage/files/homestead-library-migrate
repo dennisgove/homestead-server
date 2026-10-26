@@ -33,12 +33,10 @@ mount -o noatime "$part" "$new_mnt"
 echo "Copying while everything keeps running (this is the long part)..."
 rsync -aH --info=progress2 "$LIBRARY_MOUNT/" "$new_mnt/"
 
-echo "Stopping NOMAD for the final pass..."
-running=$(docker ps -q --filter name=nomad_)
-[[ -n "$running" ]] && docker stop $running >/dev/null
+echo "Stopping the library apps for the final pass..."
+for c in $LIBRARY_CONTAINERS; do docker stop "$c" >/dev/null 2>&1 || true; done
 rsync -aH --delete "$LIBRARY_MOUNT/" "$new_mnt/"
 umount "$new_mnt"
-umount "$NOMAD_STORAGE"
 umount "$LIBRARY_MOUNT"
 
 e2label "$temp_lv" LIBRARY-OLD

@@ -11,8 +11,8 @@
       shutdown_soc = {{ power_shutdown_soc }}
       eco_volts = {{ power_eco_volts }}
       shutdown_volts = {{ power_shutdown_volts }}
-      # NOMAD containers also paused in eco mode:
-      eco_stop_containers = nomad_jellyfin nomad_kolibri_2
+      # Stopped in eco mode (registry: power: eco-stop):
+      eco_stop_containers = {% for a in homestead_apps if a.power | default('') == 'eco-stop' and a.services is defined %}{% for s in a.services.values() %}{{ s.container_name }} {% endfor %}{% endfor %}
     mode: "0644"
 
 - name: Battery watchdog

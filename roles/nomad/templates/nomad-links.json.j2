@@ -1,8 +1,0 @@
-{
-  "api": "http://127.0.0.1:{{ ports.nomad }}",
-  "links": {
-{% for name, v in nomad_links.items() %}
-    "{{ name }}": "{{ v[1] }}://{{ nomad_links_host }}:{{ public_ports[v[0]] }}"{{ "," if not loop.last else "" }}
-{% endfor %}
-  }
-}

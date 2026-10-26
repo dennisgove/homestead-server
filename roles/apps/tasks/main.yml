@@ -1,31 +1,43 @@
-- name: App data directories
+# Containers for every app in the registry (group_vars/apps.yml).
+
+- name: App folders (from the registry's `dirs`)
   ansible.builtin.file:
-    path: "{{ homestead_data }}/{{ item }}"
+    path: "{{ item.1 }}"
+    state: directory
+    owner: "{{ 'root' if item.0.root | default(false) else '1000' }}"
+    group: "{{ 'root' if item.0.root | default(false) else '1000' }}"
+    mode: "0755"
+  loop: "{{ homestead_apps | subelements('dirs', skip_missing=True) }}"
+  loop_control: { label: "{{ item.1 }}" }
+  # Folders on the LIBRARY drive only when it's mounted (the empty mountpoint is immutable).
+  when: not item.1.startswith(library_mount) or library_is_mounted | default(false)
+
+- name: Kiwix library index folder
+  ansible.builtin.file:
+    path: "{{ state_dir }}/kiwix"
     state: directory
     mode: "0755"
-  loop: [ollama, open-webui, grocy, mealie, openwebrx/var, openwebrx/etc]
 
-- name: Open WebUI admin password (generated once; `sudo cat /etc/homestead/openwebui-admin`)
+- name: Start with an empty Kiwix library (the catalog-apply job fills it)
+  ansible.builtin.copy:
+    dest: "{{ state_dir }}/kiwix/library.xml"
+    content: '<library version="20110515"></library>'
+    mode: "0644"
+    force: false
+
+- name: Generated admin passwords (made once; `sudo cat /etc/homestead/<name>-admin`)
   ansible.builtin.set_fact:
-    openwebui_admin_password: "{{ lookup('ansible.builtin.password', '/etc/homestead/openwebui-admin', chars=['ascii_letters', 'digits'], length=20) }}"
+    "{{ item }}_admin_password": "{{ lookup('ansible.builtin.password', '/etc/homestead/' ~ item ~ '-admin', chars=['ascii_letters', 'digits'], length=20) }}"
+  loop: [openwebui, openwebrx, calibreweb]
   no_log: true
 
-- name: Open WebUI admin password file is root-only
+- name: Generated admin password files are root-only
   ansible.builtin.file:
-    path: /etc/homestead/openwebui-admin
+    path: "/etc/homestead/{{ item }}-admin"
     mode: "0600"
+  loop: [openwebui, openwebrx, calibreweb]
 
-- name: OpenWebRX+ admin password (generated once; `sudo cat /etc/homestead/openwebrx-admin`)
-  ansible.builtin.set_fact:
-    openwebrx_admin_password: "{{ lookup('ansible.builtin.password', '/etc/homestead/openwebrx-admin', chars=['ascii_letters', 'digits'], length=20) }}"
-  no_log: true
-
-- name: OpenWebRX+ admin password file is root-only
-  ansible.builtin.file:
-    path: /etc/homestead/openwebrx-admin
-    mode: "0600"
-
-# Starting point only: after the first run these files belong to OpenWebRX+'s
+# Starting points only: after the first run these files belong to OpenWebRX+'s
 # own settings pages, so they're never overwritten.
 - name: OpenWebRX+ starting settings (receiver, band profiles)
   ansible.builtin.template:
@@ -41,14 +53,30 @@
     mode: "0644"
     force: false
 
-- name: Compose file
+- name: Compose file (generated from the registry)
   ansible.builtin.template:
     src: compose.yaml.j2
     dest: "{{ homestead_dir }}/compose.yaml"
-    mode: "0644"
-  register: compose
+    mode: "0600"   # holds generated passwords
+    validate: docker compose -f %s config -q
 
-- name: Start add-on apps
-  ansible.builtin.command: docker compose -f {{ homestead_dir }}/compose.yaml up -d --remove-orphans
+- name: Start the apps
+  ansible.builtin.command: docker compose -f {{ homestead_dir }}/compose.yaml up -d --remove-orphans {{ '--pull never' if offline else '' }}
   register: up
   changed_when: "'Started' in up.stderr or 'Recreated' in up.stderr or 'Created' in up.stderr"
+
+- name: Calibre-Web setup tool
+  ansible.builtin.copy:
+    src: homestead-calibreweb-setup
+    dest: /usr/local/sbin/homestead-calibreweb-setup
+    mode: "0700"
+
+- name: Calibre-Web points at the books library, anyone can browse, admin password set
+  ansible.builtin.command: /usr/local/sbin/homestead-calibreweb-setup
+  environment:
+    CALIBREWEB_DB: "{{ homestead_data }}/calibreweb/app.db"
+    CALIBREWEB_ADMIN: "{{ admin_user }}"
+    CALIBREWEB_PASSWORD: "{{ calibreweb_admin_password }}"
+  register: cw
+  changed_when: "'changed' in cw.stdout"
+  no_log: true

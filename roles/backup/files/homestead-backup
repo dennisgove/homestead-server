@@ -61,10 +61,6 @@ borg key export "$BORG_REPO" "$MNT/borg-key.txt"
 
 # --- 1. Consistent dumps of live databases and the disk layout --------------
 mkdir -p "$DUMPS/sqlite" "$DUMPS/layout"
-if docker ps --format '{{.Names}}' | grep -qx nomad_mysql; then
-  docker exec nomad_mysql sh -c 'exec mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" --all-databases --single-transaction --routines --events' \
-    > "$DUMPS/nomad-mysql.sql.tmp" && mv "$DUMPS/nomad-mysql.sql.tmp" "$DUMPS/nomad-mysql.sql"
-fi
 find "$HOMESTEAD_DATA" -type f \( -name '*.db' -o -name '*.sqlite' -o -name '*.sqlite3' \) -size +0 2>/dev/null \
   | while read -r db; do
       out="$DUMPS/sqlite/$(echo "${db#/}" | tr / _)"
@@ -84,8 +80,6 @@ docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -v '<none>' > "$DUMPS
 # --- 2. System + data archive -----------------------------------------------
 notify "Backing up system and data..."
 borg create --stats --compression zstd,3 --one-file-system --exclude-caches \
-  --exclude "pp:${NOMAD_STORAGE#/}" \
-  --exclude "pp:${NOMAD_DIR#/}/mysql" \
   --exclude "pp:${LIBRARY_MOUNT#/}" \
   --exclude "pp:${VAULT_MOUNT#/}" \
   --exclude 'home/*/.cache' \

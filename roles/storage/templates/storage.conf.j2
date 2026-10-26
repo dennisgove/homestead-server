@@ -1,8 +1,6 @@
 # Sourced by homestead-* shell helpers. Managed by Ansible.
 LIBRARY_LABEL="{{ library_label }}"
 LIBRARY_MOUNT="{{ library_mount }}"
-NOMAD_DIR="{{ nomad_dir }}"
-NOMAD_STORAGE="{{ nomad_storage }}"
 VAULT_LV="{{ vault_lv }}"
 VAULT_MAPPER="{{ vault_mapper }}"
 VAULT_MOUNT="{{ vault_mount }}"
@@ -10,6 +8,7 @@ HOMESTEAD_DIR="{{ homestead_dir }}"
 HOMESTEAD_DATA="{{ homestead_data }}"
 STATE_DIR="{{ state_dir }}"
 CORE_DIR="{{ core_dir }}"
-PORTAL_DIR="{{ portal_dir }}"
+# Containers with data on the LIBRARY drive (registry: library: true)
+LIBRARY_CONTAINERS="{% for a in homestead_apps if a.library | default(false) and a.services is defined %}{% for s in a.services.values() %}{{ s.container_name }} {% endfor %}{% endfor %}"
 ADMIN_USER="{{ admin_user }}"
 KIOSK_USER="{{ kiosk_user }}"

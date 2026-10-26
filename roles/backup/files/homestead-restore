@@ -5,7 +5,7 @@
 #   homestead-restore BACKUP-A list                     list archives
 #   homestead-restore BACKUP-A files ARCHIVE PATH...    restore paths (e.g. home/guest/Documents) into /restore
 #   homestead-restore BACKUP-A all ARCHIVE              restore a whole system archive into /restore
-#   homestead-restore BACKUP-A mysql                    load the NOMAD database from the latest dump
+#   homestead-restore BACKUP-A app NAME                 put one app's data back (NAME = folder in /opt/homestead/data)
 #   homestead-restore BACKUP-A vault ARCHIVE            write a vault archive back onto the vault LV (vault must be closed)
 #   homestead-restore BACKUP-A library                  copy the library mirror onto a (new) LIBRARY drive
 #   homestead-restore BACKUP-A images                   docker load every saved image (no internet needed)
@@ -32,12 +32,15 @@ case "$cmd" in
     borg extract --list "::$archive" "$@"
     echo "Restored into /restore. Copy what you need back into place."
     ;;
-  mysql)
+  app)
+    name="${1:?app data folder name, e.g. grocy (see ls /opt/homestead/data)}"
     archive=$(borg list --short --glob-archives 'system-*' --last 1)
-    mkdir -p /restore && cd /restore
-    borg extract "::$archive" "${STATE_DIR#/}/dumps/nomad-mysql.sql"
-    docker exec -i nomad_mysql sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < "/restore/${STATE_DIR#/}/dumps/nomad-mysql.sql"
-    echo "NOMAD database restored from $archive."
+    containers=$(docker ps -q --filter "name=homestead-$name")
+    [[ -n "$containers" ]] && docker stop $containers >/dev/null
+    cd /
+    borg extract "::$archive" "${HOMESTEAD_DATA#/}/$name"
+    [[ -n "$containers" ]] && docker start $containers >/dev/null
+    echo "$name restored from $archive."
     ;;
   vault)
     archive="${1:?vault archive name (see list)}"
@@ -52,7 +55,6 @@ case "$cmd" in
   library)
     mountpoint -q "$LIBRARY_MOUNT" || mount "$LIBRARY_MOUNT"
     rsync -aH --info=progress2 "$MNT/library/" "$LIBRARY_MOUNT/"
-    mountpoint -q "$NOMAD_STORAGE" || mount "$NOMAD_STORAGE"
     /usr/local/sbin/homestead-library-online
     ;;
   images)

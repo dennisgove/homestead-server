@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Library health{% endblock %}
+{% block body %}
+<main>
+<h1>Library health</h1>
+{% include "library/_nav.html" %}
+<h2 id="missing">Not downloaded yet ({{ h.missing | length }})</h2>
+{% if h.missing %}<form method="post" action="/library/jobs/fetch"><button class="primary">Download all</button></form>{% endif %}
+<ul>{% for r in h.missing %}<li>{{ r.title }} <span class="tag">{{ r.type }}</span> <span class="small muted">{{ r.status.state or '' }} {{ r.status.error or '' }}</span></li>{% endfor %}</ul>
+<h2 id="dupes">More than one copy ({{ h.dupes | length }})</h2>
+<p class="small muted">The newest copy is served. Older ones are removed when that item is next updated.</p>
+<ul>{% for r in h.dupes %}<li>{{ r.title }}: {% for f in r.files %}<code>{{ f }}</code>{% if not loop.last %}, {% endif %}{% endfor %}</li>{% endfor %}</ul>
+<h2 id="orphans">On disk but not in the catalog ({{ h.orphans | length }})</h2>
+<table class="items"><tr><th>File</th><th>Size</th><th>Adopt into the catalog</th></tr>
+{% for o in h.orphans %}<tr><td><code>{{ o.file }}</code></td><td>{{ o.size | human }}</td><td>
+<form method="post" action="/library/adopt" class="inline"><input type="hidden" name="kind" value="{{ o.kind }}"><input type="hidden" name="name" value="{{ o.name }}">
+<input type="hidden" name="disk" value="{{ o.disk or 'core' }}"><input type="hidden" name="folder" value="{{ o.folder or '' }}">
+<select name="category">{% for k, v in cats.items() %}<option value="{{ k }}" {% if k == (o.category or 'reference') %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>
+<button>Adopt</button></form></td></tr>{% endfor %}</table>
+<h2 id="partial">Unfinished downloads ({{ h.partial | length }})</h2>
+<p class="small muted">These resume on the next download run.</p>
+<ul>{% for p in h.partial %}<li><code>{{ p.file.name }}</code> ({{ p.size | human }} so far)</li>{% endfor %}</ul>
+<h2 id="manual">Get by hand</h2>
+<p class="small">No download link exists for these. Get them, then use <a href="/library/add#doc">Upload a file</a>.</p>
+<ul>{% for m in manual %}<li><b>{{ m.title }}</b> <span class="tag">{{ cats.get(m.category, m.category) }}</span><br><span class="small muted">{{ m.where }}</span></li>{% endfor %}</ul>
+</main>
+{% endblock %}

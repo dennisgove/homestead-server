@@ -15,13 +15,11 @@ homestead_dir: /opt/homestead
 homestead_data: /opt/homestead/data
 state_dir: /var/lib/homestead
 core_dir: /srv/core                  # NVMe: essentials library (always available)
-portal_dir: /srv/portal
+hub_dir: /opt/homestead/hub          # the Hub's code (copied from hub/ in this repo)
 library_label: LIBRARY               # external 5TB USB HDD, ext4
 library_mount: /srv/library
 library_temp_size: 180G              # internal stand-in when no LIBRARY drive is attached ('0' = off);
                                      # move it to the drive later with homestead-library-migrate
-nomad_dir: /opt/project-nomad
-nomad_storage: /opt/project-nomad/storage   # bind mount of {{ library_mount }}/nomad
 vault_lv: /dev/vg_sys/lv_vault
 vault_mapper: homestead-vault
 vault_mount: /srv/vault
@@ -34,94 +32,12 @@ hotspot_ip: 10.42.0.1
 hotspot_channel: 6
 lan_name: library.lan
 
-# Ports. Backends listen on the host but are firewalled from everything except
-# Caddy. Public faces are Caddy ports 80 and 7000-7099.
-ports:
-  nomad: 8080
-  kiwix: 8090
-  kolibri: 8310
-  flatnotes: 8200
-  cyberchef: 8100        # NOMAD "Data Tools"
-  stirling_pdf: 8400
-  filebrowser: 8410
-  it_tools: 8430
-  excalidraw: 8440
-  meshtastic_web: 8450
-  translate: 8460        # NOMAD "Translated Library"
-  homebox: 8470
-  vaultwarden: 8480      # serves HTTPS itself (self-signed)
-  calibreweb: 8420
-  jellyfin: 8490
-  meshcore_web: 8500     # serves HTTPS itself (self-signed)
-  dozzle: 9999
-  kiwix_core: 8601
-  open_webui: 8610
-  grocy: 8620
-  mealie: 8630
-  paperless: 8640
-  pat: 8650
-  openwebrx: 8660
-  ollama: 11435
-
-public_ports:
-  nomad_readonly: 7000
-  library: 7001
-  core_library: 7002
-  education: 7004
-  books: 7005
-  videos: 7006
-  ai: 7007
-  pantry: 7008
-  recipes: 7009
-  notes: 7010
-  data_tools: 7011
-  pdf_tools: 7012
-  it_tools: 7013
-  whiteboard: 7014
-  inventory: 7015
-  passwords: 7016        # HTTPS (Vaultwarden)
-  mesh: 7017             # HTTPS (MeshCore Web)
-  meshtastic: 7018       # HTTPS (Meshtastic Web; Web Serial/Bluetooth need it)
-  translated_library: 7019
-  sdr: 7020              # OpenWebRX+ (its settings pages need the admin password)
-  admin_nomad: 7090
-  admin_pat: 7091
-  admin_paperless: 7092
-  admin_logs: 7093
-  admin_files: 7094      # File Browser can delete library files, so admin only
-
-# Plain-HTTP copies of the radio web apps, on 127.0.0.1 only, for the server's
-# own screen: browsers treat http://localhost as secure, so Web Serial works
-# without a certificate warning (Chrome only forgets that warning on restart).
-local_ports:
-  meshcore: 7027
-  meshtastic: 7028
-
-# NOMAD's own links to its apps point at their backend ports, which the
-# firewall blocks. homestead-nomad-links sets each installed app's custom URL
-# to its public port instead (at every playbook run and every 5 minutes, so
-# apps installed later from the Supply Depot get fixed too).
-# service name: [public_ports key, scheme]
-nomad_links:
-  nomad_kiwix_server: [library, http]
-  nomad_kolibri: [education, http]
-  nomad_kolibri_2: [education, http]
-  nomad_calibreweb: [books, http]
-  nomad_jellyfin: [videos, http]
-  nomad_flatnotes: [notes, http]
-  nomad_cyberchef: [data_tools, http]
-  nomad_stirling_pdf: [pdf_tools, http]
-  nomad_it_tools: [it_tools, http]
-  nomad_excalidraw: [whiteboard, http]
-  nomad_homebox: [inventory, http]
-  nomad_vaultwarden: [passwords, https]
-  nomad_meshcore_web: [mesh, https]
-  nomad_meshtastic_web: [meshtastic, https]
-  nomad_translate: [translated_library, http]
-  nomad_filebrowser: [admin_files, http]
-  # NOMAD's own AI chat unloads the models Open WebUI is using; send its tile to Open WebUI instead.
-  nomad_ollama: [ai, http]
-nomad_links_host: "{{ homestead_hostname }}.local"
+# Apps, their ports and containers: group_vars/apps.yml (the app registry).
+apps_by_id: "{{ dict(homestead_apps | map(attribute='id') | zip(homestead_apps)) }}"
+hub_port: 8700                       # the Hub's backend (portal, Library manager, API); public on port 80
+# Caddy adds this header to requests that passed the admin password; the Hub trusts nothing else.
+hub_admin_header: "{{ lookup('ansible.builtin.password', '/etc/homestead/hub-admin-header', chars=['ascii_letters', 'digits'], length=32) }}"
+ollama_port: 11435                   # host port of the AI engine (backend; Caddy and containers only)
 
 # --- Container images ---------------------------------------------------
 # Pin to the versions that worked on first install; `homestead-export-offline`
@@ -135,6 +51,20 @@ images:
   paperless: ghcr.io/paperless-ngx/paperless-ngx:latest
   redis: redis:7-alpine
   openwebrx: slechev/openwebrxplus:1.2.126
+  calibreweb: linuxserver/calibre-web:0.6.26-ls386
+  kolibri: learningequality/kolibri:0.19.4
+  jellyfin: jellyfin/jellyfin:10.11.11
+  flatnotes: dullage/flatnotes:v5.5.4
+  homebox: ghcr.io/sysadminsmedia/homebox:0.26.2
+  vaultwarden: vaultwarden/server:1.36.0
+  stirling_pdf: ghcr.io/stirling-tools/s-pdf:2.13.1
+  cyberchef: ghcr.io/gchq/cyberchef:10.24.0
+  it_tools: ghcr.io/corentinth/it-tools:2024.10.22-7ca5933
+  excalidraw: excalidraw/excalidraw:sha-4bfc5bb
+  meshcore_web: ghcr.io/axistem-dev/meshcore-web:v1.45.0
+  meshtastic_web: ghcr.io/meshtastic/web:2.7.1
+  dozzle: amir20/dozzle:v10.0
+  filebrowser: filebrowser/filebrowser:v2
 
 # --- Web SDR (OpenWebRX+) -------------------------------------------------
 # Location shown on its map (ADS-B, APRS). Rough is fine; CHANGE-ME to your town.
