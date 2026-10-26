@@ -42,7 +42,12 @@
 - name: fstab - no NOMAD storage bind any more (homestead-migrate-from-nomad moved its data)
   ansible.posix.mount:
     path: /opt/project-nomad/storage
-    state: absent
+    state: absent_from_fstab
+
+- name: Let go of the old NOMAD bind mount if it's still there (lazily, so a busy one can't stop the run)
+  ansible.builtin.shell: mountpoint -q /opt/project-nomad/storage && umount -l /opt/project-nomad/storage && echo unmounted || true
+  register: nomad_umount
+  changed_when: "'unmounted' in nomad_umount.stdout"
 
 - name: Is the library drive attached?
   ansible.builtin.command: blkid -L {{ library_label }}
