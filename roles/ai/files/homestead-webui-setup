@@ -1,0 +1,74 @@
+#!/usr/bin/env python3
+"""Apply Homestead's Open WebUI settings (they live in Open WebUI's own database).
+
+    homestead-webui-setup --token <Open WebUI admin API key> [--url http://127.0.0.1:8610]
+
+- Background jobs: titles and search rewrites on the small model; follow-ups,
+  tags, web-search and autocomplete off. Each one otherwise runs the big model.
+- Every model: built-in tools off ("legacy" function calling). Otherwise Open
+  WebUI attaches ~26 tool definitions (5,000+ tokens) to every message from the
+  web page, and on a CPU the model spends minutes reading them before answering.
+- The persona models and the photo model are shown to everyone; the raw base
+  models are hidden from the picker (still used underneath).
+Safe to re-run. Settings are read from /etc/homestead/webui.json (roles/ai).
+"""
+import argparse
+import json
+import sys
+import urllib.error
+import urllib.request
+
+CONF = "/etc/homestead/webui.json"
+PUBLIC = [{"principal_type": "user", "principal_id": "*", "permission": "read"}]
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--token", required=True)
+    ap.add_argument("--url", default="http://127.0.0.1:8610")
+    ap.add_argument("--config", default=CONF)
+    args = ap.parse_args()
+    with open(args.config) as f:
+        conf = json.load(f)
+    base = args.url.rstrip("/")
+
+    def call(path, body=None):
+        req = urllib.request.Request(base + path, data=json.dumps(body).encode() if body is not None else None,
+                                     method="POST" if body is not None else "GET",
+                                     headers={"Authorization": f"Bearer {args.token}", "Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                return json.load(r)
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                return None
+            sys.exit(f"{path}: HTTP {e.code} {e.read().decode()[:200]}")
+
+    tasks = call("/api/v1/tasks/config")
+    tasks.update(conf["tasks"])
+    call("/api/v1/tasks/config/update", tasks)
+    print("background jobs:", {k: v for k, v in conf["tasks"].items()})
+
+    shown = {m["id"]: m for m in conf["models"]}
+    for m in call("/api/models")["data"]:
+        mid = m["id"]
+        if m.get("owned_by") != "ollama" or mid.startswith("nomic-embed"):
+            continue
+        want = shown.get(mid)
+        cur = call(f"/api/v1/models/model?id={mid}") or {}
+        meta = dict(cur.get("meta") or {})
+        meta["capabilities"] = {"vision": bool(want and want["vision"]), "file_upload": True, "web_search": False,
+                                "image_generation": False, "code_interpreter": False, "citations": True,
+                                "usage": True, "builtin_tools": False}
+        meta["hidden"] = want is None
+        if want:
+            meta["description"] = want["description"]
+        params = dict(cur.get("params") or {}, function_calling="legacy")
+        form = {"id": mid, "base_model_id": None, "name": want["name"] if want else (cur.get("name") or mid),
+                "meta": meta, "params": params, "access_grants": PUBLIC, "is_active": True}
+        call(f"/api/v1/models/model/update?id={mid}" if cur else "/api/v1/models/create", form)
+        print(f"{'shown ' if want else 'hidden'}  {mid}")
+
+
+if __name__ == "__main__":
+    main()

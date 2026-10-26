@@ -158,8 +158,9 @@ ai_context: 8192
 ai_max_loaded_models: 3
 ai_keep_alive: 30m
 ai_personas:
-  - { name: homestead-planner, base: "{{ ai_models.planner }}", temperature: 0.4 }
-  - { name: homestead-thinker, base: "{{ ai_models.thinker }}", temperature: 0.6 }
+  - { name: homestead-planner, base: "{{ ai_models.planner }}", temperature: 0.4, title: "Homestead planner", description: "Answers directly. The default." }
+  - { name: homestead-thinker, base: "{{ ai_models.thinker }}", temperature: 0.6, title: "Homestead thinker (slow)", description: "Reasons step by step before answering, for hard planning questions. Takes minutes." }
+  - { name: homestead-quick, base: "{{ ai_models.fast }}", temperature: 0.4, title: "Homestead quick", description: "Small and fast. Short answers, less detail." }
 
 # --- Power (Victron VE.Direct) ------------------------------------------
 power_eco_soc: 35                    # % : stop AI + video

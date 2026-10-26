@@ -42,6 +42,18 @@
   loop_control: { label: "{{ item.persona.name }}" }
   when: item.changed or item.persona.name not in have.stdout
 
+- name: Open WebUI settings for homestead-webui-setup
+  ansible.builtin.template:
+    src: webui.json.j2
+    dest: /etc/homestead/webui.json
+    mode: "0644"
+
+- name: Open WebUI setup tool (run once with an admin API key; see docs/INSTALL.md)
+  ansible.builtin.copy:
+    src: homestead-webui-setup
+    dest: /usr/local/bin/homestead-webui-setup
+    mode: "0755"
+
 - name: Knowledge-base seeding tool
   ansible.builtin.copy:
     src: homestead-kb-seed
