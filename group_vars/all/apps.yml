@@ -289,7 +289,9 @@ homestead_apps:
         container_name: homestead-homebox
         restart: unless-stopped
         ports: ["8470:7745"]
-        environment: { HBOX_OPTIONS_ALLOW_REGISTRATION: "true" }
+        environment:
+          HBOX_OPTIONS_ALLOW_REGISTRATION: "true"
+          HBOX_AUTH_API_KEY_PEPPER: "{{ homebox_api_key_pepper }}"   # required since Homebox 0.2x
         volumes: ["{{ homestead_data }}/homebox:/data"]
 
   - id: passwords

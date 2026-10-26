@@ -31,11 +31,16 @@
   loop: [openwebui, openwebrx, calibreweb, mealie]
   no_log: true
 
+- name: Homebox API key pepper (made once; Homebox won't start without it)
+  ansible.builtin.set_fact:
+    homebox_api_key_pepper: "{{ lookup('ansible.builtin.password', '/etc/homestead/homebox-pepper', chars=['ascii_letters', 'digits'], length=64) }}"
+  no_log: true
+
 - name: Generated admin password files are root-only
   ansible.builtin.file:
-    path: "/etc/homestead/{{ item }}-admin"
+    path: "/etc/homestead/{{ item }}"
     mode: "0600"
-  loop: [openwebui, openwebrx, calibreweb, mealie]
+  loop: [openwebui-admin, openwebrx-admin, calibreweb-admin, mealie-admin, homebox-pepper]
 
 # Starting points only: after the first run these files belong to OpenWebRX+'s
 # own settings pages, so they're never overwritten.
@@ -110,3 +115,19 @@
   changed_when: "'changed' in mealie_pub.stdout"
   failed_when: false
   no_log: true
+
+- name: Grocy setting overrides folder
+  ansible.builtin.file:
+    path: "{{ homestead_data }}/grocy/data/settingoverrides"
+    state: directory
+    owner: "1000"
+    group: "1000"
+    mode: "0755"
+
+- name: Pantry open without a login (Grocy setting override; anyone on the network can edit)
+  ansible.builtin.copy:
+    dest: "{{ homestead_data }}/grocy/data/settingoverrides/DISABLE_AUTH.txt"
+    content: "true"
+    owner: "1000"
+    group: "1000"
+    mode: "0644"

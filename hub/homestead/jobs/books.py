@@ -9,6 +9,7 @@ import os
 import re
 import shutil
 import subprocess
+import urllib.request
 from pathlib import Path
 
 from .. import catalog, config
@@ -18,6 +19,17 @@ EXTS = (".pdf", ".epub", ".mobi", ".azw3", ".djvu", ".txt", ".docx", ".odt")
 
 
 CALIBRE_WEB_UID = 1000  # Calibre-Web runs as this user and must be able to write the library
+
+
+def calibreweb_unconfigured() -> bool:
+    app = next((a for a in config.load()["apps"] if a["id"] == "books"), None)
+    if not app or not app.get("health"):
+        return False
+    try:
+        r = urllib.request.urlopen(app["health"].rsplit("/", 1)[0] + "/", timeout=10)
+        return "/admin/dbconfig" in r.url
+    except OSError:
+        return False
 
 
 def calibredb(lib: Path, *args) -> subprocess.CompletedProcess:
@@ -94,7 +106,9 @@ def main(argv=None):
             calibredb(lib, "remove", ",".join(str(known[k]["id"]) for k in gone))
             for k in gone:
                 del job.status["items"][k]
-        if fresh:  # Calibre-Web only looks for a new library when it starts
+        # Calibre-Web only looks for its library when it starts: restart it if
+        # the library is new, or if it's still showing its "no library" setup page.
+        if fresh or calibreweb_unconfigured():
             subprocess.run(["docker", "restart", "homestead-calibreweb"], capture_output=True)
         job.status["done"] = len(want)
         job.log(f"{len(want)} documents in the books library ({len(gone)} removed)")
