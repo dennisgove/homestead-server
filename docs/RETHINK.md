@@ -1,6 +1,6 @@
 # Rethink: is there a better way to build this?
 
-Status: proposal, on branch `plan/rethink-stack`. Nothing here is built yet.
+Status: **decided** (option C, see [Decisions](#decisions)). Plan only, on branch `plan/rethink-stack`; nothing here is built yet. This is the base that later apps and pages build on, so it's designed to be extended (see [Extending it](#extending-it)).
 
 ## What we're actually trying to do
 
@@ -47,7 +47,7 @@ A long-running open-source project that turns Ubuntu or a Raspberry Pi into an o
 - **For:** mature and field-tested in schools and clinics, a broad app catalog, a real offline maps setup, and actively maintained (pushed June 2026).
 - **Against:** it's built for classrooms, not grid-down households. It has no local AI. It brings its own conventions (nginx layout, its own admin console, its own content tooling), and our vault, power watchdog, radio, kiosk, hotspot modes and backups would have to be fitted around it. That's the same integration problem we have with NOMAD, with a bigger system.
 
-### C. Our own thin stack, no platform (recommended)
+### C. Our own thin stack, no platform (chosen)
 
 Drop NOMAD and run each component directly from our compose file and Ansible, driven by one content catalog. We already run half of this: Open WebUI, Ollama, the essentials Kiwix, Grocy, Mealie, Paperless, OpenWebRX+, Caddy and the portal are ours, not NOMAD's.
 
@@ -58,83 +58,189 @@ Drop NOMAD and run each component directly from our compose file and Ansible, dr
 
 Several offline "survival computers" sell for roughly $200–700. Search results didn't name them reliably, so I can't compare them here. They're typically a Raspberry Pi with Kiwix and a fixed content set: simpler, but smaller, not extensible, and with no AI to speak of. Not a fit for the scope here.
 
-## Recommended design (option C)
+## Decisions
+
+1. **Option C:** our own stack, no NOMAD.
+2. **Content is managed from a web page**, not by editing YAML.
+3. **Maps:** detailed for the home state and its neighbors; less detailed for a wider area.
+4. **This is the base.** More apps and pages come later, so adding one must be cheap and must not mean touching ten files.
+
+## Design
 
 ```
-                      ┌─ Caddy (ports 80, 7000-7099) ─────────────────────────────┐
- phones / kiosk ────▶ │ portal  library  books  learn  videos  maps  AI  radio ...│
-                      └───────────────────────────────────────────────────────────┘
- content/catalog.yaml ─▶ homestead-fetch ─▶ /srv/core (NVMe)  +  /srv/library (USB)
-        (one source)          │                 essentials          everything else
-                              ├─▶ kiwix library.xml (one library, both disks)
-                              ├─▶ Calibre library (PDFs, EPUBs, books)
-                              ├─▶ portal pages + printed binder index
-                              └─▶ AI knowledge bases (curated PDFs)
- Open WebUI ─▶ Ollama (server, or Mac mini when it's on)
-     └─ library-search filter: asks Kiwix full-text search at question time
+                     ┌─ Caddy (ports 80, 7000-7099) ──────────────────────────────────┐
+phones / kiosk ────▶ │ Hub (portal + Library manager + health + future pages)         │
+                     │ library  books  learn  videos  maps  AI  radio  pantry  ...    │
+                     └────────────────────────────────────────────────────────────────┘
+                                         │
+             ┌────────── Hub (homestead-hub: small Python web app) ──────────┐
+             │ pages: portal, library manager, health, settings; JSON API   │
+             │ catalog = repo baseline + local edits (/var/lib/homestead)   │
+             └───────┬──────────────────────────────┬───────────────────────┘
+                     │ starts jobs (systemd)        │ reads/writes
+     homestead-fetch │ homestead-kb-sync │ homestead-books │ homestead-maps
+                     ▼
+   /srv/core (NVMe, essentials)        /srv/library (USB, everything else)
+      zim/  docs/  maps/                  zim/  books/  maps/  video/  kolibri/
+                     │
+   kiwix library.xml (one library, both disks) · Calibre library · map tiles
+   Open WebUI + Ollama (server; Mac mini first when it's on)
+      └─ library-search filter: Kiwix full-text search at question time
 ```
 
-### 1. One catalog drives everything
+### 1. The Hub: one small web app for our own pages
 
-Replace `content/manifest.yaml` with a richer `content/catalog.yaml`. Each item records its title, source, category, tier, **where it lives** (essentials on the NVMe, or bulk on the USB drive), licence, whether the AI should index it, and whether it belongs in the printed binder. From that one file we generate:
-- the Kiwix library (`library.xml`) and the portal's topic pages;
-- the Calibre book library (PDFs and EPUBs get search, covers and categories in Calibre-Web, instead of the folder listing);
-- the binder index (`PRINT-BINDER.md` generated, not hand-written);
-- the AI knowledge-base membership;
-- a **library health page** on the portal: what's downloaded, what's missing, what failed its checksum, what's out of date, and the by-hand checklist with a drop folder.
+Today the portal is static HTML, and everything else of ours is scripts. Replace it with **`homestead-hub`**, a small Python web app (FastAPI with server-rendered pages and a sprinkle of htmx: no JavaScript build step, works on old phones, nothing to download from the internet). It serves:
+- **the portal** (same look and tiles, now generated from the app registry below);
+- **the Library manager** (next section);
+- **the library health page** (downloaded, missing, failed, out of date, by-hand checklist);
+- **a JSON API** (`/api/catalog`, `/api/apps`, `/api/status`) that future apps and pages use instead of reading files.
 
-No item exists twice. Essentials live on the NVMe, everything else on the USB drive.
+It runs as an unprivileged user. It can only start the specific `homestead-*` jobs, through a narrow polkit rule, and never runs anything as root itself. Admin pages sit behind the admin password at Caddy, as now. Future pages are **modules** of the Hub (a folder with routes, templates and a menu entry), so a new page doesn't need a new server, port or login.
 
-### 2. Serving
+Why one app rather than many small ones: one place for the look, navigation, login and the API. And one less thing that can be down on solar power.
+
+### 2. Content managed from a web page: the Library manager
+
+**Where the catalog lives:**
+- `content/catalog.yaml` in the repo is the **baseline**: everything recommended (today's manifest, enriched).
+- `/var/lib/homestead/catalog.local.yaml` holds **your changes from the web page**: added items, removed items, changed tier or placement. It's backed up by borg, so a rebuild restores your choices.
+- The two are merged at run time. An **Export** button turns your local changes into a patch for the repo, so good additions can become baseline.
+
+**What the page does:**
+- **Browse and search Kiwix's online catalog** (it publishes an OPDS feed) by language, category and size, and **add** an item in one click, choosing a category, tier and disk (essentials or bulk).
+- **Add a PDF or document by URL, or upload a file** (for the by-hand items). The upload goes to the right category folder and is queued for the AI and the books library.
+- **Remove** an item: its file is deleted after confirmation, and the space freed is shown.
+- Per item: **use in AI** (on or off), **in printed binder** (on or off), **update automatically** (on or off).
+- **Space planner:** size of each pending download against free space on each disk, with warnings before anything is queued.
+- **Queue and progress:** current download, queue, failures with a retry button, recent checksum results.
+- **Updates:** "new release available" per ZIM, from the same catalog feed, with update-all or one at a time.
+- **Health:** missing files, duplicates, partial downloads, items in the catalog but not on disk, files on disk but not in the catalog (with an **adopt** button).
+
+**Behind the page:** the existing jobs, reading the merged catalog. Each job writes a small status file that the page reads:
+`homestead-fetch` (downloads), `homestead-kb-sync` (AI), `homestead-books` (Calibre import), `homestead-maps` (map extracts), and `homestead-catalog-apply`, which regenerates the Kiwix `library.xml`, the portal topic pages and the binder index.
+
+### 3. Serving
 
 | What | How | Replaces |
 |---|---|---|
-| All ZIMs | **One `kiwix-serve`** over a single `library.xml` covering both disks, plus the essentials-only instance that keeps working without the USB drive | NOMAD's Kiwix + our kiwix-core duplicates |
-| PDFs, EPUBs, purchased books | **Calibre-Web** on a Calibre library built by `homestead-fetch` | portal folder listing |
-| Maps | **Protomaps PMTiles** extract for your state and its neighbors (cut from the planet build with the `pmtiles` CLI), plus a **MapLibre** viewer page in the portal. It's a static file with no tile server: anything that supports HTTP range requests can serve it ([supabase guide](https://supabase.com/blog/self-host-maps-storage-protomaps), [Bobek](https://www.bobek.cz/til/self-hosting-openstreetmap/), [NPR](https://blog.apps.npr.org/2024/11/26/slippy-maps.html)). Organic Maps files on the share for phones. | NOMAD maps |
-| Courses | **Kolibri** container, with channels listed in the catalog and imported by the playbook | NOMAD Kolibri |
-| Video | **Jellyfin** container | NOMAD Jellyfin |
-| Optional tools | CyberChef, IT Tools, Excalidraw and Stirling PDF as plain containers, listed in group_vars | Supply Depot |
+| All ZIMs | **One `kiwix-serve`** over a single `library.xml` for both disks, plus an **essentials-only** instance that keeps working without the USB drive | NOMAD's Kiwix and our duplicate copies |
+| PDFs, EPUBs, purchased books | **Calibre-Web** on a Calibre library that `homestead-books` keeps in sync with `docs/` and `books/` | portal folder listing |
+| Maps | see [Maps](#4-maps) | NOMAD maps |
+| Courses | **Kolibri** container. Channels are catalog items, imported by a job. | NOMAD Kolibri |
+| Video | **Jellyfin** container on `/srv/library/video` | NOMAD Jellyfin |
+| Optional tools | CyberChef, IT Tools, Excalidraw, Stirling PDF, Homebox, Vaultwarden as plain containers, switched on in the app registry | Supply Depot |
 
-### 3. The AI, grounded in the whole library without indexing it
+### 4. Maps
 
-Two layers:
-1. **Curated knowledge bases** (as now): the procedure-type PDFs (medical, canning, water, field manuals), embedded once, which is small enough to do on the CPU or the Mac mini.
-2. **Live library search, at question time.** An Open WebUI **filter function** (it runs before the model, with no tool definitions sent) takes the question, queries **Kiwix's full-text search** across every ZIM, pulls the best two or three article excerpts, and adds them to the prompt with their titles, so the answer cites them. **Nothing has to be indexed**, it covers full Wikipedia and every new ZIM automatically, and it costs one search plus a few hundred tokens per question.
-   - The same idea exists as **MCP servers** (for example OpenZIM MCP and Kiwix Agent: [glama](https://glama.ai/mcp/servers/cameronrye/openzim-mcp), [mcpmarket](https://mcpmarket.com/server/kiwix-agent)), but those work through tool calling, which is exactly what made every message cost 5,000+ tokens here. A filter avoids that.
-   - Kiwix's own search is keyword-based and community users call it "questionable" ([piefed](https://piefed.jeena.net/post/369262)). The filter would first have the small model turn the question into good search terms, which is cheap.
+Built from **Protomaps** basemap files (a single PMTiles file per extract, served as a static file with no tile server; see [supabase guide](https://supabase.com/blog/self-host-maps-storage-protomaps), [Bobek](https://www.bobek.cz/til/self-hosting-openstreetmap/), [NPR](https://blog.apps.npr.org/2024/11/26/slippy-maps.html)). The `pmtiles extract` command cuts a region, at a chosen maximum zoom, straight from the published planet build over the internet, with no need to download the whole planet.
 
-Settings are applied entirely by the playbook (`homestead-webui-setup` plus env), as now.
+| Layer | Area | Detail | Rough size* |
+|---|---|---|---|
+| **Detailed** | home state plus neighboring states (from `region_state`; for Massachusetts: MA, NH, VT, NY, CT, RI) | full detail (zoom 15: every street, building, trail, POI) | a few GB to ~15 GB |
+| **Wide** | contiguous US plus southern Canada | zoom 10 (towns, highways, rivers, county roads) | ~1–3 GB |
+| **World** | whole planet | zoom 6 (countries, major cities) | ~100 MB |
 
-**Compute:** the server's Ollama is always on. When the Mac mini is on the network, Open WebUI uses it first (Open WebUI supports several Ollama connections), and falls back to the server when it's off.
+\*To be measured when built. Sizes depend on the states.
 
-### 4. What goes away
+- **Viewer:** a Hub page with **MapLibre GL**, a Protomaps style, and fonts and icons stored locally, so nothing loads from the internet. It switches automatically from detailed to wide to world as you zoom out or leave the detailed area.
+- **Search places offline:** a small place-name index built from the same data (towns, roads, POIs) and served by the Hub API. Typing "Concord" or "hospital" jumps the map there.
+- **Printing:** a "print this view" button (the browser prints the current map at page size) for binder maps with routes marked.
+- **Phones:** Organic Maps state files on the share, as now.
+- **Later, if wanted:** hillshade or topo lines, and USGS topo GeoPDFs for your county as catalog items.
+- `homestead-maps` rebuilds the extracts when the catalog's map settings change, and refreshes them from a newer build quarterly while online.
 
-The NOMAD role and its interactive install, the Command Center and its MySQL, Redis and Qdrant, the link-fixer timer, NOMAD storage bind mounts, the duplicate ZIM copies, the second Wikipedia, NOMAD's embedding jobs, and ports 7000 (read-only NOMAD) and 7090 (Command Center).
+### 5. The AI, grounded in the whole library without indexing it
 
-## Migration (keeping everything already downloaded)
+1. **Curated knowledge bases:** procedure-type PDFs (medical, canning, water, field manuals), embedded once by `homestead-kb-sync`. Which items go in is the **use in AI** switch on the Library manager.
+2. **Live library search at question time:** an Open WebUI **filter function**, which runs before the model and sends no tool definitions. The small model turns the question into search terms; Kiwix's full-text search runs across every ZIM; the best two or three article excerpts are added to the prompt with their titles, so the answer cites them. **Nothing has to be indexed**, it covers full Wikipedia and every new ZIM, and it costs one search plus a few hundred tokens per question.
+   - MCP servers do the same thing ([OpenZIM MCP](https://glama.ai/mcp/servers/cameronrye/openzim-mcp), [Kiwix Agent](https://mcpmarket.com/server/kiwix-agent)), but through tool calling, which is what made every message cost 5,000+ tokens here. A filter avoids that.
+   - Kiwix search is keyword-based ([piefed thread](https://piefed.jeena.net/post/369262)), which is why the small model writes the search terms. Answer quality and speed get measured on real questions before we rely on it (phase 4).
+3. **Compute:** the server's Ollama is always on. A Mac mini, if added, is listed first in Open WebUI's connections, with the server as fallback.
+4. **Settings:** applied by the playbook (`homestead-webui-setup` plus env), as now.
+
+### 6. What goes away
+
+The NOMAD role and its interactive install; the Command Center with its MySQL, Redis and Qdrant; the link-fixer timer; NOMAD storage bind mounts; duplicate ZIMs and the second Wikipedia; NOMAD's embedding jobs; ports 7000 (read-only NOMAD) and 7090 (Command Center); the static portal files, which the Hub replaces.
+
+## Extending it
+
+The rule: **adding an app or page means adding one entry and, if needed, one role or Hub module. Nothing else gets hand-edited.**
+
+### The app registry
+
+`group_vars/apps.yml` lists every app in one place. One entry declares:
+
+```yaml
+apps:
+  - id: grocy
+    title: Pantry
+    icon: "🥫"
+    hint: Food storage & expiry
+    section: tools              # portal section
+    access: public              # public | admin | local (this machine only)
+    scheme: http                # https for apps that need a secure context
+    backend: 8620               # container port on 127.0.0.1
+    port: 7008                  # public port (assigned once, never reused)
+    container: homestead-grocy  # compose service (or a role for non-container apps)
+    data: [/opt/homestead/data/grocy]   # what backups must include
+    power: normal               # normal | eco-stop (stopped in power-saving mode)
+    health: /                   # URL checked for the status page
+```
+
+Generated from the registry:
+- **Caddy** sites (public, admin-password, or local-only);
+- **firewall** port sets;
+- **portal tiles**, the kiosk's bookmarks, and the binder's app list;
+- **backup** include list and database dumps;
+- **power-saving** stop list;
+- the **status page** (up or down per app, with response time);
+- **`/api/apps`**, so Hub pages and future apps can discover each other.
+
+Today all of that is hand-written in six places (Caddyfile, firewall, portal config, Firefox policy, backup script, power script).
+
+### Hub modules
+
+A future page (a family message board, an inventory dashboard, a garden planner, a medication tracker…) is a folder in `hub/modules/<name>/` with its routes, templates, an optional SQLite database under `/var/lib/homestead/<name>/` (backed up automatically), and a menu entry. It gets the Hub's look, login, API and backups for free.
+
+### Shared services future apps can rely on
+
+- **Catalog and library API:** search the library, link to an article or book, check what's on disk.
+- **AI API:** a Hub endpoint that asks the planner a question with library search included, so apps don't each wire up Ollama.
+- **Events:** when content changes, the jobs signal it (a systemd target, `homestead-content-updated`), so apps can react, for example to re-index.
+- **Accounts (later):** today, admin pages use the admin password and Open WebUI has its own users. When apps need per-person accounts, add one sign-in (for example Caddy `forward_auth` to a small identity service) in front of the Hub and the apps. The registry's `access` field is where each app opts in. It's not needed for the base.
+
+### Conventions
+
+- Ports: public 7000–7089 assigned from the registry; admin 7090–7099; backends 8080–8999, never exposed.
+- Data: `/opt/homestead/data/<app>` (NVMe), big media on `/srv/library/<kind>`; every path is declared in the registry so backups can't miss it.
+- Everything is rebuilt by `bootstrap.sh`. Anything a web page changes lives under `/var/lib/homestead` and is backed up.
+
+## Build plan (keeping everything already downloaded)
 
 | Phase | Work | Downtime |
 |---|---|---|
-| 1. Catalog | Write `catalog.yaml` from the manifest plus what's on disk now; generate the health page. No behaviour change. | none |
-| 2. One library | Move ZIMs out of `/opt/project-nomad/storage/zim` into `/srv/library/zim` (same disk, so a rename, not a copy); one `kiwix-serve` over both disks; delete duplicates | library for minutes |
-| 3. Books and maps | Calibre library from `/srv/core/docs`; PMTiles extract plus MapLibre page | none |
-| 4. Library-search filter | Open WebUI filter calling Kiwix search; measure answer quality and latency on real questions | none |
-| 5. Apps off NOMAD | Kolibri, Jellyfin, tools as our containers (move their data folders); switch portal links | each app for minutes |
-| 6. Remove NOMAD | Stop and remove its containers and role; keep its storage folder until we've checked nothing's missing | none |
-| 7. Docs | INSTALL, RESTORE and the binder regenerated from the catalog | none |
+| 1. Registry | `apps.yml`, and generate Caddy, firewall, portal tiles, backup list and power list from it (same result as today, now from one place) | none |
+| 2. Catalog | `catalog.yaml` from the manifest plus what's on disk; merged-catalog loader; `homestead-catalog-apply`; health status files | none |
+| 3. Hub | `homestead-hub` serving the portal (replacing the static files), health page, JSON API | none |
+| 4. One library | Move ZIMs from NOMAD's folder to `/srv/library/zim` (a rename on the same disk), one `kiwix-serve` over both disks, delete duplicates and the second Wikipedia | library for minutes |
+| 5. Library manager | Kiwix catalog browse and add, uploads, remove, space planner, queue, updates | none |
+| 6. Books | Calibre library and Calibre-Web from `docs/`, `homestead-books` job | none |
+| 7. Maps | `homestead-maps` (detailed, wide and world extracts), MapLibre page, place search | none |
+| 8. AI library search | Open WebUI filter calling Kiwix search; measure quality and latency | none |
+| 9. Apps off NOMAD | Kolibri, Jellyfin and the tools as our containers (move their data folders); registry entries | each app for minutes |
+| 10. Remove NOMAD | Stop and remove its containers and role; keep its storage folder until checked | none |
+| 11. Docs | INSTALL, RESTORE, binder and README regenerated or updated | none |
 
-Each phase is its own commit and can be stopped after. Phases 1–4 are worth doing even if we keep NOMAD.
-
-**Effort:** phases 1–4 are the bulk (the catalog generator, Calibre import, the maps page, the filter). 5–7 are mostly moving things.
+Each phase is its own commit on this branch, tested on the server, and leaves the system working. Phases 1–3 lay the extendable base. 4–8 are the features. 9–11 retire NOMAD.
 
 **Risks:**
-- **Kiwix search quality:** if keyword search turns out poor for questions, the filter can fall back to the curated knowledge bases only. We'd measure that in phase 4 before relying on it.
-- **Maps:** PMTiles needs a planet build download (big) to cut the state extract from. Phones still have Organic Maps either way.
-- **Losing NOMAD's UI:** content changes then happen through the catalog file, not a web page. The health page shows status, but adding an item means editing YAML.
+- **Kiwix search quality** for questions: measured in phase 8. If it's weak, the AI falls back to the curated knowledge bases.
+- **Map sizes and build time:** measured in phase 7. The detailed zoom level can be lowered if the extract is too big.
+- **The Hub is new code to maintain:** kept small, server-rendered, with no build step and tests for its API.
 
-## Decisions for you
+## Open questions
 
-1. **Go with option C**, or stay on A and only take phases 1–4 (catalog, one library, books and maps, live library search) alongside NOMAD?
-2. **Content editing:** is editing `catalog.yaml` (with me) acceptable, or do you want a web page for adding and removing items?
-3. **Maps:** state plus neighboring states, or wider?
+1. **Hub technology:** Python (FastAPI plus htmx) matches the scripts we already have. Any preference?
+2. **Wide map area:** contiguous US plus southern Canada, or just the eastern US (smaller)?
+3. **Start with phase 1** (registry) once you're happy with this plan?
