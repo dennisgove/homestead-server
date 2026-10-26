@@ -4,7 +4,7 @@
 #         target: core     -> /srv/core/zim on the NVMe (essentials; works without the USB drive)
 #                 library  -> NOMAD's zim folder on the LIBRARY drive (skipped if NOMAD already has it)
 # docs:   PDFs into /srv/core/docs/<cat>/ (listed on the portal, fed to the AI knowledge bases)
-#         url: a single file    page: every PDF linked from that page
+#         url: a single file    page: every PDF linked from that page (match: only links matching this regex)
 # manual: no stable direct link; get these by hand into /srv/core/docs/<cat>/
 #
 # tier 1 = critical (medical, water, food, defense), 2 = sustainability & repair, 3 = education & culture.
@@ -119,23 +119,35 @@ docs:
   - { title: "FM 3-98: Reconnaissance and Security Operations (US Army)", url: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN37194-FM_3-98-000-WEB-1.pdf", file: us-army-fm-3-98-reconnaissance-and-security-operations.pdf, cat: defense, tier: 1 }
   # Historical (OSS, 1944; declassified 2008). Project Gutenberg has no PDF, so EPUB.
   - { title: "Simple Sabotage Field Manual (OSS, 1944)", url: "https://www.gutenberg.org/cache/epub/26184/pg26184.epub", file: oss-simple-sabotage-field-manual-1944.epub, cat: defense, tier: 1 }
+  # Free from the publishers (Oct 2026). Hesperian posts each book chapter by chapter on one page.
+  - { title: "Where There Is No Doctor (Hesperian)", page: "https://languages.hesperian.org/pages/en/pdf.html", match: "/en_wtnd_\\d{4}/", folder: where-there-is-no-doctor, cat: medical, tier: 1 }
+  - { title: "Where There Is No Dentist (Hesperian)", page: "https://languages.hesperian.org/pages/en/pdf.html", match: "/en_dent_\\d{4}/", folder: where-there-is-no-dentist, cat: medical, tier: 1 }
+  - { title: "Where Women Have No Doctor (Hesperian)", page: "https://languages.hesperian.org/pages/en/pdf.html", match: "/en_wwhnd_\\d{4}/", folder: where-women-have-no-doctor, cat: medical, tier: 1 }
+  - { title: "A Book for Midwives (Hesperian)", page: "https://languages.hesperian.org/pages/en/pdf.html", match: "/en_midw_\\d{4}/", folder: a-book-for-midwives, cat: medical, tier: 1 }
+  - { title: "A Community Guide to Environmental Health (Hesperian)", page: "https://languages.hesperian.org/pages/en/pdf.html", match: "/en_cgeh_\\d{4}/", folder: community-guide-environmental-health, cat: water, tier: 1 }
+  - { title: "Stop the Bleed: Save a Life booklet (American College of Surgeons)", url: "https://www.slhn.org/-/media/sluhn/emergency-services/pdf/stop-the-bleed-booklet.ashx", file: stop-the-bleed.pdf, cat: medical, tier: 1 }
+  - { title: "Survival and Austere Medicine, 3rd ed. (2017)", url: "https://public.3.basecamp.com/p/inZg8e16NHVuznoxmCMQvZG2/attachments/0b0f040a-2008-11ef-adb3-b2d1a80aa527/download/survivalausteremedicine.pdf", file: survival-and-austere-medicine-3rd-ed.pdf, cat: medical, tier: 1 }
+  - { title: "Special Operations Forces Medical Handbook (USSOCOM, 2001)", url: "https://archive.org/download/SOFMH2001/SOFMH2001.pdf", file: sof-medical-handbook-2001.pdf, cat: medical, tier: 1 }
+  - { title: "ST 31-91B Special Forces Medical Handbook (US Army, 1982)", url: "https://archive.org/download/ST_31-91B_Special_Forces_Medical_Handbook/ST_31-91B_Special_Forces_Medical_Handbook.pdf", file: st-31-91b-special-forces-medical-handbook.pdf, cat: medical, tier: 1 }
+  - { title: "WHO Model List of Essential Medicines, 24th list (2025)", url: "https://iris.who.int/server/api/core/bitstreams/17642505-ecd3-4940-a691-4f1dfa0d835a/content", file: who-essential-medicines-list-2025.pdf, cat: medical, tier: 1 }
+  - { title: "WHO Managing Complications in Pregnancy and Childbirth (2017)", url: "https://iris.who.int/server/api/core/bitstreams/3bda1306-da5d-487d-b2ad-aff995112a7a/content", file: who-managing-complications-pregnancy-childbirth.pdf, cat: medical, tier: 1 }
+  - { title: "USDA Complete Guide to Home Canning (2015)", page: "https://nchfp.uga.edu/resources/entry/about-the-usda-guide-to-home-canning-2015-revision", match: "/papers/guide/", folder: usda-home-canning-guide, cat: food, tier: 1 }
+  - { title: "UMass Extension vegetable planting chart (Massachusetts)", url: "https://ag.umass.edu/sites/ag.umass.edu/files/fact-sheets/pdf/vegetable_planting_chart_1_-ua.pdf", file: garden-calendar.pdf, cat: food, tier: 1 }
+  - { title: "Small-Scale Poultry Production (FAO)", url: "https://www.fao.org/3/y5169e/y5169e.pdf", file: fao-small-scale-poultry-production.pdf, cat: food, tier: 1 }
+  - { title: "CERT Basic Training Participant Manual (FEMA, 2019)", url: "https://em.uci.edu/training/_pdf/cert-participant-manual-english.pdf", file: cert-basic-training.pdf, cat: survival, tier: 1 }
+  - { title: "ARRL US Amateur Radio Bands chart", url: "https://www.arrl.org/files/file/Regulatory/Band%20Chart/Hambands4_Color_11x8_5.pdf", file: arrl-us-amateur-bands.pdf, cat: comms, tier: 1 }
+  - { title: "NIMS ICS Forms Booklet incl. ICS-213/214 (FEMA 502-2)", url: "https://training.fema.gov/emiweb/is/icsresource/assets/nims%20ics%20forms%20booklet.v3.pdf", file: fema-ics-forms-booklet.pdf, cat: comms, tier: 1 }
 
 manual:
-  # Free, but behind landing pages or split into chapters that move around.
-  - { title: "Where There Is No Doctor; Where There Is No Dentist; Where Women Have No Doctor; A Book for Midwives (Hesperian)", where: "hesperian.org - free PDF downloads", cat: medical }
-  - { title: "Where There Is No Animal Doctor", where: "search the title; distributed free by Christian Veterinary Mission", cat: food }
-  - { title: "TCCC guidelines + All Service Members card", where: "deployedmedicine.com", cat: medical }
-  - { title: "Stop the Bleed booklet", where: "stopthebleed.org", cat: medical }
-  - { title: "Special Operations Forces Medical Handbook / Ranger Medic Handbook", where: "public PDFs; search the titles", cat: medical }
-  - { title: "The Ship Captain's Medical Guide", where: "gov.uk (Maritime and Coastguard Agency)", cat: medical }
-  - { title: "WHO Model Formulary + Essential Medicines List", where: "who.int (IRIS repository)", cat: medical }
-  - { title: "USDA Complete Guide to Home Canning (2015)", where: "nchfp.uga.edu", cat: food }
-  - { title: "So Easy to Preserve - excerpts + NCHFP fact sheets", where: "nchfp.uga.edu", cat: food }
-  - { title: "State extension service: vegetable garden calendar, livestock, food preservation", where: "your state's land-grant university extension site", cat: food }
-  - { title: "FAO technical manuals (small-scale farming, fish ponds, food storage)", where: "fao.org/documents", cat: food }
-  - { title: "CERT Basic Training participant manual", where: "fema.gov/emergency-managers/individuals-communities/cert", cat: survival }
+  # Not free online, or depend on your location and gear. The rest of the old list is now in docs: above.
+  - { title: "Where There Is No Animal Doctor", where: "buy from store.hesperian.org (WikiVet and FAO poultry are in the library meanwhile)", cat: food }
+  - { title: "TCCC guidelines + All Service Members card", where: "Deployed Medicine app/site (ATP 4-02.11 in the library covers TCCC and first aid)", cat: medical }
+  - { title: "The Ship Captain's Medical Guide, 24th ed.", where: "sold by TSO/MCA, no free copy (the SOF and Special Forces medical handbooks cover similar ground)", cat: medical }
+  - { title: "So Easy to Preserve", where: "buy from the University of Georgia (the USDA canning guide is in the library)", cat: food }
+  - { title: "State extension: livestock, food preservation", where: "your state's land-grant university extension site", cat: food }
+  - { title: "FAO technical manuals (fish ponds, food storage, farm structures)", where: "openknowledge.fao.org", cat: food }
   - { title: "Manuals for every firearm, radio, generator, vehicle and appliance you own", where: "manufacturer sites", cat: defense }
-  - { title: "ARRL band plan, ICS-213/ICS-214 forms, local repeater list, ARES/RACES plan", where: "arrl.org, your county ARES", cat: comms }
+  - { title: "Local repeater list, ARES/RACES plan", where: "your county ARES / RepeaterBook", cat: comms }
   - { title: "USGS topo maps (GeoPDF) for your county", where: "ngmdb.usgs.gov/topoview", cat: survival }
   - { title: "Purchased books (ARRL Handbook, Foxfire, Machinery's Handbook, ...)", where: "your own copies, into /srv/library/personal", cat: personal }
 

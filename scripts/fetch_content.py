@@ -229,6 +229,8 @@ def fetch_docs(items, dry):
                 print(f"  ! couldn't read {d['page']}: {e}")
                 continue
             links = sorted({urllib.parse.urljoin(d["page"], h) for h in parser.links})
+            if "match" in d:  # one book's chapters from a page that lists several
+                links = [u for u in links if re.search(d["match"], u)]
             todo = [u for u in links if not os.path.exists(os.path.join(sub, os.path.basename(urllib.parse.unquote(urllib.parse.urlsplit(u).path))))]
             if todo:
                 print(f"  docs {d['title']}: {len(todo)} PDFs")
