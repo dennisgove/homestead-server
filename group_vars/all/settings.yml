@@ -37,6 +37,8 @@ apps_by_id: "{{ dict(homestead_apps | map(attribute='id') | zip(homestead_apps))
 hub_port: 8700                       # the Hub's backend (portal, Library manager, API); public on port 80
 # Caddy adds this header to requests that passed the admin password; the Hub trusts nothing else.
 hub_admin_header: "{{ lookup('ansible.builtin.password', '/etc/homestead/hub-admin-header', chars=['ascii_letters', 'digits'], length=32) }}"
+# Homebox won't start without this; made once, never rotated (that would void its API keys).
+homebox_api_key_pepper: "{{ lookup('ansible.builtin.password', '/etc/homestead/homebox-pepper', chars=['ascii_letters', 'digits'], length=64) }}"
 ollama_port: 11435                   # host port of the AI engine (backend; Caddy and containers only)
 
 # --- Container images ---------------------------------------------------

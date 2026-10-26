@@ -31,11 +31,6 @@
   loop: [openwebui, openwebrx, calibreweb, mealie]
   no_log: true
 
-- name: Homebox API key pepper (made once; Homebox won't start without it)
-  ansible.builtin.set_fact:
-    homebox_api_key_pepper: "{{ lookup('ansible.builtin.password', '/etc/homestead/homebox-pepper', chars=['ascii_letters', 'digits'], length=64) }}"
-  no_log: true
-
 - name: Generated admin password files are root-only
   ansible.builtin.file:
     path: "/etc/homestead/{{ item }}"
