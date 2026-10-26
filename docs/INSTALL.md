@@ -182,8 +182,8 @@ With the temporary internal library, run `--tier 1` and NOMAD's Essential/Standa
 
 1. Open http://localhost:7007 and create the first account. **It becomes the Open WebUI admin, so make it dennis.**
 2. Admin Panel → Settings → enable API keys. Then profile → Settings → Account → create an API key.
-3. `homestead-webui-setup --token <key>` applies the settings that keep chat fast on this CPU (built-in tools off, background jobs on the small model) and sets up the model menu. **Without it, every message waits minutes before an answer starts.** Then `homestead-kb-seed --token <key>` uploads the essentials PDFs into knowledge bases (Medical, Food & Agriculture, ...).
-4. In Workspace → Models, edit `homestead-planner` (answers directly, the default) and `homestead-thinker` (reasons step by step first: slower, for hard planning questions) and attach the knowledge bases. Family members sign up, and dennis approves them (Admin → Users).
+3. `homestead-webui-setup --token <key>` applies the settings that keep chat fast on this CPU (built-in tools off, background jobs on the small model) and sets up the model menu. **Without it, every message waits minutes before an answer starts.** Then `homestead-kb-seed --token <key>` uploads the essentials PDFs into knowledge bases (Medical, Food & Agriculture, ...; hours on this CPU), and `homestead-webui-setup --token <key>` once more attaches them to the planner and thinker.
+4. The model menu: **Homestead planner** (answers directly, the default; searches the library), **Homestead thinker** (reasons step by step first: slower, for hard planning questions; searches the library), **Homestead quick** (small and fast; no library search), and **Photo helper**. Family members sign up, and dennis approves them (Admin → Users).
 
 ## 11. Vault
 

@@ -10,8 +10,8 @@
   },
   "models": [
 {% for p in ai_personas %}
-    { "id": "{{ p.name }}:latest", "name": {{ p.title | to_json }}, "description": {{ p.description | to_json }}, "vision": false }{{ "," }}
+    { "id": "{{ p.name }}:latest", "name": {{ p.title | to_json }}, "description": {{ p.description | to_json }}, "vision": false, "knowledge": {{ p.knowledge | to_json }} }{{ "," }}
 {% endfor %}
-    { "id": "{{ ai_models.vision }}", "name": "Photo helper (what plant/bug/label is this?)", "description": "Small model that can look at pictures.", "vision": true }
+    { "id": "{{ ai_models.vision }}", "name": "Photo helper (what plant/bug/label is this?)", "description": "Small model that can look at pictures.", "vision": true, "knowledge": false }
   ]
 }

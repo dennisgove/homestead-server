@@ -10,6 +10,9 @@
   web page, and on a CPU the model spends minutes reading them before answering.
 - The persona models and the photo model are shown to everyone; the raw base
   models are hidden from the picker (still used underneath).
+- Models marked "knowledge" get every homestead knowledge base attached (the ones
+  homestead-kb-seed creates), so they search the library and cite it. Run this
+  again after homestead-kb-seed adds a new category.
 Safe to re-run. Settings are read from /etc/homestead/webui.json (roles/ai).
 """
 import argparse
@@ -49,6 +52,13 @@ def main():
     call("/api/v1/tasks/config/update", tasks)
     print("background jobs:", {k: v for k, v in conf["tasks"].items()})
 
+    kbs = call("/api/v1/knowledge/") or []
+    if isinstance(kbs, dict):  # newer versions paginate
+        kbs = kbs.get("items", [])
+    homestead_kbs = [{"id": k["id"], "name": k["name"], "description": k.get("description", ""), "type": "collection"}
+                     for k in kbs if (k.get("description") or "").startswith("Homestead ")]
+    print("knowledge bases:", ", ".join(k["name"] for k in homestead_kbs) or "none yet (run homestead-kb-seed first)")
+
     shown = {m["id"]: m for m in conf["models"]}
     for m in call("/api/models")["data"]:
         mid = m["id"]
@@ -63,11 +73,16 @@ def main():
         meta["hidden"] = want is None
         if want:
             meta["description"] = want["description"]
+            if want.get("knowledge"):
+                meta["knowledge"] = homestead_kbs
+            else:
+                meta.pop("knowledge", None)
         params = dict(cur.get("params") or {}, function_calling="legacy")
         form = {"id": mid, "base_model_id": None, "name": want["name"] if want else (cur.get("name") or mid),
                 "meta": meta, "params": params, "access_grants": PUBLIC, "is_active": True}
         call(f"/api/v1/models/model/update?id={mid}" if cur else "/api/v1/models/create", form)
-        print(f"{'shown ' if want else 'hidden'}  {mid}")
+        kb = f"  + {len(homestead_kbs)} knowledge bases" if want and want.get("knowledge") else ""
+        print(f"{'shown ' if want else 'hidden'}  {mid}{kb}")
 
 
 if __name__ == "__main__":
