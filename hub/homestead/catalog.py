@@ -188,6 +188,30 @@ def zim_files(name: str) -> list[Path]:
     return sorted(found, key=lambda p: p.name, reverse=True)
 
 
+def doc_titles() -> dict[str, str]:
+    """Titles the catalog gives document files, by full path: a document's
+    own title, and the catalog name of each part of a split book."""
+    titles = {}
+    for it in items():
+        if it["type"] == "doc" and it.get("file"):
+            titles[str(docs_dir(it["category"]) / it["file"])] = it["title"]
+        elif it["type"] == "docpage":
+            for new in (it.get("file_names") or {}).values():
+                titles[str(docs_dir(it["category"]) / it["folder"] / new)] = Path(new).stem
+    return titles
+
+
+def doc_title(f: Path, titles: dict[str, str] | None = None) -> str:
+    """What to call a document file in lists: its catalog title, else its
+    book's name (the folder's .title) plus the cleaned-up file name."""
+    titles = doc_titles() if titles is None else titles
+    if str(f) in titles:
+        return titles[str(f)]
+    group = (f.parent / ".title").read_text().strip() if (f.parent / ".title").exists() else ""
+    name = re.sub(r"[_-]+", " ", f.stem).strip()
+    return f"{group}: {name}" if group else name
+
+
 def item_files(it: dict) -> list[Path]:
     """Files on disk that belong to an item."""
     if it["type"] == "zim":

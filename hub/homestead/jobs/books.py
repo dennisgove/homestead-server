@@ -42,13 +42,7 @@ def calibredb(lib: Path, *args) -> subprocess.CompletedProcess:
 def sources() -> list[tuple[Path, str, str]]:
     """(file, title, tag) for every document we want in Calibre."""
     cats = catalog.merged().get("categories", {})
-    titles = {}
-    for it in catalog.items():
-        if it["type"] == "doc":
-            titles[str(catalog.docs_dir(it["category"]) / it["file"])] = it["title"]
-        elif it["type"] == "docpage":
-            for new in (it.get("file_names") or {}).values():
-                titles[str(catalog.docs_dir(it["category"]) / it["folder"] / new)] = Path(new).stem
+    titles = catalog.doc_titles()
     out = []
     docs = config.path("docs")
     for f in sorted(docs.rglob("*")) if docs.is_dir() else []:
@@ -56,11 +50,7 @@ def sources() -> list[tuple[Path, str, str]]:
             continue
         rel = f.relative_to(docs)
         tag = cats.get(rel.parts[0], rel.parts[0])
-        group = ""
-        if len(rel.parts) > 2 and (f.parent / ".title").exists():
-            group = (f.parent / ".title").read_text().strip() + ": "
-        title = titles.get(str(f)) or group + re.sub(r"[_-]+", " ", f.stem).strip()
-        out.append((f, title, tag))
+        out.append((f, catalog.doc_title(f, titles), tag))
     inc = config.path("books_incoming")
     for f in sorted(inc.rglob("*")) if inc.is_dir() else []:
         if f.is_file() and f.suffix.lower() in EXTS:

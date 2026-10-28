@@ -96,10 +96,7 @@ def core_search_url(request: Request, q: str) -> str:
 
 def guides(category: str | None = None) -> dict[str, list[dict]]:
     docs = config.path("docs")
-    titles = {}
-    for it in catalog.items():
-        if it["type"] == "doc" and it.get("file"):
-            titles[f"{it['category']}/{it['file']}"] = it["title"]
+    titles = catalog.doc_titles()
     out: dict[str, list[dict]] = {}
     if not docs.is_dir():
         return out
@@ -110,9 +107,7 @@ def guides(category: str | None = None) -> dict[str, list[dict]]:
         cat = rel.parts[0]
         if category and cat != category:
             continue
-        group = (f.parent / ".title").read_text().strip() if (f.parent / ".title").exists() else ""
-        title = titles.get(str(rel)) or (f"{group}: " if group else "") + re.sub(r"[_-]+", " ", f.stem)
-        out.setdefault(cat, []).append({"title": title, "path": "/docs/" + str(rel)})
+        out.setdefault(cat, []).append({"title": catalog.doc_title(f, titles), "path": "/docs/" + str(rel)})
     for v in out.values():
         v.sort(key=lambda d: d["title"].lower())
     return out

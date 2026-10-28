@@ -92,3 +92,20 @@ def test_videos_page(site):
     assert "fix a leak" in c.get("/videos").text
     r = c.get("/videos", params={"play": "Repair/fix_a_leak.mp4"})
     assert "<video" in r.text and "/videos/files/Repair/fix_a_leak.mp4" in r.text
+
+
+def test_split_book_parts_titled_the_same_everywhere(site):
+    from homestead import catalog
+    from homestead.jobs import books
+    catalog.add({"id": "wtnd", "type": "docpage", "page": "https://example.org/", "folder": "wtnd",
+                 "title": "Where There Is No Doctor (Hesperian)", "category": "medical",
+                 "file_names": {"x.pdf": "Where There Is No Doctor - Vocabulary.pdf"}})
+    d = catalog.docs_dir("medical") / "wtnd"
+    d.mkdir(parents=True)
+    (d / ".title").write_text("Where There Is No Doctor (Hesperian)")
+    (d / "Where There Is No Doctor - Vocabulary.pdf").write_bytes(b"%PDF")
+    (d / "other_part.pdf").write_bytes(b"%PDF")
+    want = {"Where There Is No Doctor - Vocabulary", "Where There Is No Doctor (Hesperian): other part"}
+    from homestead.web.app import guides
+    assert want <= {g["title"] for g in guides("medical")["medical"]}
+    assert want <= {t for f, t, _ in books.sources()}
