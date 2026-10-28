@@ -173,7 +173,9 @@ def fetch_docpage(job: Job, it: dict, plan_only: bool):
     links = sorted({urllib.parse.urljoin(it["page"], h) for h in p.links})
     if it.get("match"):
         links = [u for u in links if re.search(it["match"], u)]
+    rename = it.get("file_names") or {}
     names = {u: os.path.basename(urllib.parse.unquote(urllib.parse.urlsplit(u).path)) for u in links}
+    names = {u: rename.get(n, n) for u, n in names.items()}
     todo = [u for u in links if not (sub / names[u]).exists()]
     if plan_only:
         job.item(it["id"], state="pending" if todo else "done", files=len(links), missing=len(todo))

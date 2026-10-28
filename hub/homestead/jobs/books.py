@@ -46,6 +46,9 @@ def sources() -> list[tuple[Path, str, str]]:
     for it in catalog.items():
         if it["type"] == "doc":
             titles[str(catalog.docs_dir(it["category"]) / it["file"])] = it["title"]
+        elif it["type"] == "docpage":
+            for new in (it.get("file_names") or {}).values():
+                titles[str(catalog.docs_dir(it["category"]) / it["folder"] / new)] = Path(new).stem
     out = []
     docs = config.path("docs")
     for f in sorted(docs.rglob("*")) if docs.is_dir() else []:

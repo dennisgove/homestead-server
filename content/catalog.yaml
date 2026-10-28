@@ -615,6 +615,52 @@ items:
   type: docpage
   page: https://medcoe.army.mil/borden-tb-ews
   folder: emergency-war-surgery
+  file_names:   # saved under these names (titles from each part's first page)
+    "EWS 5 FM.pdf": "Emergency War Surgery - 00 Front Matter and Contents.pdf"
+    "AbbrevAcro.pdf": "Emergency War Surgery - Abbreviations and Acronyms.pdf"
+    "App 1.pdf": "Emergency War Surgery - App 1 Principles of Medical Ethics.pdf"
+    "App 2.pdf": "Emergency War Surgery - App 2 Glasgow Coma Scale.pdf"
+    "App 3.pdf": "Emergency War Surgery - App 3 DoD Trauma Registry.pdf"
+    "Envoi.pdf": "Emergency War Surgery - App 4 Envoi.pdf"
+    "Ch 1.pdf": "Emergency War Surgery - Ch 01 Weapons Effects and War Wounds.pdf"
+    "Ch 2.pdf": "Emergency War Surgery - Ch 02 Roles of Medical Care.pdf"
+    "Ch 3.pdf": "Emergency War Surgery - Ch 03 Mass Casualty and Triage.pdf"
+    "ch 4.pdf": "Emergency War Surgery - Ch 04 Aeromedical Evacuation.pdf"
+    "Ch 5.pdf": "Emergency War Surgery - Ch 05 Airway and Breathing.pdf"
+    "ch 6.pdf": "Emergency War Surgery - Ch 06 Hemorrhage Control.pdf"
+    "Ch 7.pdf": "Emergency War Surgery - Ch 07 Shock, Damage Control Resuscitation, and Vascular Access.pdf"
+    "ch 8.pdf": "Emergency War Surgery - Ch 08 Anesthesia.pdf"
+    "Ch 9.pdf": "Emergency War Surgery - Ch 09 Soft-Tissue and Open Joint Injuries.pdf"
+    "Ch 10.pdf": "Emergency War Surgery - Ch 10 Infections.pdf"
+    "Ch 11.pdf": "Emergency War Surgery - Ch 11 Critical Care.pdf"
+    "Ch 12.pdf": "Emergency War Surgery - Ch 12 Damage Control Surgery.pdf"
+    "Ch 13.pdf": "Emergency War Surgery - Ch 13 Face and Neck Injuries.pdf"
+    "Ch 14.pdf": "Emergency War Surgery - Ch 14 Ocular (Eye) Injuries.pdf"
+    "Ch 15.pdf": "Emergency War Surgery - Ch 15 Head Injuries.pdf"
+    "Ch 16.pdf": "Emergency War Surgery - Ch 16 Thoracic (Chest) Injuries.pdf"
+    "Ch 17.pdf": "Emergency War Surgery - Ch 17 Abdominal Injuries.pdf"
+    "Ch 18.pdf": "Emergency War Surgery - Ch 18 Genitourinary Tract Injuries.pdf"
+    "Ch 19.pdf": "Emergency War Surgery - Ch 19 Gynecological Trauma and Emergencies.pdf"
+    "Ch 20.pdf": "Emergency War Surgery - Ch 20 Spinal Column and Cord Injuries.pdf"
+    "Ch 21.pdf": "Emergency War Surgery - Ch 21 Pelvic Injuries.pdf"
+    "Ch 22.pdf": "Emergency War Surgery - Ch 22 Extremity Fractures.pdf"
+    "Ch 23.pdf": "Emergency War Surgery - Ch 23 Amputations.pdf"
+    "Ch 24.pdf": "Emergency War Surgery - Ch 24 Injuries to the Hands and Feet.pdf"
+    "Ch 25.pdf": "Emergency War Surgery - Ch 25 Vascular Injuries.pdf"
+    "Ch 26.pdf": "Emergency War Surgery - Ch 26 Burns.pdf"
+    "Ch 27.pdf": "Emergency War Surgery - Ch 27 Environmental Injuries (Cold, Heat, Altitude).pdf"
+    "ch 28.pdf": "Emergency War Surgery - Ch 28 Radiological Injuries.pdf"
+    "Ch 29.pdf": "Emergency War Surgery - Ch 29 Biological Warfare Agents.pdf"
+    "Ch 30.pdf": "Emergency War Surgery - Ch 30 Chemical Injuries.pdf"
+    "Ch 31.pdf": "Emergency War Surgery - Ch 31 Pediatric Care.pdf"
+    "Ch 32.pdf": "Emergency War Surgery - Ch 32 Care of Prisoners of War and Internees.pdf"
+    "Ch 33.pdf": "Emergency War Surgery - Ch 33 Battlefield Transfusions.pdf"
+    "Ch 34.pdf": "Emergency War Surgery - Ch 34 Compartment Syndrome.pdf"
+    "Ch 35.pdf": "Emergency War Surgery - Ch 35 Battlefield Trauma Systems.pdf"
+    "Ch 36.pdf": "Emergency War Surgery - Ch 36 Emergency Whole Blood Collection.pdf"
+    "Ch 37.pdf": "Emergency War Surgery - Ch 37 Tactical Combat Casualty Care.pdf"
+    "Index.pdf": "Emergency War Surgery - Index.pdf"
+    "ProdMfg.pdf": "Emergency War Surgery - Product Manufacturers.pdf"
   title: Emergency War Surgery, 5th US revision (Borden Institute)
   category: medical
   tier: 1
@@ -863,6 +909,39 @@ items:
   type: docpage
   page: https://languages.hesperian.org/pages/en/pdf.html
   folder: where-there-is-no-doctor
+  file_names:   # saved under these names (titles from each part's first page)
+    "en_wtnd_2025_toc.pdf": "Where There Is No Doctor - 00 Contents.pdf"
+    "en_wtnd_2025_fm.pdf": "Where There Is No Doctor - 00 Front Matter.pdf"
+    "en_wtnd_2025_int.pdf": "Where There Is No Doctor - 00 Words to the Village Health Worker.pdf"
+    "en_wtnd_2025_info.pdf": "Where There Is No Doctor - Additional Information.pdf"
+    "en_wtnd_2025_resc.pdf": "Where There Is No Doctor - Addresses for Teaching Materials.pdf"
+    "en_wtnd_2025_01.pdf": "Where There Is No Doctor - Ch 01 Home Cures and Popular Beliefs.pdf"
+    "en_wtnd_2025_02.pdf": "Where There Is No Doctor - Ch 02 Sicknesses that Are Often Confused.pdf"
+    "en_wtnd_2025_03.pdf": "Where There Is No Doctor - Ch 03 How to Examine a Sick Person.pdf"
+    "en_wtnd_2025_04.pdf": "Where There Is No Doctor - Ch 04 How to Take Care of a Sick Person.pdf"
+    "en_wtnd_2025_05.pdf": "Where There Is No Doctor - Ch 05 Healing Without Medicines.pdf"
+    "en_wtnd_2025_06.pdf": "Where There Is No Doctor - Ch 06 Right and Wrong Uses of Modern Medicines.pdf"
+    "en_wtnd_2025_07.pdf": "Where There Is No Doctor - Ch 07 Antibiotics, What They Are and How to Use Them.pdf"
+    "en_wtnd_2025_08.pdf": "Where There Is No Doctor - Ch 08 How to Measure and Give Medicine.pdf"
+    "en_wtnd_2025_09.pdf": "Where There Is No Doctor - Ch 09 Instructions and Precautions for Injections.pdf"
+    "en_wtnd_2025_10.pdf": "Where There Is No Doctor - Ch 10 First Aid.pdf"
+    "en_wtnd_2025_11.pdf": "Where There Is No Doctor - Ch 11 Nutrition, What to Eat to Be Healthy.pdf"
+    "en_wtnd_2025_12.pdf": "Where There Is No Doctor - Ch 12 Prevention, How to Avoid Many Sicknesses.pdf"
+    "en_wtnd_2025_13.pdf": "Where There Is No Doctor - Ch 13 Some Very Common Sicknesses.pdf"
+    "en_wtnd_2025_14.pdf": "Where There Is No Doctor - Ch 14 Serious Illnesses that Need Special Medical Attention.pdf"
+    "en_wtnd_2025_15.pdf": "Where There Is No Doctor - Ch 15 Skin Problems.pdf"
+    "en_wtnd_2025_16.pdf": "Where There Is No Doctor - Ch 16 The Eyes.pdf"
+    "en_wtnd_2025_17.pdf": "Where There Is No Doctor - Ch 17 The Teeth, Gums, and Mouth.pdf"
+    "en_wtnd_2025_18.pdf": "Where There Is No Doctor - Ch 18 The Urinary System and the Genitals.pdf"
+    "en_wtnd_2025_19.pdf": "Where There Is No Doctor - Ch 19 Information for Mothers and Midwives.pdf"
+    "en_wtnd_2025_20.pdf": "Where There Is No Doctor - Ch 20 Family Planning.pdf"
+    "en_wtnd_2025_21.pdf": "Where There Is No Doctor - Ch 21 Health and Sicknesses of Children.pdf"
+    "en_wtnd_2025_22.pdf": "Where There Is No Doctor - Ch 22 Health and Sicknesses of Older People.pdf"
+    "en_wtnd_2025_23.pdf": "Where There Is No Doctor - Ch 23 The Medicine Kit.pdf"
+    "en_wtnd_2025_bm.pdf": "Where There Is No Doctor - Dosage Blanks and Back Matter.pdf"
+    "en_wtnd_2025_gp.pdf": "Where There Is No Doctor - Green Pages, Uses, Dosage and Precautions for Medicines.pdf"
+    "en_wtnd_2025_indx.pdf": "Where There Is No Doctor - Index.pdf"
+    "en_wtnd_2025_gloss.pdf": "Where There Is No Doctor - Vocabulary.pdf"
   title: Where There Is No Doctor (Hesperian)
   category: medical
   tier: 1
@@ -873,6 +952,21 @@ items:
   type: docpage
   page: https://languages.hesperian.org/pages/en/pdf.html
   folder: where-there-is-no-dentist
+  file_names:   # saved under these names (titles from each part's first page)
+    "en_dent_2024_fm.pdf": "Where There Is No Dentist - 00 Front Matter.pdf"
+    "en_dent_2024_bm.pdf": "Where There Is No Dentist - Appendices, Waste, Dental Kit, Medicines.pdf"
+    "en_dent_2024_01.pdf": "Where There Is No Dentist - Ch 01 Your Own Teeth and Gums.pdf"
+    "en_dent_2024_02.pdf": "Where There Is No Dentist - Ch 02 Teaching Family and Friends in Your Community.pdf"
+    "en_dent_2024_03.pdf": "Where There Is No Dentist - Ch 03 Teaching Children at School.pdf"
+    "en_dent_2024_04.pdf": "Where There Is No Dentist - Ch 04 School Activities for Learning About Teeth and Gums.pdf"
+    "en_dent_2024_05.pdf": "Where There Is No Dentist - Ch 05 Taking Care of Teeth and Gums.pdf"
+    "en_dent_2024_06.pdf": "Where There Is No Dentist - Ch 06 Examination and Diagnosis.pdf"
+    "en_dent_2024_07.pdf": "Where There Is No Dentist - Ch 07 Treating Some Common Problems.pdf"
+    "en_dent_2024_08.pdf": "Where There Is No Dentist - Ch 08 Scaling Teeth.pdf"
+    "en_dent_2024_09.pdf": "Where There Is No Dentist - Ch 09 Injecting Inside the Mouth.pdf"
+    "en_dent_2024_10.pdf": "Where There Is No Dentist - Ch 10 How to Treat a Cavity.pdf"
+    "en_dent_2024_11.pdf": "Where There Is No Dentist - Ch 11 Taking Out a Tooth.pdf"
+    "en_dent_2024_12.pdf": "Where There Is No Dentist - Ch 12 HIV and Care of the Teeth and Gums.pdf"
   title: Where There Is No Dentist (Hesperian)
   category: medical
   tier: 1
@@ -882,6 +976,45 @@ items:
   type: docpage
   page: https://languages.hesperian.org/pages/en/pdf.html
   folder: where-women-have-no-doctor
+  file_names:   # saved under these names (titles from each part's first page)
+    "en_wwhnd_2024_fm.pdf": "Where Women Have No Doctor - 00 Front Matter.pdf"
+    "en_wwhnd_2024_01.pdf": "Where Women Have No Doctor - Ch 01 Women's Health Is a Community Issue.pdf"
+    "en_wwhnd_2024_02.pdf": "Where Women Have No Doctor - Ch 02 Solving Health Problems.pdf"
+    "en_wwhnd_2024_03.pdf": "Where Women Have No Doctor - Ch 03 The Medical System.pdf"
+    "en_wwhnd_2024_04.pdf": "Where Women Have No Doctor - Ch 04 Our Reproductive Bodies.pdf"
+    "en_wwhnd_2024_05.pdf": "Where Women Have No Doctor - Ch 05 Health Concerns of Girls.pdf"
+    "en_wwhnd_2024_06.pdf": "Where Women Have No Doctor - Ch 06 Pregnancy and Birth.pdf"
+    "en_wwhnd_2024_07.pdf": "Where Women Have No Doctor - Ch 07 Breastfeeding.pdf"
+    "en_wwhnd_2024_08.pdf": "Where Women Have No Doctor - Ch 08 Growing Older.pdf"
+    "en_wwhnd_2024_09.pdf": "Where Women Have No Doctor - Ch 09 Living with Disability.pdf"
+    "en_wwhnd_2024_10.pdf": "Where Women Have No Doctor - Ch 10 Staying Healthy.pdf"
+    "en_wwhnd_2024_11.pdf": "Where Women Have No Doctor - Ch 11 Eating for Good Health.pdf"
+    "en_wwhnd_2024_12.pdf": "Where Women Have No Doctor - Ch 12 Sexual Health.pdf"
+    "en_wwhnd_2024_13.pdf": "Where Women Have No Doctor - Ch 13 Family Planning.pdf"
+    "en_wwhnd_2024_14.pdf": "Where Women Have No Doctor - Ch 14 Infertility.pdf"
+    "en_wwhnd_2024_15.pdf": "Where Women Have No Doctor - Ch 15 Abortion.pdf"
+    "en_wwhnd_2024_16.pdf": "Where Women Have No Doctor - Ch 16 Sexually Transmitted and Other Genital Infections.pdf"
+    "en_wwhnd_2024_17.pdf": "Where Women Have No Doctor - Ch 17 HIV.pdf"
+    "en_wwhnd_2024_18.pdf": "Where Women Have No Doctor - Ch 18 Violence Against Women.pdf"
+    "en_wwhnd_2024_19.pdf": "Where Women Have No Doctor - Ch 19 Rape and Sexual Violence.pdf"
+    "en_wwhnd_2024_20.pdf": "Where Women Have No Doctor - Ch 20 Sex Workers.pdf"
+    "en_wwhnd_2024_21.pdf": "Where Women Have No Doctor - Ch 21 Pain in the Lower Abdomen.pdf"
+    "en_wwhnd_2024_22.pdf": "Where Women Have No Doctor - Ch 22 Abnormal Bleeding from the Vagina.pdf"
+    "en_wwhnd_2024_23.pdf": "Where Women Have No Doctor - Ch 23 Problems of the Urine System.pdf"
+    "en_wwhnd_2024_24.pdf": "Where Women Have No Doctor - Ch 24 Cancer and Growths.pdf"
+    "en_wwhnd_2024_25.pdf": "Where Women Have No Doctor - Ch 25 Tuberculosis.pdf"
+    "en_wwhnd_2024_26.pdf": "Where Women Have No Doctor - Ch 26 Work.pdf"
+    "en_wwhnd_2024_27.pdf": "Where Women Have No Doctor - Ch 27 Mental Health.pdf"
+    "en_wwhnd_2024_28.pdf": "Where Women Have No Doctor - Ch 28 Alcohol and Other Drugs.pdf"
+    "en_wwhnd_2024_29.pdf": "Where Women Have No Doctor - Ch 29 Refugees and Displaced Women.pdf"
+    "en_wwhnd_2024_30.pdf": "Where Women Have No Doctor - Ch 30 Female Genital Cutting.pdf"
+    "en_wwhnd_2024_31.pdf": "Where Women Have No Doctor - Ch 31 Using Medicines.pdf"
+    "en_wwhnd_2024_skills.pdf": "Where Women Have No Doctor - Health Care Skills.pdf"
+    "en_wwhnd_2024_indx.pdf": "Where Women Have No Doctor - Index.pdf"
+    "en_wwhnd_2024_gp.pdf": "Where Women Have No Doctor - Medicines Pages.pdf"
+    "en_wwhnd_2024_ob.pdf": "Where Women Have No Doctor - Other Hesperian Books.pdf"
+    "en_wwhnd_2024_gloss.pdf": "Where Women Have No Doctor - Vocabulary.pdf"
+    "en_wwhnd_2024_resc.pdf": "Where Women Have No Doctor - Where to Get More Information.pdf"
   title: Where Women Have No Doctor (Hesperian)
   category: medical
   tier: 1
@@ -891,6 +1024,38 @@ items:
   type: docpage
   page: https://languages.hesperian.org/pages/en/pdf.html
   folder: a-book-for-midwives
+  file_names:   # saved under these names (titles from each part's first page)
+    "en_midw_2026_fm.pdf": "A Book for Midwives - 00 Front Matter.pdf"
+    "en_midw_2026_01.pdf": "A Book for Midwives - Ch 01 Midwives and the Communities They Serve.pdf"
+    "en_midw_2026_02.pdf": "A Book for Midwives - Ch 02 Treating Health Problems.pdf"
+    "en_midw_2026_03.pdf": "A Book for Midwives - Ch 03 A Woman's Body in Pregnancy.pdf"
+    "en_midw_2026_04.pdf": "A Book for Midwives - Ch 04 Helping Women Stay Healthy.pdf"
+    "en_midw_2026_05.pdf": "A Book for Midwives - Ch 05 Preventing Infection.pdf"
+    "en_midw_2026_06.pdf": "A Book for Midwives - Ch 06 Prenatal Care and the Changes of Pregnancy.pdf"
+    "en_midw_2026_07.pdf": "A Book for Midwives - Ch 07 Learning a Pregnant Woman's Health History.pdf"
+    "en_midw_2026_08.pdf": "A Book for Midwives - Ch 08 Prenatal Checkups.pdf"
+    "en_midw_2026_09.pdf": "A Book for Midwives - Ch 09 Labor and Birth, Warning Signs.pdf"
+    "en_midw_2026_10.pdf": "A Book for Midwives - Ch 10 Giving Good Care During Labor and Birth.pdf"
+    "en_midw_2026_11.pdf": "A Book for Midwives - Ch 11 Opening, Stage 1 of Labor.pdf"
+    "en_midw_2026_12.pdf": "A Book for Midwives - Ch 12 Pushing, Stage 2 of Labor.pdf"
+    "en_midw_2026_13.pdf": "A Book for Midwives - Ch 13 Birth of the Placenta, Stage 3 of Labor.pdf"
+    "en_midw_2026_14.pdf": "A Book for Midwives - Ch 14 The First Few Hours After the Birth.pdf"
+    "en_midw_2026_15.pdf": "A Book for Midwives - Ch 15 The First Weeks After the Birth.pdf"
+    "en_midw_2026_16.pdf": "A Book for Midwives - Ch 16 Breastfeeding.pdf"
+    "en_midw_2026_17.pdf": "A Book for Midwives - Ch 17 Women's Health Beyond Birth, Introduction.pdf"
+    "en_midw_2026_18.pdf": "A Book for Midwives - Ch 18 Sexually Transmitted Infections.pdf"
+    "en_midw_2026_19.pdf": "A Book for Midwives - Ch 19 Advanced Skills for Pregnancy and Birth.pdf"
+    "en_midw_2026_20.pdf": "A Book for Midwives - Ch 20 The Pelvic Exam.pdf"
+    "en_midw_2026_21.pdf": "A Book for Midwives - Ch 21 How to Insert an IUD.pdf"
+    "en_midw_2026_22.pdf": "A Book for Midwives - Ch 22 Helping a Woman After a Pregnancy Ends Early.pdf"
+    "en_midw_2026_23.pdf": "A Book for Midwives - Ch 23 Manual Vacuum Aspiration (MVA).pdf"
+    "en_midw_2026_24.pdf": "A Book for Midwives - Ch 24 Getting Medical Help.pdf"
+    "en_midw_2026_25.pdf": "A Book for Midwives - Ch 25 Homemade Tools and Teaching Materials.pdf"
+    "en_midw_2026_ddc.pdf": "A Book for Midwives - Due Date Calculator.pdf"
+    "en_midw_2026_indx.pdf": "A Book for Midwives - Index.pdf"
+    "en_midw_2026_gp.pdf": "A Book for Midwives - Medicines Pages.pdf"
+    "en_midw_2026_gloss.pdf": "A Book for Midwives - Technical and Medical Words.pdf"
+    "en_midw_2026_resc.pdf": "A Book for Midwives - To Learn More.pdf"
   title: A Book for Midwives (Hesperian)
   category: medical
   tier: 1
@@ -900,6 +1065,36 @@ items:
   type: docpage
   page: https://languages.hesperian.org/pages/en/pdf.html
   folder: community-guide-environmental-health
+  file_names:   # saved under these names (titles from each part's first page)
+    "en_cgeh_2012_fm.pdf": "Community Guide to Environmental Health - 00 Front Matter.pdf"
+    "en_cgeh_2012_appa.pdf": "Community Guide to Environmental Health - App A Safety and Emergencies.pdf"
+    "en_cgeh_2012_appb.pdf": "Community Guide to Environmental Health - App B Using Laws to Fight for Environmental Rights.pdf"
+    "en_cgeh_2012_01.pdf": "Community Guide to Environmental Health - Ch 01 Promoting Community Environmental Health.pdf"
+    "en_cgeh_2012_02.pdf": "Community Guide to Environmental Health - Ch 02 Understanding and Mobilizing for Community Health.pdf"
+    "en_cgeh_2012_03.pdf": "Community Guide to Environmental Health - Ch 03 Protecting Natural Resources for All.pdf"
+    "en_cgeh_2012_04.pdf": "Community Guide to Environmental Health - Ch 04 Environmental Rights and Justice.pdf"
+    "en_cgeh_2012_05.pdf": "Community Guide to Environmental Health - Ch 05 Health Problems from Unsafe Water.pdf"
+    "en_cgeh_2012_06.pdf": "Community Guide to Environmental Health - Ch 06 Protecting Community Water.pdf"
+    "en_cgeh_2012_07.pdf": "Community Guide to Environmental Health - Ch 07 Building Toilets.pdf"
+    "en_cgeh_2012_08.pdf": "Community Guide to Environmental Health - Ch 08 Health Problems from Mosquitoes.pdf"
+    "en_cgeh_2012_09.pdf": "Community Guide to Environmental Health - Ch 09 Protecting Watersheds.pdf"
+    "en_cgeh_2012_10.pdf": "Community Guide to Environmental Health - Ch 10 Forests.pdf"
+    "en_cgeh_2012_11.pdf": "Community Guide to Environmental Health - Ch 11 Restoring Land and Planting Trees.pdf"
+    "en_cgeh_2012_12.pdf": "Community Guide to Environmental Health - Ch 12 Community Food Security.pdf"
+    "en_cgeh_2012_13.pdf": "Community Guide to Environmental Health - Ch 13 Genetically Engineered Foods.pdf"
+    "en_cgeh_2012_14.pdf": "Community Guide to Environmental Health - Ch 14 Pesticides Are Poison.pdf"
+    "en_cgeh_2012_15.pdf": "Community Guide to Environmental Health - Ch 15 Sustainable Farming.pdf"
+    "en_cgeh_2012_16.pdf": "Community Guide to Environmental Health - Ch 16 Harm from Toxic Chemicals.pdf"
+    "en_cgeh_2012_17.pdf": "Community Guide to Environmental Health - Ch 17 A Healthy Home.pdf"
+    "en_cgeh_2012_18.pdf": "Community Guide to Environmental Health - Ch 18 Solid Waste, Turning a Health Risk into a Resource.pdf"
+    "en_cgeh_2012_19.pdf": "Community Guide to Environmental Health - Ch 19 Health Care Waste.pdf"
+    "en_cgeh_2012_20.pdf": "Community Guide to Environmental Health - Ch 20 Preventing and Reducing Harm from Toxics.pdf"
+    "en_cgeh_2012_21.pdf": "Community Guide to Environmental Health - Ch 21 Mining and Health.pdf"
+    "en_cgeh_2012_22.pdf": "Community Guide to Environmental Health - Ch 22 Oil, Illness, and Human Rights.pdf"
+    "en_cgeh_2012_23.pdf": "Community Guide to Environmental Health - Ch 23 Clean Energy.pdf"
+    "en_cgeh_2012_indx.pdf": "Community Guide to Environmental Health - Index.pdf"
+    "en_cgeh_2012_resc.pdf": "Community Guide to Environmental Health - Resources.pdf"
+    "en_cgeh_2012_gloss.pdf": "Community Guide to Environmental Health - Vocabulary.pdf"
   title: A Community Guide to Environmental Health (Hesperian)
   category: water
   tier: 1
@@ -958,6 +1153,15 @@ items:
   type: docpage
   page: https://nchfp.uga.edu/resources/entry/about-the-usda-guide-to-home-canning-2015-revision
   folder: usda-home-canning-guide
+  file_names:   # saved under these names (titles from each part's first page)
+    "INTRO_HomeCanrev0715.pdf": "USDA Home Canning Guide - 00 Introduction.pdf"
+    "GUIDE01_HomeCan_rev0715.pdf": "USDA Home Canning Guide - Guide 1 Principles of Home Canning.pdf"
+    "GUIDE02_HomeCan_rev0715.pdf": "USDA Home Canning Guide - Guide 2 Fruit and Fruit Products.pdf"
+    "GUIDE03_HomeCan_rev0715.pdf": "USDA Home Canning Guide - Guide 3 Tomatoes and Tomato Products.pdf"
+    "GUIDE04_HomeCan_rev0715.pdf": "USDA Home Canning Guide - Guide 4 Vegetables and Vegetable Products.pdf"
+    "GUIDE05_HomeCan_rev0715.pdf": "USDA Home Canning Guide - Guide 5 Poultry, Red Meats, and Seafoods.pdf"
+    "GUIDE06_HomeCan_rev0715.pdf": "USDA Home Canning Guide - Guide 6 Fermented Foods and Pickled Vegetables.pdf"
+    "GUIDE07_HomeCan_rev0715.pdf": "USDA Home Canning Guide - Guide 7 Jams and Jellies.pdf"
   title: USDA Complete Guide to Home Canning (2015)
   category: food
   tier: 1

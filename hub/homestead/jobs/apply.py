@@ -1,6 +1,7 @@
 """Apply the catalog to the disks (homestead-catalog-apply.service).
 
 - deletes the files of items removed in the Library manager (when asked to)
+- renames the parts of split books to their catalog names
 - rebuilds the Kiwix library (one library.xml for both disks; newest release of
   each ZIM, essentials copy preferred) so the library server shows exactly what's on disk
 - then starts the books import and the AI knowledge-base sync
@@ -31,6 +32,22 @@ def delete_removed(job: Job):
                     shutil.rmtree(d)
         catalog.forget_removed(it["id"])
         job.item(it["id"], state="removed")
+
+
+def rename_parts(job: Job):
+    """Give the parts of split books their catalog names (`file_names`)."""
+    for it in catalog.items():
+        if it["type"] != "docpage" or not it.get("file_names"):
+            continue
+        d = catalog.docs_dir(it["category"]) / it["folder"]
+        n = 0
+        for old, new in it["file_names"].items():
+            src, dst = d / old, d / new
+            if src.is_file() and not dst.exists():
+                src.rename(dst)
+                n += 1
+        if n:
+            job.log(f"{it['title']}: renamed {n} files")
 
 
 def library_zims() -> list[tuple[str, Path]]:
@@ -77,6 +94,7 @@ def rebuild_kiwix_library(job: Job):
 def main(argv=None):
     with Job("catalog-apply") as job:
         delete_removed(job)
+        rename_parts(job)
         rebuild_kiwix_library(job)
         job.log("applied")
     start_unit("homestead-books.service")

@@ -51,3 +51,19 @@ def test_maps_detailed_area():
     for s, ns in maps.NEIGHBORS.items():
         for n in ns:
             assert s in maps.NEIGHBORS[n], (s, n)
+
+
+def test_split_book_parts_get_catalog_names(site):
+    from homestead import catalog
+    from homestead.jobs import apply
+    from homestead.jobs.common import Job
+    catalog.add({"id": "wtnd", "type": "docpage", "page": "https://example.org/", "folder": "wtnd",
+                 "title": "Where There Is No Doctor", "category": "medical",
+                 "file_names": {"en_wtnd_10.pdf": "Where There Is No Doctor - Ch 10 First Aid.pdf"}})
+    d = catalog.docs_dir("medical") / "wtnd"
+    d.mkdir(parents=True)
+    (d / "en_wtnd_10.pdf").write_bytes(b"%PDF")
+    with Job("catalog-apply") as job:
+        apply.rename_parts(job)
+    assert not (d / "en_wtnd_10.pdf").exists()
+    assert (d / "Where There Is No Doctor - Ch 10 First Aid.pdf").exists()

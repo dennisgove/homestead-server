@@ -81,7 +81,19 @@ def main():
             kb = by_name[name] = r.json()
             print(f"created knowledge base {name}")
         detail = s.get(f"{api}/knowledge/{kb['id']}", timeout=30).json()
-        existing = {f.get("meta", {}).get("name") or f.get("filename") for f in detail.get("files") or []}
+        kb_files = detail.get("files") or []
+        existing = {f.get("meta", {}).get("name") or f.get("filename") for f in kb_files}
+
+        # Files renamed or removed on disk leave the knowledge base too, so the AI
+        # doesn't cite (or count twice) what's no longer in the library.
+        on_disk = {fn for _, _, fs in os.walk(folder) for fn in fs}
+        if on_disk:
+            for f in kb_files:
+                fname = f.get("meta", {}).get("name") or f.get("filename")
+                if fname and fname not in on_disk:
+                    r = s.post(f"{api}/knowledge/{kb['id']}/file/remove", json={"file_id": f["id"]}, timeout=120)
+                    print(f"[{name}] {fname} gone from disk ... {'removed' if r.ok else f'remove failed ({r.status_code})'}")
+                    existing.discard(fname)
 
         for root, _, files in os.walk(folder):
             for fn in sorted(files):
