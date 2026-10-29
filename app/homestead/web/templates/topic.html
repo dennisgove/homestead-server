@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% set tid = t.id %}
+{% block title %}{{ t.name }} · Homestead Library{% endblock %}
+{% block body %}
+<p class="crumbs"><a href="/">Topics</a> /</p>
+<h1><span aria-hidden="true">{{ t.icon }}</span> {{ t.name }}</h1>
+<p class="lead">{{ t.blurb }}</p>
+
+<form class="bigfind" action="/search" role="search">
+  <input type="hidden" name="t" value="{{ t.id }}">
+  <input name="q" type="search" placeholder="Search {{ t.name | lower }}" aria-label="Search {{ t.name }}" autocomplete="off">
+  <button type="submit">Search</button>
+</form>
+{% if t.quick %}<p class="chips">{% for w in t.quick %}<a href="/search?t={{ t.id }}&q={{ quote(w) }}">{{ w }}</a>{% endfor %}</p>{% endif %}
+
+{% if docs or loose %}
+<h2 class="label">Guides and manuals</h2>
+<ul class="list">
+  {% for d in docs %}
+  <li>
+    <a class="title" href="{{ d.url }}">{{ '📘' if d.kind == 'book' else '📄' }} {{ d.title }}</a>
+    {%- set bits = [] -%}
+    {%- if d.kind == 'book' %}{% set _ = bits.append(d.parts | length ~ ' chapters') %}{% elif d.pages %}{% set _ = bits.append(d.pages ~ ' pages') %}{% endif -%}
+    {%- set _ = bits.append(d.size | human) -%}
+    {%- if d.print %}{% set _ = bits.append('in the printed binder') %}{% endif %}
+    <span class="meta">{{ bits | join(' · ') }}</span>
+  </li>
+  {% endfor %}
+  {% for d in loose %}
+  <li><a class="title" href="{{ d.url }}">📄 {{ d.title }}</a> <span class="meta">{{ d.size | human }}</span></li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if books %}
+<h2 class="label">Encyclopedias and reference</h2>
+<div class="cards">
+  {% for b in books %}
+  <a class="card" href="{{ b.url }}">
+    {% if b.has_icon %}<img src="/wiki-icon/{{ b.id }}.png" alt="" width="40" height="40" loading="lazy">{% else %}<span class="noimg">📚</span>{% endif %}
+    <span><b>{{ b.title }}</b><small>{{ b.description }}</small>
+    <em>{{ '{:,}'.format(b.articles) }} pages{% if b.essential %} · always available{% endif %}</em></span>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if channels %}
+<h2 class="label">Courses</h2>
+<div class="cards">
+  {% for c in channels %}
+  <a class="card" href="/learn/{{ c.id }}"><span class="noimg">🎓</span>
+    <span><b>{{ c.title }}</b><small>{{ c.description[:180] }}</small><em>Video lessons by subject and grade</em></span></a>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if not docs and not loose and not books and not channels %}
+<p class="empty">Nothing here yet.{% if t.id == 'family' %} Our own documents go in the <code>docs/family</code> folder on the internal disk; they show up here.{% endif %}</p>
+{% endif %}
+{% endblock %}

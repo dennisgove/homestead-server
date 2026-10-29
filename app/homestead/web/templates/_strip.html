@@ -1,0 +1,6 @@
+<div class="strip">
+{%- if power and power.soc is not none %}<span class="pill {{ 'bad' if power.soc < 20 else 'warn' if power.soc < 40 else 'good' }}">Battery {{ power.soc | round | int }}%</span>
+{%- elif power and power.volts is not none %}<span class="pill">Battery {{ '%.2f' % power.volts }} V</span>{% endif %}
+<span class="pill {{ 'good' if drive else 'bad' }}">{{ 'Library drive connected' if drive else 'Library drive not connected: essentials only' }}</span>
+<span class="pill">Last backup: {{ backup | when }}</span>
+</div>

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Print · Homestead Library{% endblock %}
+{% block body %}
+<h1>🖨️ What to keep on paper</h1>
+<p class="lead noprint">If this computer fails, these are the documents you'll want on paper, in a binder with coloured tabs.
+Print this page as the binder's index, then print each document. <button type="button" onclick="window.print()">Print this list</button></p>
+{% set tabs = {'medical': 'RED tab', 'water': 'BLUE tab', 'food': 'GREEN tab', 'security': 'BLACK tab',
+               'survival': 'BLACK tab', 'comms': 'YELLOW tab'} %}
+{% for tid, group in docs | groupby('topic') %}
+<section class="tab">
+  <h2 class="label">{{ topics[tid].name if tid in topics else tid }}{% if tid in tabs %} · {{ tabs[tid] }}{% endif %}</h2>
+  <ul class="list">
+    {% for d in group %}
+    <li><a class="title" href="{{ d.url }}">{{ '📘' if d.kind == 'book' else '📄' }} {{ d.title }}</a>
+      <span class="meta">{% if d.kind == 'book' %}{{ d.parts | length }} chapters{% elif d.pages %}{{ d.pages }} pages{% endif %}</span></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endfor %}
+{% if not docs %}<p class="empty">Nothing is marked for printing yet (set <code>print: true</code> on an item in the library list).</p>{% endif %}
+<section class="box tab"><h2>Also print</h2>
+<ul>{% if wifi_sign %}<li><a href="/files/share/print/wifi-sign.html">The WiFi sign</a>, for the wall</li>{% endif %}
+<li>The server's runbook and restore guide (on the server: <code>libreoffice --headless --convert-to pdf /opt/homestead/repo/docs/*.md</code>)</li></ul></section>
+{% endblock %}

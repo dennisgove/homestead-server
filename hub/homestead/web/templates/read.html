@@ -1,9 +1,0 @@
-{% extends "base.html" %}
-{% block title %}{{ title }} · Homestead Library{% endblock %}
-{% block body %}
-<main class="reader">
-  <p class="crumbs noprint"><a href="javascript:history.back()">← Back</a> · <a href="{{ download }}" download>Download the ebook file</a></p>
-  <h1>{{ title }}</h1>
-  <article>{{ body | safe }}</article>
-</main>
-{% endblock %}

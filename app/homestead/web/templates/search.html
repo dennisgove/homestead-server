@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}{{ q ~ ' · ' if q }}Search · Homestead Library{% endblock %}
+{% block body %}
+<h1>Search</h1>
+<form class="bigfind" action="/search" role="search">
+  <input name="q" type="search" value="{{ q }}" placeholder="Search everything" aria-label="Search" autocomplete="off" {% if not q %}autofocus{% endif %}>
+  <select name="t" aria-label="Topic"><option value="">Every topic</option>
+    {% for k, x in topics.items() %}<option value="{{ k }}" {% if k == tid %}selected{% endif %}>{{ x.name }}</option>{% endfor %}</select>
+  <button type="submit">Search</button>
+</form>
+
+{% if res %}
+{% set nothing = not res.documents and not res.encyclopedias and not res.lessons and not res.places %}
+<p class="meta">{% if tid %}Only in {{ topics[tid].name }} · <a href="/search?q={{ quote(q) }}">every topic</a> · {% endif %}<a href="/ask?q={{ quote(q) }}">🤖 Ask the AI about this</a></p>
+{% if nothing %}<p class="empty">Nothing found for “{{ q }}”. Try fewer words, or other words for the same thing.</p>{% endif %}
+
+{% if res.documents %}
+<h2 class="label">In the guides and manuals{% if res.loose %} <small>(pages with some of the words)</small>{% endif %}</h2>
+<ul class="results">
+  {% for d in res.documents %}
+  <li><a class="title" href="{{ d.url }}#page={{ d.pages[0].page }}">📄 {{ d.title }}</a>
+    {% for p in d.pages %}<p><a class="pg" href="{{ d.url }}#page={{ p.page }}">page {{ p.page }}</a> {{ p.snippet | safe }}</p>{% endfor %}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if res.encyclopedias %}
+<h2 class="label">In the encyclopedias</h2>
+{% for g in res.encyclopedias %}
+<section class="group">
+  <h3><a href="{{ g.book.url }}">{{ g.book.title }}</a> <span class="meta">about {{ '{:,}'.format(g.total) }} pages</span></h3>
+  <ul class="results">
+    {% for h in g.hits %}<li><a class="title" href="{{ h.url }}">{{ h.title }}</a>{% if h.snippet %}<p>{{ h.snippet | safe }}</p>{% endif %}</li>{% endfor %}
+  </ul>
+  {% if g.total > g.hits | length %}<p><a href="/wiki-search/{{ g.book.id }}?q={{ quote(q) }}">More in {{ g.book.title }} →</a></p>{% endif %}
+</section>
+{% endfor %}
+{% endif %}
+
+{% if res.lessons %}
+<h2 class="label">Lessons</h2>
+<ul class="results">
+  {% for l in res.lessons %}<li><a class="title" href="{{ l.url }}">{{ '🎬' if l.kind == 'video' else '📂' }} {{ l.title }}</a> <span class="meta">{{ l.place }}</span>{% if l.snippet %}<p>{{ l.snippet | safe }}</p>{% endif %}</li>{% endfor %}
+</ul>
+{% endif %}
+
+{% if res.places %}
+<h2 class="label">Places on the map</h2>
+<ul class="results">
+  {% for p in res.places %}<li><a class="title" href="/maps#14/{{ p.lat }}/{{ p.lon }}">📍 {{ p.name }}</a> <span class="meta">{{ p.kind }}{% if p.admin %} · {{ p.admin }}{% endif %}</span></li>{% endfor %}
+</ul>
+{% endif %}
+{% endif %}
+{% endblock %}

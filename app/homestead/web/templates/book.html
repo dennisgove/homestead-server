@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{{ d.title }} · Homestead Library{% endblock %}
+{% block body %}
+<p class="crumbs"><a href="/">Topics</a> / {% if t %}<a href="/t/{{ t.id }}">{{ t.name }}</a> /{% endif %}</p>
+<h1>📘 {{ d.title }}</h1>
+<p class="lead">{{ d.parts | length }} parts · {{ d.size | human }}{% if d.print %} · in the printed binder{% endif %}</p>
+<ol class="chapters">
+  {% for p in d.parts %}
+  <li><a href="{{ p.url }}">{% if p.label and p.label != p.title %}<span class="num">{{ p.label }}</span>{% endif %}<span>{{ p.title }}</span></a>
+    {% if p.pages %}<small>{{ p.pages }} p.</small>{% endif %}</li>
+  {% endfor %}
+</ol>
+{% endblock %}

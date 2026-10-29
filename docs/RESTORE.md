@@ -70,10 +70,10 @@ Any 64-bit PC with ≥16GB RAM (32GB for the big AI model):
   2. `cp -a /mnt/offline/repo ~/homestead-server`. It has no `secrets.yml`; `bootstrap.sh` asks for the passwords again in step 6. When it asks for the borg passphrase, type the one from the recovery sheet.
   3. `sudo apt install /mnt/offline/debs/*.deb` installs Docker, Ansible, borg and the rest from the saved packages.
   4. Load the container images: `for f in /mnt/offline/images/*.tar.zst; do zstd -dc "$f" | sudo docker load; done`
-  5. Restore /opt (the Hub, app data, AI models) from borg, as root:
+  5. Restore /opt (the program, tool data, AI models) from borg, as root:
      `cd / && BORG_REPO=/mnt/borg borg extract ::system-<newest> opt`, then `sudo umount /mnt`.
   6. Prepare a new LIBRARY drive and restore it (Scenario 3), then `cd ~/homestead-server && sudo ./bootstrap.sh -e offline=true`.
-  7. `homestead-restore ... vault` if you use the vault. The library catalog edits and job status came back with /var/lib/homestead in step 5's archive.
+  7. `homestead-restore ... vault` if you use the vault. The library's changes (changes.yaml) and search index came back with /var/lib/homestead in step 5's archive.
 
 ## Scenario 5: bad edit to settings
 
@@ -83,7 +83,7 @@ Any 64-bit PC with ≥16GB RAM (32GB for the big AI model):
 
 1. Take a spare SSD or NVMe (or a USB enclosure with an old disk).
 2. Restore the latest Clonezilla image onto it (Scenario 2, target = spare disk).
-3. Swap it in, boot, and check: the kiosk comes up, the portal loads, Kiwix searches work, the AI answers, and `homestead-vault open` accepts the passphrase.
+3. Swap it in, boot, and check: the kiosk comes up, the website loads, search works, the AI answers, and `homestead-vault open` accepts the passphrase.
 4. Restore one file from borg (Scenario 1).
 5. Plug BACKUP-B into another computer and open a ZIM from `library/` in Kiwix desktop.
 6. Write the date and result on the recovery sheet.
@@ -91,5 +91,5 @@ Any 64-bit PC with ≥16GB RAM (32GB for the big AI model):
 ## Drive care
 
 - Plug BACKUP-A in **weekly**. Rotate BACKUP-B **monthly**, and keep it away from the server (another building, or a Faraday container: a steel ammo can lined with cardboard, lid gasket scraped so metal touches metal).
-- The portal shows "Last backup …". A desktop warning appears after 8 days without one.
+- The website shows "Last backup …" at the bottom of every page. A desktop warning appears after 8 days without one.
 - Replace any drive that the backup reports SMART warnings for.

@@ -1,0 +1,70 @@
+# The website and what runs behind it (roles/homestead).
+#
+#   http://<server>/        the website: the whole library, search, Ask, maps, learn, videos, tools
+#   http://localhost:8701   the library manager, on the server itself only (no password: nobody
+#                           else can reach it). From another computer: ssh -L 8701:localhost:8701 …
+#
+# Nothing on the website asks for a login. The tools below are separate programs on their own
+# ports, linked from the website's Tools page; none of them has a login either.
+
+app_dir: /opt/homestead/app          # the program (copied from app/ in this repo)
+library_state: /var/lib/homestead/library
+site_port: 8700                      # the website's backend (Caddy serves it on port 80)
+manager_port: 8701                   # the library manager (127.0.0.1 only)
+fetch_priority: 3                    # download items up to this priority (1 = critical … 3 = everything)
+
+# --- The AI (Ask) -------------------------------------------------------------
+ollama_port: 11435                   # backend; only the website and this computer use it
+ai_models:
+  main: qwen3:30b-instruct           # answers questions (MoE 30B / 3B active, ~19GB RAM)
+  helper: qwen3:4b-instruct          # turns questions into search words (fast)
+ai_context: 8192
+ai_keep_alive: 30m
+ai_max_loaded_models: 2
+
+# --- Tools: programs linked from the Tools page --------------------------------
+# port: public port (7000-7099)   backend: where it listens (firewalled)   group: Tools page section
+# local_port: a second port on 127.0.0.1 only (for the kiosk's own launchers)
+tools:
+  - { id: pantry, title: Pantry, icon: "🥫", hint: "Food storage, amounts and expiry dates", group: Everyday,
+      port: 7008, backend: 8620 }
+  - { id: notes, title: Notes, icon: "📝", hint: "Shared notes", group: Everyday, port: 7010, backend: 8200 }
+  - { id: pdf-tools, title: PDF tools, icon: "🧾", hint: "Merge, split, convert, OCR", group: Everyday, port: 7012, backend: 8400 }
+  - { id: data-tools, title: Data tools, icon: "🧪", hint: "Decode, convert, encrypt (CyberChef)", group: Everyday, port: 7011, backend: 8100 }
+  - { id: it-tools, title: IT tools, icon: "🧰", hint: "Network, text and date helpers", group: Everyday, port: 7013, backend: 8430 }
+  - { id: whiteboard, title: Whiteboard, icon: "✏️", hint: "Sketch plans and diagrams", group: Everyday, port: 7014, backend: 8440 }
+  - { id: sdr, title: Radio receiver, icon: "📻", hint: "NOAA weather, scanner, shortwave", group: Radio, port: 7020, backend: 8660 }
+  - { id: mesh, title: MeshCore, icon: "📡", hint: "Mesh text messages (Chrome or Edge)", group: Radio, scheme: https,
+      port: 7017, backend: 8500, local_port: 7027 }
+  - { id: meshtastic, title: Meshtastic, icon: "📶", hint: "Meshtastic nodes (Chrome or Edge)", group: Radio, scheme: https,
+      port: 7018, backend: 8450, local_port: 7028 }
+tools_by_id: "{{ dict(tools | map(attribute='id') | zip(tools)) }}"
+
+# The radio receiver's own settings pages (not its listening pages) need the admin password.
+sdr_admin_paths: [/settings*, /login*, /logout*, /generalsettings*, /sdrsettings*, /bookmarks*, /decoding*,
+                  /backgrounddecoding*, /reporting*, /features*, /logs*, /clients*, /files*]
+
+# Admin-only pages (admin password), not on the website.
+winlink_port: 7091                   # Pat (roles/radio)
+winlink_backend: 8650
+vault_port: 7092                     # Paperless, while the vault is open (homestead-vault open)
+vault_backend: 8640
+
+# Stopped in power-saving mode (roles/power).
+eco_stop: [homestead-ollama]
+
+# Container images: pinned to versions that worked. `homestead-export-offline` saves them to
+# the backup drive, so a rebuild needs no internet.
+images:
+  ollama: ollama/ollama:0.33.3
+  grocy: lscr.io/linuxserver/grocy:latest
+  flatnotes: dullage/flatnotes:v5.5.4
+  stirling_pdf: ghcr.io/stirling-tools/s-pdf:2.13.1
+  cyberchef: ghcr.io/gchq/cyberchef:10.24.0
+  it_tools: ghcr.io/corentinth/it-tools:2024.10.22-7ca5933
+  excalidraw: excalidraw/excalidraw:sha-4bfc5bb
+  openwebrx: slechev/openwebrxplus:1.2.126
+  meshcore_web: ghcr.io/axistem-dev/meshcore-web:v1.45.0
+  meshtastic_web: ghcr.io/meshtastic/web:2.7.1
+  paperless: ghcr.io/paperless-ngx/paperless-ngx:latest
+  redis: redis:7-alpine

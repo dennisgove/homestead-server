@@ -1,0 +1,40 @@
+{% extends "manage_base.html" %}
+{% block body %}
+<h1>Add to the library</h1>
+
+<h2 class="label">An encyclopedia or website (Kiwix's catalog; needs internet)</h2>
+<form class="bigfind" action="/add"><input name="q" value="{{ q }}" type="search" placeholder="e.g. gardening, first aid, wikihow" aria-label="Search Kiwix's catalog"><button>Find</button></form>
+{% if error %}<p class="bad">{{ error }}</p>{% endif %}
+{% if results %}
+<ul class="results">
+{% for r in results %}
+  <li><b>{{ r.title }}</b> <span class="meta">{{ r.name }} · {{ r.size | human }} · {{ r.release }}</span><p>{{ r.summary }}</p>
+  {% if r.have %}<p class="good">Already in the library.</p>{% else %}
+  <form method="post" action="/add/zim" class="chips">
+    <input type="hidden" name="name" value="{{ r.name }}">
+    <select name="topic" aria-label="Topic">{% for k, x in topics.items() %}<option value="{{ k }}">{{ x.name }}</option>{% endfor %}</select>
+    <label><input type="checkbox" name="essential" value="1"> on the internal disk (works without the USB drive)</label>
+    <button>Add</button></form>{% endif %}</li>
+{% endfor %}
+</ul>
+{% elif q %}<p class="meta">Nothing in Kiwix's catalog for “{{ q }}”.</p>{% endif %}
+
+<h2 class="label">A document from a link</h2>
+<form method="post" action="/add/link" class="box">
+  <p><label>Link <input name="url" type="url" required style="width:100%"></label></p>
+  <p><label>Title <input name="title" required style="width:100%"></label></p>
+  <p class="chips"><select name="topic" aria-label="Topic">{% for k, x in topics.items() %}<option value="{{ k }}">{{ x.name }}</option>{% endfor %}</select>
+  <select name="kind" aria-label="What it is"><option value="pdf">a PDF</option><option value="epub">an ebook (EPUB)</option>
+    <option value="book">a page linking one PDF per chapter</option></select>
+  <label><input type="checkbox" name="print" value="1"> keep on paper</label></p>
+  <p><label class="meta">For a page of chapters, only links matching (optional) <input name="match" placeholder="e.g. /en_wtnd_"></label></p>
+  <p><button>Add</button> <span class="meta">It downloads with the next run (or press Run now on the overview).</span></p>
+</form>
+
+<h2 class="label">A file from this computer</h2>
+<form method="post" action="/add/upload" enctype="multipart/form-data" class="box">
+  <p class="chips"><input type="file" name="file" accept=".pdf,.epub,.txt,.md" required>
+  <select name="topic" aria-label="Topic">{% for k, x in topics.items() %}<option value="{{ k }}">{{ x.name }}</option>{% endfor %}</select>
+  <button>Upload</button></p>
+</form>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "manage_base.html" %}
+{% block body %}
+<h1>Library</h1>
+<p class="lead">{{ here }} of {{ total }} items are on disk. {% if not drive %}<b class="bad">The USB library drive isn't plugged in.</b>{% endif %}</p>
+<div class="cards">
+{% for name, d in disks.items() %}
+  <div class="card static"><span><b>{{ name }}</b>
+  {% if d %}<span class="meter"><span style="width:{{ (100 * d.used / d.total) | round(1) }}%"></span></span>
+  <small>{{ d.used | human }} used of {{ d.total | human }} · {{ d.free | human }} free</small>{% else %}<small>not available</small>{% endif %}</span></div>
+{% endfor %}
+</div>
+<h2 class="label">Jobs</h2>
+<div class="cards">
+{% for j, label in job_names.items() %}{% set s = jobs[j] %}
+  <div class="card static"><span><b>{{ label }}</b>
+  {% if s %}<small>{{ s.state }} · started {{ s.started | when }}{% if s.finished %} · finished {{ s.finished | when }}{% endif %}</small>
+    {% if s.state == 'running' and s.total %}<span class="meter"><span style="width:{{ (100 * s.done / s.total) | round(1) }}%"></span></span><small>{{ s.done }} / {{ s.total }} · {{ s.step }}</small>{% endif %}
+    {% for line in s.log[-3:] %}<small>{{ line }}</small>{% endfor %}
+  {% else %}<small>not run yet</small>{% endif %}
+  <form method="post" action="/run/{{ j }}"><button {% if s and s.state == 'running' %}disabled{% endif %}>Run now</button></form></span></div>
+{% endfor %}
+</div>
+<p class="meta">Downloading runs by itself every week and resumes where it stopped. It needs internet; everything else doesn't.</p>
+{% endblock %}

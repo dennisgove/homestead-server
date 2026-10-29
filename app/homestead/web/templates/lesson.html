@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ n.title }} · Learn · Homestead Library{% endblock %}
+{% block body %}
+<p class="crumbs"><a href="/learn">Learn</a> /
+  {% for c in n.path %}<a href="/learn/{{ n.channel }}/{{ c.id }}">{{ c.title }}</a> / {% endfor %}</p>
+<h1>{{ n.title }}</h1>
+{% if n.description and n.kind == 'topic' %}<p class="lead">{{ n.description }}</p>{% endif %}
+
+{% if n.kind == 'topic' %}
+  {% if n.children %}
+  <ul class="list lessons">
+    {% for k in n.children %}
+    <li><a class="title" href="/learn/{{ n.channel }}/{{ k.id }}">{{ '📂' if k.kind == 'topic' else '🎬' if k.kind == 'video' else '📄' }} {{ k.title }}</a>
+      <span class="meta">{% if k.kind == 'topic' and k.videos %}{{ k.videos }} video{{ '' if k.videos == 1 else 's' }}{% elif k.duration %}{{ (k.duration // 60) }}:{{ '%02d' % (k.duration % 60) }}{% endif %}</span></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="empty">Nothing to watch in this part (it only has practice exercises).</p>{% endif %}
+{% else %}
+  {% set f = n.files %}
+  {% if f.video %}
+  <video class="player" controls preload="metadata" {% if f.thumbnail %}poster="{{ f.thumbnail }}"{% endif %}>
+    <source src="{{ f.video }}" type="video/mp4">
+    {% for s in f.subtitles %}<track kind="subtitles" src="{{ s.url }}" srclang="{{ s.lang[:2] }}" label="{{ s.lang }}" {% if loop.first and s.lang.startswith('en') %}default{% endif %}>{% endfor %}
+  </video>
+  {% elif f.audio %}<audio controls src="{{ f.audio }}" class="player"></audio>
+  {% elif f.document %}<p><a href="{{ f.document }}">Open the document</a></p>
+  {% else %}<p class="empty">This lesson's video hasn't been downloaded yet.</p>{% endif %}
+  {% if n.description %}<p class="lead">{{ n.description }}</p>{% endif %}
+  <p class="pager">{% if n.prev %}<a href="/learn/{{ n.channel }}/{{ n.prev.id }}">← {{ n.prev.title }}</a>{% endif %}
+  {% if n.next %}<a href="/learn/{{ n.channel }}/{{ n.next.id }}">{{ n.next.title }} →</a>{% endif %}</p>
+{% endif %}
+{% endblock %}

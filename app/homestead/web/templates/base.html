@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Homestead Library{% endblock %}</title>
+<link rel="stylesheet" href="/static/site.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏡</text></svg>">
+{% block head %}{% endblock %}
+</head>
+<body class="{% block bodyclass %}{% endblock %}">
+<a class="skip" href="#main">Skip to content</a>
+<header class="top noprint">
+  <div class="wrap row">
+    <a class="logo" href="/">🏡 <span>Homestead Library</span></a>
+    <form class="find" action="/search" role="search">
+      <input name="q" type="search" value="{{ q | default('') }}" placeholder="Search everything" aria-label="Search everything" autocomplete="off">
+      {% if tid %}<input type="hidden" name="t" value="{{ tid }}">{% endif %}
+      <button type="submit">Search</button>
+    </form>
+    <a class="sos" href="/emergency">🚑 Emergency</a>
+  </div>
+  <nav class="wrap menu" aria-label="Main">
+    <a href="/" {% if path == '/' or path.startswith('/t/') %}aria-current="page"{% endif %}>Topics</a>
+    <a href="/ask" {% if path == '/ask' %}aria-current="page"{% endif %}>Ask</a>
+    <a href="/maps" {% if path == '/maps' %}aria-current="page"{% endif %}>Maps</a>
+    <a href="/learn" {% if path.startswith('/learn') %}aria-current="page"{% endif %}>Learn</a>
+    <a href="/videos" {% if path == '/videos' %}aria-current="page"{% endif %}>Videos</a>
+    <a href="/tools" {% if path == '/tools' %}aria-current="page"{% endif %}>Tools</a>
+    <a href="/print" {% if path == '/print' %}aria-current="page"{% endif %}>Print</a>
+    <a href="/status" class="end" {% if path == '/status' %}aria-current="page"{% endif %}>Status</a>
+  </nav>
+</header>
+<main id="main" class="{% block mainclass %}wrap{% endblock %}">
+{% block body %}{% endblock %}
+</main>
+{% block footer %}
+<footer class="bottom noprint">
+  <div class="wrap">
+    <div id="strip"></div>
+    <p>Everything here is on this computer: it works with no internet and needs no account.
+    On a phone, join the WiFi <b>{{ site.ssid }}</b> and open this page's address.</p>
+  </div>
+</footer>
+<script>
+fetch("/strip").then(r => r.ok ? r.text() : "").then(h => { document.getElementById("strip").innerHTML = h; }).catch(() => {});
+</script>
+{% endblock %}
+</body>
+</html>

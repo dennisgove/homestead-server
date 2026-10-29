@@ -1,0 +1,377 @@
+# The website and everything behind it: the program, its settings and services, the
+# library jobs, the tools and the AI engine (containers), Caddy, and the firewall.
+
+- name: What the program needs
+  ansible.builtin.apt:
+    name: [python3-fastapi, python3-uvicorn, python3-jinja2, python3-yaml, python3-multipart, python3-libzim,
+           poppler-utils, aria2, sqlite3, caddy]
+    update_cache: "{{ not offline }}"
+    install_recommends: false
+
+- name: The website's own user (reads the library; can't change anything)
+  ansible.builtin.user:
+    name: homestead
+    system: true
+    shell: /usr/sbin/nologin
+    home: /nonexistent
+    create_home: false
+
+# --- the old system goes ------------------------------------------------------------
+
+- name: Old containers (Kiwix, Kolibri, Calibre-Web, Open WebUI and friends) are removed
+  ansible.builtin.shell: |
+    gone=""
+    for c in homestead-kiwix homestead-kiwix-core homestead-kolibri homestead-calibreweb homestead-open-webui \
+             homestead-jellyfin homestead-mealie homestead-homebox homestead-vaultwarden homestead-dozzle homestead-filebrowser; do
+      docker rm -f "$c" >/dev/null 2>&1 && gone="$gone $c"
+    done
+    echo "removed:$gone"
+  register: old_containers
+  changed_when: old_containers.stdout != "removed:"
+
+- name: Old services and timers are removed
+  ansible.builtin.shell: |
+    gone=""
+    for u in homestead-hub.service homestead-fetch-plan.service homestead-fetch-plan.timer homestead-catalog-apply.service \
+             homestead-books.service homestead-docindex.service homestead-kb-sync.service homestead-kb-sync.timer; do
+      if [ -e "/etc/systemd/system/$u" ]; then
+        systemctl disable --now "$u" >/dev/null 2>&1 || true
+        rm -f "/etc/systemd/system/$u"; gone="$gone $u"
+      fi
+    done
+    rm -rf {{ homestead_dir }}/hub /etc/homestead/hub.json /etc/homestead/webui.json /usr/local/share/homestead \
+           /usr/local/bin/homestead-webui-setup /usr/local/bin/homestead-kb-seed /usr/local/sbin/homestead-kb-sync \
+           /usr/local/sbin/homestead-webui-token /usr/local/sbin/homestead-calibreweb-setup \
+           /usr/local/sbin/homestead-mealie-setup /usr/local/sbin/homestead-homebox-setup \
+           /etc/polkit-1/rules.d/60-homestead-hub.rules {{ state_dir }}/kiwix {{ state_dir }}/hub
+    systemctl daemon-reload
+    echo "removed:$gone"
+  register: old_units
+  changed_when: old_units.stdout != "removed:"
+
+# --- the program ------------------------------------------------------------------------
+
+- name: Program folder
+  ansible.builtin.file:
+    path: "{{ app_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: The program
+  ansible.posix.synchronize:
+    src: "{{ playbook_dir }}/app/homestead"
+    dest: "{{ app_dir }}/"
+    delete: true
+    rsync_opts: ["--exclude=__pycache__", "--chmod=D755,F644"]
+  notify: restart website
+
+- name: The library list
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/library.yaml"
+    dest: "{{ app_dir }}/library.yaml"
+    mode: "0644"
+  notify: start index
+
+- name: Settings
+  ansible.builtin.template:
+    src: site.json.j2
+    dest: /etc/homestead/site.json
+    mode: "0644"
+  notify: restart website
+
+- name: The homestead command
+  ansible.builtin.copy:
+    dest: /usr/local/bin/homestead
+    mode: "0755"
+    content: |
+      #!/bin/sh
+      # The homestead library command: `homestead --help`.
+      PYTHONPATH={{ app_dir }} exec python3 -m homestead "$@"
+
+- name: Library folders
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ library_state }}"
+    - "{{ library_state }}/status"
+    - "{{ core_dir }}/zim"
+    - "{{ core_dir }}/docs"
+    - "{{ core_dir }}/docs/family"
+    - "{{ core_dir }}/maps"
+    - "{{ core_dir }}/share"
+
+- name: Library folders on the USB drive (when it's plugged in)
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop: ["{{ library_mount }}/zim", "{{ library_mount }}/courses", "{{ library_mount }}/video"]
+  when: library_is_mounted | default(false)
+
+- name: Files from an older install move into this layout (once; nothing is downloaded again)
+  ansible.builtin.script:
+    cmd: migrate-layout.py {{ core_dir }} {{ library_mount }} {{ role_path }}/files/old-layout.json
+    executable: python3
+  register: migrated
+  changed_when: "'changed' in migrated.stdout"
+  notify: start index
+
+# --- services ---------------------------------------------------------------------------
+
+- name: Services and timers
+  ansible.builtin.copy:
+    dest: "/etc/systemd/system/{{ item.name }}"
+    mode: "0644"
+    content: "{{ item.content }}"
+  loop:
+    - name: homestead-site.service
+      content: |
+        [Unit]
+        Description=Homestead library website (behind Caddy on port 80)
+        After=network.target local-fs.target
+        [Service]
+        User=homestead
+        Group=homestead
+        Environment=PYTHONPATH={{ app_dir }}
+        ExecStart=/usr/bin/python3 -m uvicorn homestead.web.site:app --host 127.0.0.1 --port {{ site_port }} --no-access-log
+        Restart=always
+        RestartSec=3
+        NoNewPrivileges=yes
+        ProtectSystem=strict
+        ProtectHome=yes
+        PrivateTmp=yes
+        [Install]
+        WantedBy=multi-user.target
+    - name: homestead-manager.service
+      content: |
+        [Unit]
+        Description=Homestead library manager (this computer only: http://localhost:{{ manager_port }})
+        After=network.target
+        [Service]
+        Environment=PYTHONPATH={{ app_dir }}
+        ExecStart=/usr/bin/python3 -m uvicorn homestead.web.manage:app --host 127.0.0.1 --port {{ manager_port }} --no-access-log
+        Restart=always
+        RestartSec=3
+        [Install]
+        WantedBy=multi-user.target
+    - name: homestead-fetch.service
+      content: |
+        [Unit]
+        Description=Download and update the library (needs internet), then index it
+        After=network-online.target
+        Wants=network-online.target
+        [Service]
+        Type=oneshot
+        Nice=10
+        IOSchedulingClass=idle
+        ExecStart=/usr/local/bin/homestead fetch
+    - name: homestead-fetch.timer
+      content: |
+        [Unit]
+        Description=Download and update the library (weekly)
+        [Timer]
+        OnCalendar=weekly
+        RandomizedDelaySec=6h
+        Persistent=true
+        [Install]
+        WantedBy=timers.target
+    - name: homestead-index.service
+      content: |
+        [Unit]
+        Description=Index the library's documents and courses for search
+        [Service]
+        Type=oneshot
+        Nice=10
+        IOSchedulingClass=idle
+        ExecStart=/usr/local/bin/homestead index
+    - name: homestead-maps.service
+      content: |
+        [Unit]
+        Description=Build the offline maps (needs internet)
+        After=network-online.target
+        Wants=network-online.target
+        [Service]
+        Type=oneshot
+        Nice=10
+        ExecStart=/usr/local/bin/homestead maps
+    - name: homestead-maps.timer
+      content: |
+        [Unit]
+        Description=Refresh the offline maps (quarterly)
+        [Timer]
+        OnCalendar=quarterly
+        RandomizedDelaySec=1d
+        Persistent=true
+        [Install]
+        WantedBy=timers.target
+  loop_control: { label: "{{ item.name }}" }
+  notify: restart website
+
+- name: Website and manager running
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+  loop: [homestead-site.service, homestead-manager.service]
+
+- name: Download and map timers on
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop: [homestead-fetch.timer, homestead-maps.timer]
+
+# --- tools and the AI engine -------------------------------------------------------------
+
+- name: Tool data folders
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "1000"
+    group: "1000"
+    mode: "0755"
+  loop:
+    - "{{ homestead_data }}/ollama"
+    - "{{ homestead_data }}/grocy"
+    - "{{ homestead_data }}/grocy/data/settingoverrides"
+    - "{{ homestead_data }}/flatnotes"
+    - "{{ homestead_data }}/stirling-pdf/configs"
+    - "{{ homestead_data }}/stirling-pdf/logs"
+    - "{{ homestead_data }}/openwebrx/var"
+    - "{{ homestead_data }}/openwebrx/etc"
+
+- name: Pantry needs no login (Grocy setting)
+  ansible.builtin.copy:
+    dest: "{{ homestead_data }}/grocy/data/settingoverrides/DISABLE_AUTH.txt"
+    content: "true"
+    owner: "1000"
+    group: "1000"
+    mode: "0644"
+
+- name: Radio receiver's settings password (made once; `sudo cat /etc/homestead/openwebrx-admin`)
+  ansible.builtin.set_fact:
+    openwebrx_admin_password: "{{ lookup('ansible.builtin.password', '/etc/homestead/openwebrx-admin', chars=['ascii_letters', 'digits'], length=20) }}"
+  no_log: true
+
+- name: Radio receiver's starting settings (after the first run they belong to its own settings pages)
+  ansible.builtin.template:
+    src: openwebrx-settings.json.j2
+    dest: "{{ homestead_data }}/openwebrx/var/settings.json"
+    mode: "0644"
+    force: false
+
+- name: Radio receiver's starting bookmarks (NOAA, calling channels)
+  ansible.builtin.copy:
+    src: openwebrx-bookmarks.json
+    dest: "{{ homestead_data }}/openwebrx/var/bookmarks.json"
+    mode: "0644"
+    force: false
+
+- name: Containers
+  ansible.builtin.template:
+    src: compose.yaml.j2
+    dest: "{{ homestead_dir }}/compose.yaml"
+    mode: "0600"
+    validate: docker compose -f %s config -q
+
+- name: Containers running (old ones it no longer lists are removed)
+  ansible.builtin.command: docker compose -f {{ homestead_dir }}/compose.yaml up -d --remove-orphans {{ '--pull never' if offline else '' }}
+  register: up
+  changed_when: "'Started' in up.stderr or 'Recreated' in up.stderr or 'Created' in up.stderr"
+
+- name: AI engine answering
+  ansible.builtin.uri:
+    url: http://127.0.0.1:{{ ollama_port }}/api/version
+  register: ollama
+  retries: 20
+  delay: 6
+  until: ollama.status == 200
+
+- name: AI models present
+  ansible.builtin.command: docker exec homestead-ollama ollama list
+  register: have_models
+  changed_when: false
+
+- name: AI models (large; needs internet; skipped when present)
+  ansible.builtin.command: docker exec homestead-ollama ollama pull {{ item }}
+  loop: "{{ ai_models.values() | list }}"
+  when: not offline and item not in have_models.stdout
+  register: pulled
+  failed_when: false
+
+# --- Caddy and the firewall ----------------------------------------------------------------
+
+- name: Caddy config
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: /etc/caddy/Caddyfile
+    owner: root
+    group: caddy
+    mode: "0640"
+    validate: caddy validate --adapter caddyfile --config %s
+  notify: reload caddy
+
+- name: Caddy running
+  ansible.builtin.systemd_service:
+    name: caddy
+    enabled: true
+    state: started
+
+- name: Firewall folder
+  ansible.builtin.file:
+    path: /etc/nftables.d
+    state: directory
+    mode: "0755"
+
+- name: Firewall rules
+  ansible.builtin.template:
+    src: homestead.nft.j2
+    dest: /etc/nftables.d/homestead.nft
+    mode: "0644"
+    validate: nft -c -f %s
+  notify: reload firewall
+
+- name: Firewall service (its own table; leaves Docker's rules alone)
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/homestead-firewall.service
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Homestead firewall
+      Wants=network-pre.target
+      Before=network-pre.target
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      ExecStart=/usr/sbin/nft -f /etc/nftables.d/homestead.nft
+      ExecReload=/usr/sbin/nft -f /etc/nftables.d/homestead.nft
+      ExecStop=/usr/sbin/nft delete table inet homestead
+      [Install]
+      WantedBy=multi-user.target
+  notify: reload firewall
+
+- name: Firewall on
+  ansible.builtin.systemd_service:
+    name: homestead-firewall
+    enabled: true
+    state: started
+    daemon_reload: true
+
+# --- first fill ----------------------------------------------------------------------------
+
+- name: Index what's on disk, then download what's missing (background; needs internet)
+  ansible.builtin.command: "systemctl start --no-block homestead-index.service {{ '' if offline else 'homestead-fetch.service' }}"
+  changed_when: false
+
+- name: Are the maps built?
+  ansible.builtin.stat:
+    path: "{{ core_dir }}/maps/maps.json"
+  register: maps_built
+
+- name: Build the maps (background; needs internet)
+  ansible.builtin.command: systemctl start --no-block homestead-maps.service
+  when: not maps_built.stat.exists and not offline
+  changed_when: true

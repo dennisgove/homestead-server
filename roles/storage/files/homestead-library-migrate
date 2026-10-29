@@ -33,8 +33,8 @@ mount -o noatime "$part" "$new_mnt"
 echo "Copying while everything keeps running (this is the long part)..."
 rsync -aH --info=progress2 "$LIBRARY_MOUNT/" "$new_mnt/"
 
-echo "Stopping the library apps for the final pass..."
-for c in $LIBRARY_CONTAINERS; do docker stop "$c" >/dev/null 2>&1 || true; done
+echo "Pausing downloads for the final pass..."
+systemctl stop homestead-fetch.service homestead-index.service 2>/dev/null || true
 rsync -aH --delete "$LIBRARY_MOUNT/" "$new_mnt/"
 umount "$new_mnt"
 umount "$LIBRARY_MOUNT"

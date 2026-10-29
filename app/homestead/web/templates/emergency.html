@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% set tid = 'medical' %}
+{% block title %}Medical emergency · Homestead Library{% endblock %}
+{% block body %}
+<div class="redbox">
+  <h1>🚑 Medical emergency</h1>
+  <p><b>Is it safe to help? Then: stop heavy bleeding → open the airway → check breathing → treat for shock and keep them warm.</b>
+  If there's any way to reach 911 or a medic, do that first.</p>
+</div>
+<div class="sos-grid">
+  {% for icon, label, hint, q in cards %}
+  <a href="/search?t=medical&q={{ quote(q) }}"><span>{{ icon }}</span><b>{{ label }}</b><small>{{ hint }}</small></a>
+  {% endfor %}
+</div>
+<p><a href="/ask">🤖 Ask a question</a> · <a href="/t/medical">Everything medical</a></p>
+
+<h2 class="label">Field medicine guides</h2>
+<ul class="list">
+  {% for d in docs %}<li><a class="title" href="{{ d.url }}">{{ '📘' if d.kind == 'book' else '📄' }} {{ d.title }}</a></li>{% endfor %}
+</ul>
+{% if books %}
+<h2 class="label">Medical encyclopedias</h2>
+<div class="cards">{% for b in books %}<a class="card" href="{{ b.url }}">{% if b.has_icon %}<img src="/wiki-icon/{{ b.id }}.png" alt="" width="40" height="40" loading="lazy">{% else %}<span class="noimg">📚</span>{% endif %}<span><b>{{ b.title }}</b><small>{{ b.description }}</small></span></a>{% endfor %}</div>
+{% endif %}
+<section class="box"><h2>If the computer is down</h2>
+<p>The printed binder (red tab: MEDICAL) has the same first pages. Oral rehydration: 1 litre of clean water, 6 level teaspoons of sugar, ½ level teaspoon of salt.</p></section>
+{% endblock %}

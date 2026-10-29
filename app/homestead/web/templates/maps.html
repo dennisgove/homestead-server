@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Maps · Homestead Library{% endblock %}
+{% block bodyclass %}fill{% endblock %}
+{% block mainclass %}mapbox{% endblock %}
+{% block footer %}{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/lib/maplibre-gl.css">{% endblock %}
+{% block body %}
+{% if not (layers.detailed or layers.wide or layers.world) %}
+<div class="wrap"><h1>🗺️ Maps</h1><p class="empty">The maps aren't built yet. They're built in the background while the
+server has internet, and show up here when they're ready.</p></div>
+{% else %}
+<div id="map"></div>
+<div class="mapui noprint">
+  <form id="where" class="panel"><input id="place" type="search" placeholder="Find a town, road, hospital…" aria-label="Find a place" autocomplete="off"><ul id="found"></ul></form>
+  <div class="panel"><button type="button" onclick="window.print()">🖨️ Print this view</button></div>
+  {% if info %}<div class="panel meta">Detailed map: {{ info.states | join(', ') }}</div>{% endif %}
+</div>
+<script>window.MAPS = {{ {"layers": layers, "info": info} | tojson }};</script>
+<script src="/static/lib/maplibre-gl.js"></script>
+<script src="/static/lib/pmtiles.js"></script>
+<script src="/static/lib/basemaps.js"></script>
+<script src="/static/maps.js"></script>
+{% endif %}
+{% endblock %}

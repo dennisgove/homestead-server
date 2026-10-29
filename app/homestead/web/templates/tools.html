@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Tools · Homestead Library{% endblock %}
+{% block body %}
+<h1>🧰 Tools</h1>
+<p class="lead">Programs on this computer. None of them need an account.</p>
+{% for group in ['Everyday', 'Radio'] %}
+{% set mine = tools | selectattr('group', 'equalto', group) | list %}
+{% if mine %}
+<h2 class="label">{{ group }}</h2>
+<div class="links">
+  {% for t in mine %}<a href="{{ t.url }}"><span>{{ t.icon }}</span><b>{{ t.title }}</b><small>{{ t.hint }}{% if t.scheme == 'https' %}. The browser warns about the certificate once: choose Advanced, then Continue.{% endif %}</small></a>{% endfor %}
+</div>
+{% endif %}
+{% endfor %}
+
+<h2 class="label">Phone apps and downloads</h2>
+{% if share %}
+<ul class="list">{% for f in share %}<li><a class="title" href="{{ f.url }}" download>⬇️ {{ f.name }}</a> <span class="meta">{{ f.size | human }}</span></li>{% endfor %}</ul>
+{% else %}<p class="meta">Nothing in the downloads folder yet.</p>{% endif %}
+{% if apps %}<p class="meta">Worth having on phones: {% for a in apps %}{{ a.title }}{% if not loop.last %} · {% endif %}{% endfor %}.</p>{% endif %}
+{% endblock %}

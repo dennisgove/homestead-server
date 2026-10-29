@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Videos · Homestead Library{% endblock %}
+{% block body %}
+<h1>🎬 Videos</h1>
+{% if current %}
+<section class="nowplaying">
+  <h2>{{ current.title }}</h2>
+  {% if current.audio %}<audio class="player" controls autoplay src="/files/video/{{ quote(current.rel) }}"></audio>
+  {% else %}<video class="player" controls autoplay src="/files/video/{{ quote(current.rel) }}"></video>{% endif %}
+  <p class="meta"><a href="/files/video/{{ quote(current.rel) }}" download>Download</a> · If it won't play, this browser can't play the format: download it and use VLC.</p>
+</section>
+{% endif %}
+
+{% if video_books %}
+<h2 class="label">Video collections</h2>
+<div class="cards">
+  {% for b in video_books %}<a class="card" href="{{ b.url }}">{% if b.has_icon %}<img src="/wiki-icon/{{ b.id }}.png" alt="" width="40" height="40" loading="lazy">{% else %}<span class="noimg">📚</span>{% endif %}
+    <span><b>{{ b.title }}</b><small>{{ b.description }}</small></span></a>{% endfor %}
+</div>
+{% endif %}
+<p><a href="/learn">Khan Academy lessons are under Learn →</a></p>
+
+{% for g, vs in groups | dictsort %}
+<h2 class="label">{{ g }}</h2>
+<ul class="list">{% for v in vs %}<li><a class="title" href="/videos?play={{ quote(v.rel) }}">{{ '🎵' if v.audio else '🎬' }} {{ v.title }}</a> <span class="meta">{{ v.size | human }}</span></li>{% endfor %}</ul>
+{% endfor %}
+{% if not groups %}<p class="meta">Your own videos go in the <code>video</code> folder on the library drive; they show up here.</p>{% endif %}
+{% endblock %}

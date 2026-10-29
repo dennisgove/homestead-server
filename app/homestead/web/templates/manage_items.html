@@ -1,0 +1,20 @@
+{% extends "manage_base.html" %}
+{% block body %}
+<h1>Everything in the library</h1>
+<p class="chips"><a href="/items">All</a>{% for k, x in topics.items() %}<a href="/items?t={{ k }}">{{ x.icon }} {{ x.name }}</a>{% endfor %}</p>
+<ul class="list">
+{% for r in rows %}{% set it = r.it %}
+  <li>
+    <span class="title">{{ it.title or it.id }}</span>
+    <span class="meta">{{ it.kind }} · {{ topics[it.topic].name if it.topic in topics else it.topic }}{% if it.essential %} · internal disk{% endif %}{% if it.priority > 1 %} · priority {{ it.priority }}{% endif %}{% if it.added %} · added here{% endif %}</span>
+    <span class="meta {{ 'good' if r.here else 'warn' }}">{% if r.removed %}removed{% elif r.here %}here · {{ r.size | human }}{% else %}{{ r.state or 'not downloaded yet' }}{% endif %}{% if r.note %} · {{ r.note }}{% endif %}</span>
+    {% if r.removed %}
+    <form method="post" action="/items/{{ it.id }}/restore"><button>Put back</button></form>
+    {% else %}
+    <form method="post" action="/items/{{ it.id }}/remove" onsubmit="return confirm('Remove {{ (it.title or it.id) | replace("'", "") }} from the library?')">
+      <label class="meta"><input type="checkbox" name="delete" value="1" {% if r.here %}checked{% endif %}> delete its files</label> <button>Remove</button></form>
+    {% endif %}
+  </li>
+{% endfor %}
+</ul>
+{% endblock %}

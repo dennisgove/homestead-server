@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}{{ q ~ ' · ' if q }}{{ b.title }} · Homestead Library{% endblock %}
+{% block body %}
+<p class="crumbs"><a href="/">Topics</a> / {% if t %}<a href="/t/{{ t.id }}">{{ t.name }}</a> /{% endif %} <a href="{{ b.url }}">{{ b.title }}</a></p>
+<h1>Search {{ b.title }}</h1>
+<form class="bigfind" action="/wiki-search/{{ b.id }}" role="search">
+  <input name="q" type="search" value="{{ q }}" placeholder="Search {{ b.title }}" aria-label="Search {{ b.title }}" autocomplete="off" {% if not q %}autofocus{% endif %}>
+  <button type="submit">Search</button>
+</form>
+{% if titles %}<p class="chips">Pages named like this: {% for h in titles %}<a href="{{ h.url }}">{{ h.title }}</a>{% endfor %}</p>{% endif %}
+{% if res %}
+  {% if res.hits %}
+  <p class="meta">About {{ '{:,}'.format(res.total) }} pages · <a href="/search?q={{ quote(q) }}">search the whole library instead</a></p>
+  <ul class="results">
+    {% for h in res.hits %}<li><a class="title" href="{{ h.url }}">{{ h.title }}</a>{% if h.snippet %}<p>{{ h.snippet | safe }}</p>{% endif %}</li>{% endfor %}
+  </ul>
+  <p class="pager">{% if start > 0 %}<a href="?q={{ quote(q) }}&start={{ [start - 20, 0] | max }}">← Previous</a>{% endif %}
+  {% if start + 20 < res.total %}<a href="?q={{ quote(q) }}&start={{ start + 20 }}">More results →</a>{% endif %}</p>
+  {% else %}
+  <p class="empty">Nothing in {{ b.title }} for “{{ q }}”. <a href="/search?q={{ quote(q) }}">Search the whole library</a>.</p>
+  {% endif %}
+{% endif %}
+{% endblock %}

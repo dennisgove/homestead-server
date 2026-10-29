@@ -12,14 +12,10 @@
   roles:
     - { role: base,    tags: base }
     - { role: users,   tags: users }
-    - { role: storage, tags: storage }
-    - { role: apps,    tags: apps }
-    - { role: proxy,   tags: proxy }
-    - { role: hub,     tags: hub }
-    - { role: kiosk,   tags: kiosk }
-    - { role: network, tags: network }
-    - { role: ai,      tags: ai }
-    - { role: content, tags: content }
-    - { role: radio,   tags: radio }
+    - { role: storage,   tags: storage }
+    - { role: homestead, tags: homestead }   # the website, the library, the tools, the AI
+    - { role: kiosk,     tags: kiosk }
+    - { role: network,   tags: network }
+    - { role: radio,     tags: radio }
     - { role: power,   tags: power }
     - { role: backup,  tags: backup }

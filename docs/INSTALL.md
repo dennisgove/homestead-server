@@ -96,7 +96,7 @@ The NVMe gets this layout:
 |---|---|---|
 | lv_root | 120G | / |
 | lv_home | 60G | /home |
-| lv_opt | 250G | /opt (apps, the Hub, AI models) |
+| lv_opt | 250G | /opt (the program, tools, AI models) |
 | lv_core | 150G | /srv/core (essentials library) |
 | lv_swap | 16G | swap |
 | lv_vault | 50G | encrypted vault (set up later) |
@@ -135,7 +135,7 @@ It asks for:
 - the root password (break-glass, goes on the recovery sheet)
 - the dennis password (replaces the temporary one)
 - the guest password (simple; it will be posted)
-- the admin web password (the admin pages only: Library manager, vault documents, Winlink, logs, file browser, radio receiver settings). The website itself never asks for one.
+- the admin web password (only for Winlink, the vault documents, and the radio receiver's settings). The website itself never asks for one.
 - your SSH public key (on the Mac: `cat ~/.ssh/id_ed25519.pub`; blank to skip)
 - the hotspot WiFi password
 - the borg passphrase: **leave it blank on a first install**, and it generates one. On a rebuild, type the one from the recovery sheet.
@@ -146,47 +146,43 @@ After the first run, the firewall allows SSH only from **wired ethernet** (never
 
 To update the server from the Mac later, copy the folder again and re-run `bootstrap.sh`. That keeps the existing passwords and passphrase (`/opt/homestead/repo/secrets.yml`).
 
-The first run takes a while (container images, AI models). Everything after it happens in the background: the library download, the maps, the books library and the AI's knowledge bases. Watch it on the **Library manager** page.
+The first run takes a while (container images, AI models). Everything after it happens in the background: the library download, the search index and the maps. Watch it on the website's **Status** page.
 
-**Upgrading an older install that used Project NOMAD?** Run `sudo scripts/migrate-from-nomad.sh` once, before this step. It moves NOMAD's ZIMs, courses, videos and app data into the new layout (renames on the same disk, so it's quick) and retires NOMAD.
+An older install (Kiwix, Kolibri and the earlier web pages) is converted on this run: its downloaded files move into the new layout (renames on the same disk; nothing is downloaded again), and its containers and services are removed.
 
-## 8. The Library manager (http://homestead.local:7090; dennis + admin web password)
+## 8. The website (http://homestead.local, or http://library.lan on the hotspot)
 
-Everything about the library's content, from a web page:
-- **Overview:** what's downloaded, disk space (including whether pending downloads will fit), the jobs and their progress, with **Run now** buttons.
-- **Add from Kiwix:** search Kiwix's online catalog (needs internet) and add an item in one click: category, tier, and which disk (essentials on the NVMe, or the USB drive).
-- **Add a document:** by link, or upload a file (the by-hand items). Choose its category, and whether the AI uses it and it goes in the printed binder.
-- **All items:** change category, tier or disk, switch "use in AI", "in binder" and "updates" per item, download or remove (optionally deleting the files).
-- **Updates:** newer releases of what you have (checked weekly, or **Check now**).
-- **Health & checklist:** what isn't downloaded yet, duplicates, unfinished downloads, files on disk that aren't in the catalog (**Adopt** them), and the list of things to get by hand.
-- **Export my changes:** your edits as a YAML patch for `content/catalog.yaml`, so a rebuild starts from them too. (They're also backed up.)
+No account, no password. Topics, Search, Ask, Emergency, Maps, Learn, Videos, Tools, Print and Status are all on it. Everything is read straight from the library's files, so there's nothing else to set up.
 
-## 9. Content and maps (automatic; days)
+**Ask** runs the AI on this computer's processor: an answer starts after 10–30 seconds (a couple of minutes if the model has to load first). Nothing anyone asks is kept.
 
-`bootstrap.sh` indexes what's on disk, then starts the download in the background, and it repeats weekly to resume and pick up new releases. It fetches tiers 1–3 (`content_tier` in `group_vars/all/settings.yml`) and skips anything that won't fit, so it's safe with the temporary internal library too. The **maps** are built once in the background (needs internet; refreshed quarterly):
+## 9. The library: downloads, the manager, maps (automatic; days)
+
+`bootstrap.sh` indexes what's on disk, then starts the download in the background; it runs again every week to resume and pick up new releases. It fetches everything in `library.yaml` up to `fetch_priority` (`group_vars/all/website.yml`), checks every download, and skips anything that won't fit, so it's safe with the temporary internal library too.
+
+**The library manager:** http://localhost:8701 on the server's own screen (from the Mac: `ssh -L 8701:localhost:8701 dennis@homestead.local`, then open the same address). It shows what's here and what isn't, disk space and the jobs, with **Run now** buttons; it adds encyclopedias (searching Kiwix's catalog), documents by link, and files from your computer; and it removes things. The same from the command line:
+
+```bash
+homestead status                                  # what's here, what's missing
+sudo homestead find gardening                     # look in Kiwix's catalog
+sudo homestead add zim gardening.stackexchange.com_en_all --topic food
+sudo homestead add pdf https://example.org/x.pdf --title "Seed Saving" --topic food
+sudo homestead remove seed-saving --delete
+```
+Changes made this way are kept in `/var/lib/homestead/library/changes.yaml` (backed up). Documents copied straight into `/srv/core/docs/<topic>/` show up on the website after `sudo homestead index`.
+
+The **maps** are built once in the background (needs internet; refreshed quarterly):
 - **detailed:** your state and its neighbors (`region_state`), every street, building and trail;
 - **wide:** the contiguous US and southern Canada, towns and highways;
 - **world:** countries and major cities;
 
-plus offline place search. Open them at http://homestead.local/maps.
+plus place-name search. Some things have no free download; the website's **Status** page lists them.
 
-```bash
-systemctl status homestead-fetch homestead-maps   # or the Library manager's Overview
-```
+Phone apps (Kiwix, Organic Maps + map files, MeshCore, F-Droid) go into `/srv/core/share/apps/`; the **Tools** page offers them for download.
 
-Some documents have no download link: **Health & checklist** lists them. Upload them there once you have them.
+## 10. Tools
 
-Phone apps (Kiwix, Organic Maps + map files, MeshCore, F-Droid) go into `/srv/core/share/apps/`.
-
-## 10. Search and AI (automatic)
-
-Nothing to click, and nobody needs an account:
-- **Search** (the box on every page of http://homestead.local) looks through the text of every PDF, page by page, and every encyclopedia. The documents' index (`homestead-docindex`) is rebuilt after each library change, in under a minute.
-- **Ask** (http://homestead.local/ask): the AI searches the same way, gives the planner model the best passages, and streams the answer with numbered links to its sources. It runs on this CPU: the answer starts after 10–30 seconds (a couple of minutes if the model has to load first). Nothing is saved on the server.
-
-```bash
-systemctl status homestead-docindex        # journalctl -u homestead-docindex to see what it read
-```
+Pantry, notes, PDF/data/IT tools, a whiteboard, the radio receiver and the mesh radio pages are on the **Tools** page. None of them asks for a login.
 
 ## 11. Vault
 
@@ -204,19 +200,19 @@ See [COMMS.md](COMMS.md): `pat configure` (callsign, grid), Digirig audio levels
 
 ## 13. Finish
 
-1. Plug in BACKUP-A. The first backup starts automatically and takes many hours. Then do BACKUP-B. (No backup drive yet? The portal shows "Last backup never". The daily desktop reminder only starts after the first backup. Until then you have **no backup**.)
+1. Plug in BACKUP-A. The first backup starts automatically and takes many hours. Then do BACKUP-B. (No backup drive yet? The website's status line shows "Last backup: never". The daily desktop reminder only starts after the first backup. Until then you have **no backup**.)
 2. Make the first **Clonezilla image** (RESTORE.md §Clonezilla).
 3. Do the **restore drill** (RESTORE.md §Drill) before you rely on it.
-4. Print the binder: http://homestead.local/binder lists everything marked **in binder** (set in the Library manager), by tab ([PRINT-BINDER.md](PRINT-BINDER.md)). Also the WiFi sign (`/srv/core/share/print/wifi-sign.html`).
+4. Print the binder: http://homestead.local/print lists the documents to keep on paper (`print: true` in `library.yaml`), by tab ([PRINT-BINDER.md](PRINT-BINDER.md)). Also the WiFi sign (`/srv/core/share/print/wifi-sign.html`).
 5. Test `sudo homestead-mode griddown` with a phone, then `gridup`.
 
 ## Adding the drives later
 
-**Library drive** (moves the temporary internal library onto it; the library apps are down only for the final copy pass):
+**Library drive** (moves the temporary internal library onto it; the website keeps working throughout):
 ```bash
 lsblk                                         # find the new USB drive, e.g. /dev/sda
 sudo homestead-library-migrate /dev/sdX       # erases it, copies, swaps labels
-# check the website and the Library manager, then free the NVMe space:
+# check the website (Status page), then free the NVMe space:
 sudo lvremove vg_sys/lv_library
 sudo systemctl start --no-block homestead-fetch   # now download the rest (also happens weekly on its own)
 ```

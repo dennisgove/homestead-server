@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · Homestead Library{% endblock %}
+{% block bodyclass %}fill{% endblock %}
+{% block mainclass %}reader{% endblock %}
+{% block footer %}{% endblock %}
+{% block body %}
+<div class="readbar noprint">
+  <div class="where">
+    {% if t %}<a href="/t/{{ t.id }}">{{ t.name }}</a> / {% endif %}
+    {% if nav %}<a href="{{ nav.book.url }}">{{ nav.book.title }}</a> / {% endif %}
+    <b>{% if label and label != title %}{{ label }}: {% endif %}{{ title }}</b>
+    {% if pages %}<span class="meta">{{ pages }} pages</span>{% endif %}
+  </div>
+  <div class="acts">
+    {% if nav and nav.prev %}<a href="{{ nav.prev.url }}" title="{{ nav.prev.title }}">← Previous</a>{% endif %}
+    {% if nav and nav.next %}<a href="{{ nav.next.url }}" title="{{ nav.next.title }}">Next →</a>{% endif %}
+    <a href="{{ file }}" target="_blank" rel="noopener">Open full screen</a>
+    <a href="{{ file }}" download>Download</a>
+  </div>
+</div>
+<iframe class="pdf" id="pdf" title="{{ title }}" src="{{ file }}"></iframe>
+<script>
+// Keep "#page=N" from search results: pass it on to the PDF viewer.
+if (location.hash) document.getElementById("pdf").src = {{ file | tojson }} + location.hash;
+</script>
+{% endblock %}

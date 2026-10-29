@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Library manager{% endblock %}</title>
+<link rel="stylesheet" href="/static/site.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap row"><span class="logo">🏡 <span>Library manager</span></span>
+    <span class="meta">This page only works on this computer. The website is at <a href="http://localhost/">http://localhost/</a>.</span></div>
+  <nav class="wrap menu" aria-label="Manager">
+    <a href="/" {% if path == '/' %}aria-current="page"{% endif %}>Overview</a>
+    <a href="/items" {% if path == '/items' %}aria-current="page"{% endif %}>Everything</a>
+    <a href="/add" {% if path == '/add' %}aria-current="page"{% endif %}>Add</a>
+  </nav>
+</header>
+<main id="main" class="wrap">
+{% block body %}{% endblock %}
+</main>
+</body>
+</html>

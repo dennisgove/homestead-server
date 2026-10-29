@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 # Called by udev when the LIBRARY drive appears (and safe to run by hand):
-# mount it, restart the apps whose data is on it, and re-index the library.
+# mount it and bring the search index up to date. (The website reads the drive directly
+# and notices it on its own.)
 set -euo pipefail
 . /etc/homestead/storage.conf
 
 mountpoint -q "$LIBRARY_MOUNT" || mount "$LIBRARY_MOUNT"
-# They started with an empty mountpoint (or never started); restart to see the drive.
-for c in $LIBRARY_CONTAINERS; do docker restart "$c" >/dev/null 2>&1 || true; done
-systemctl start --no-block homestead-catalog-apply.service
-logger -t homestead "LIBRARY drive online; library apps restarted"
+systemctl start --no-block homestead-index.service
+logger -t homestead "LIBRARY drive online"

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Learn · Homestead Library{% endblock %}
+{% block body %}
+<h1>🎓 Learn</h1>
+{% if channels %}
+<div class="cards">
+  {% for c in channels %}<a class="card" href="/learn/{{ c.id }}"><span class="noimg">🎓</span><span><b>{{ c.title }}</b><small>{{ c.description[:200] }}</small></span></a>{% endfor %}
+</div>
+{% else %}
+<p class="empty">No courses yet. They download with the rest of the library (they're big, so they come last).</p>
+{% endif %}
+{% endblock %}

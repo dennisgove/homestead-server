@@ -1,0 +1,474 @@
+# The Homestead library: everything the website offers, by topic.
+#
+# Each topic lists its items. An item is one of:
+#   zim: <name>          an encyclopedia or website from Kiwix's catalog (newest release is fetched)
+#   pdf: <url>           one document            epub: <url>   one ebook
+#   book: <page url>     a book published as one PDF per chapter: every PDF linked from the page
+#                        (only links matching `match:`, a regular expression). Chapter titles are
+#                        read from each chapter's first page.
+#   course: <channel>    a Khan Academy-style course channel (Kolibri Studio channel id)
+# Options:
+#   title:      what the website calls it (zim: taken from the file itself if left out)
+#   essential:  true = stored on the internal disk, so it works even without the USB library drive
+#   print:      true = goes in the printed binder
+#   priority:   1 (default) fetched first ... 3 fetched last, and only if there's room
+#
+# Add or remove things here, or with `homestead add` / `homestead remove` on the server
+# (those changes are kept in /var/lib/homestead/library/changes.yaml and survive updates).
+
+topics:
+
+  medical:
+    name: "Medical"
+    icon: "🩺"
+    blurb: "First aid, trauma, illness, medicines, dental, childbirth"
+    quick: ["tourniquet", "CPR", "burns", "splint", "wound infection", "oral rehydration", "childbirth", "dosage", "toothache"]
+    items:
+      - zim: zimgit-medicine_en
+        essential: true
+      - zim: mdwiki_en_all_maxi
+        essential: true
+      - zim: wikem_en_all_maxi
+        essential: true
+      - zim: wikipedia_en_medicine_maxi
+        essential: true
+      - zim: fas-military-medicine_en
+        essential: true
+      - zim: irp.fas.org_en_military-medicine
+        essential: true
+      - zim: nhs.uk_en_medicines
+        essential: true
+      - zim: wwwnc.cdc.gov_en_all
+        essential: true
+      - zim: medlineplus.gov_en_all
+        priority: 2
+      - zim: librepathology_en_all_maxi
+        priority: 2
+      - zim: medicalsciences.stackexchange.com_en_all
+        priority: 2
+      - zim: fitness.stackexchange.com_en_all
+        priority: 2
+      - zim: libretexts.org_en_med
+        priority: 2
+      - book: "https://medcoe.army.mil/borden-tb-ews"
+        title: "Emergency War Surgery, 5th US revision (Borden Institute)"
+        essential: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN46159-ATP_4-02.11-000-WEB-1.pdf"
+        title: "ATP 4-02.11: Casualty Response, Tactical Combat Casualty Care, and First Aid (US Army)"
+        essential: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN33634-TC_8-800-000-WEB-1.pdf"
+        title: "TC 8-800: Medical Education and Demonstration of Individual Competence (US Army)"
+        essential: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN30121-ATP_4-02.5-001-WEB-3.pdf"
+        title: "ATP 4-02.5: Casualty Care (US Army)"
+        essential: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN43608-TB_MED_507-001-WEB-2.pdf"
+        title: "TB MED 507: Heat Stress Control and Heat Casualty Management (US Army)"
+        essential: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN45918-TB_MED_508-000-WEB-1.pdf"
+        title: "TB MED 508: Prevention and Management of Cold-Weather Injuries (US Army)"
+        essential: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN44589-ATP_4-02.8-002-WEB-4.pdf"
+        title: "ATP 4-02.8: Force Health Protection (US Army)"
+        essential: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN47228-ATP_4-02.19-000-WEB-1.pdf"
+        title: "ATP 4-02.19: Dental Services (US Army)"
+        essential: true
+      - book: "https://languages.hesperian.org/pages/en/pdf.html"
+        title: "Where There Is No Doctor (Hesperian)"
+        match: "/en_wtnd_\\d{4}/"
+        essential: true
+      - book: "https://languages.hesperian.org/pages/en/pdf.html"
+        title: "Where There Is No Dentist (Hesperian)"
+        match: "/en_dent_\\d{4}/"
+        essential: true
+      - book: "https://languages.hesperian.org/pages/en/pdf.html"
+        title: "Where Women Have No Doctor (Hesperian)"
+        match: "/en_wwhnd_\\d{4}/"
+        essential: true
+      - book: "https://languages.hesperian.org/pages/en/pdf.html"
+        title: "A Book for Midwives (Hesperian)"
+        match: "/en_midw_\\d{4}/"
+        essential: true
+      - pdf: "https://www.slhn.org/-/media/sluhn/emergency-services/pdf/stop-the-bleed-booklet.ashx"
+        title: "Stop the Bleed: Save a Life booklet (American College of Surgeons)"
+        essential: true
+        print: true
+      - pdf: "https://public.3.basecamp.com/p/inZg8e16NHVuznoxmCMQvZG2/attachments/0b0f040a-2008-11ef-adb3-b2d1a80aa527/download/survivalausteremedicine.pdf"
+        title: "Survival and Austere Medicine, 3rd ed. (2017)"
+        essential: true
+      - pdf: "https://archive.org/download/SOFMH2001/SOFMH2001.pdf"
+        title: "Special Operations Forces Medical Handbook (USSOCOM, 2001)"
+        essential: true
+      - pdf: "https://archive.org/download/ST_31-91B_Special_Forces_Medical_Handbook/ST_31-91B_Special_Forces_Medical_Handbook.pdf"
+        title: "ST 31-91B Special Forces Medical Handbook (US Army, 1982)"
+        essential: true
+      - pdf: "https://iris.who.int/server/api/core/bitstreams/17642505-ecd3-4940-a691-4f1dfa0d835a/content"
+        title: "WHO Model List of Essential Medicines, 24th list (2025)"
+        essential: true
+      - pdf: "https://iris.who.int/server/api/core/bitstreams/3bda1306-da5d-487d-b2ad-aff995112a7a/content"
+        title: "WHO Managing Complications in Pregnancy and Childbirth (2017)"
+        essential: true
+
+  water:
+    name: "Water & sanitation"
+    icon: "💧"
+    blurb: "Finding, filtering, disinfecting and storing water; latrines and hygiene"
+    quick: ["water purification", "boiling water", "bleach", "rainwater", "well", "latrine"]
+    items:
+      - zim: zimgit-water_en
+        essential: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/pdf/web/tc4_02x3.pdf"
+        title: "TC 4-02.3: Field Hygiene and Sanitation (US Army)"
+        essential: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN44577-ATP_4-25.12-002-WEB-3.pdf"
+        title: "ATP 4-25.12: Unit Field Sanitation Teams (US Army)"
+        essential: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/pdf/web/tbmed577.pdf"
+        title: "TB MED 577: Sanitary Control and Surveillance of Field Water Supplies (US Army)"
+        essential: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN47037-ATP_4-44-001-WEB-1.pdf"
+        title: "ATP 4-44: Water Support Operations (US Army)"
+        essential: true
+      - book: "https://languages.hesperian.org/pages/en/pdf.html"
+        title: "A Community Guide to Environmental Health (Hesperian)"
+        match: "/en_cgeh_\\d{4}/"
+        essential: true
+
+  food:
+    name: "Food & farming"
+    icon: "🌱"
+    blurb: "Gardening, seeds, livestock, foraging, canning and preserving, cooking"
+    quick: ["pressure canning", "seed saving", "chickens", "compost", "drying food", "root cellar"]
+    items:
+      - zim: zimgit-food-preparation_en
+        essential: true
+      - zim: wikivet.net_en_all_maxi
+        essential: true
+      - zim: usda-2015_en
+        essential: true
+      - zim: gardenology.org_en_all
+        essential: true
+        priority: 2
+      - zim: publicdomainrecipes.com_en_all
+        priority: 2
+      - zim: gardening.stackexchange.com_en_all
+        priority: 2
+      - zim: cooking.stackexchange.com_en_all
+        priority: 2
+      - zim: homebrew.stackexchange.com_en_all
+        priority: 2
+      - zim: pets.stackexchange.com_en_all
+        priority: 2
+      - zim: canadian-prepper_en_preppingfood
+        priority: 3
+      - zim: based.cooking_en_all
+        priority: 2
+      - zim: foss.cooking_en_all
+        priority: 2
+      - zim: gutenberg_en_lcc-s
+        priority: 2
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN43434-ATP_4-41-001-WEB-3.pdf"
+        title: "ATP 4-41: Army Field Feeding and Class I Operations (US Army)"
+        essential: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/pdf/web/ARN15052_TB_MED_530_FINAL.pdf"
+        title: "TB MED 530: Tri-Service Food Code (US Army)"
+        essential: true
+      - book: "https://nchfp.uga.edu/resources/entry/about-the-usda-guide-to-home-canning-2015-revision"
+        title: "USDA Complete Guide to Home Canning (2015)"
+        match: "/papers/guide/"
+        essential: true
+      - pdf: "https://ag.umass.edu/sites/ag.umass.edu/files/fact-sheets/pdf/vegetable_planting_chart_1_-ua.pdf"
+        title: "UMass Extension vegetable planting chart (Massachusetts)"
+        essential: true
+        print: true
+      - pdf: "https://www.fao.org/3/y5169e/y5169e.pdf"
+        title: "Small-Scale Poultry Production (FAO)"
+        essential: true
+
+  survival:
+    name: "Survival & shelter"
+    icon: "🏕️"
+    blurb: "Shelter, fire, navigation, cold and heat, disasters, bugging out"
+    quick: ["shelter", "fire starting", "compass", "hypothermia", "knots", "fallout"]
+    items:
+      - zim: zimgit-post-disaster_en
+        essential: true
+      - zim: zimgit-knots_en
+        essential: true
+      - zim: www.ready.gov_en
+        essential: true
+      - zim: trueprepper.com_en_all
+        essential: true
+      - zim: survivorlibrary.com_en_all
+        priority: 2
+      - zim: 100r.co_en_all
+        priority: 2
+      - zim: outdoors.stackexchange.com_en_all
+        priority: 2
+      - zim: canadian-prepper_en_bugoutconcepts
+        priority: 3
+      - zim: canadian-prepper_en_bugoutroll
+        priority: 3
+      - zim: canadian-prepper_en_winterprepping
+        priority: 3
+      - zim: urban-prepper_en_all
+        priority: 3
+      - zim: lrnselfreliance_en_all
+        priority: 3
+      - zim: modern-rogue
+        priority: 3
+      - pdf: "https://www.oism.org/nwss/nwss.pdf"
+        title: "Nuclear War Survival Skills (Kearny)"
+        essential: true
+        print: true
+      - pdf: "https://www.ready.gov/sites/default/files/2021-11/are-you-ready-guide.pdf"
+        title: "Are You Ready? (FEMA citizen preparedness)"
+        essential: true
+        print: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/pdf/web/ARN12086_ATP 3-50x21 FINAL WEB 2.pdf"
+        title: "ATP 3-50.21: Survival (US Army)"
+        essential: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN45217-TC_21-3-000-WEB-1.pdf"
+        title: "TC 21-3: Individual Operations and Survival in Cold-Weather Areas (US Army)"
+        essential: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN44366-ATP_3-21.50-000-WEB-1.pdf"
+        title: "ATP 3-21.50: Infantry Small-Unit Mountain and Cold Weather Operations (US Army)"
+        essential: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN45366-TC_3-97.61-000-WEB-1.pdf"
+        title: "TC 3-97.61: Military Mountaineering (US Army)"
+        essential: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/pdf/web/atp3_90x97.pdf"
+        title: "ATP 3-90.97: Mountain Warfare and Cold Weather Operations (US Army)"
+        essential: true
+      - pdf: "https://em.uci.edu/training/_pdf/cert-participant-manual-english.pdf"
+        title: "CERT Basic Training Participant Manual (FEMA, 2019)"
+        essential: true
+        print: true
+
+  security:
+    name: "Security & defense"
+    icon: "🛡️"
+    blurb: "Protecting home and family, Army field manuals, CBRN"
+    quick: ["perimeter", "camouflage", "decontamination", "marksmanship", "first aid kit"]
+    items:
+      - zim: armypubs_en_all
+        essential: true
+      - zim: security.stackexchange.com_en_all
+        priority: 2
+      - zim: martialarts.stackexchange.com_en_all
+        priority: 2
+      - zim: gutenberg_en_lcc-u
+        priority: 2
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN45113-TC_3-21.76-000-WEB-2.pdf"
+        title: "TC 3-21.76: Ranger Handbook (US Army)"
+        essential: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN44065-ATP_3-21.8-001-WEB-3.pdf"
+        title: "ATP 3-21.8: Infantry Rifle Platoon and Squad (US Army)"
+        essential: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/pdf/web/tc3_21x75.pdf"
+        title: "TC 3-21.75: The Warrior Ethos and Soldier Combat Skills (US Army)"
+        essential: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/pdf/web/ARN19927_TC_3-22x9_C3_FINAL_WEB.pdf"
+        title: "TC 3-22.9: Rifle and Carbine (US Army)"
+        essential: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/pdf/web/ARN20599_TC_3-23x35_Incl_C2_FINAL_WEB.pdf"
+        title: "TC 3-23.35: Pistol (US Army)"
+        essential: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/pdf/web/ARN3118_TC 3-25x150 FINAL WEB.pdf"
+        title: "TC 3-25.150: Combatives (US Army)"
+        essential: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN43472-FM_3-11-000-WEB-1.pdf"
+        title: "FM 3-11: Chemical, Biological, Radiological, and Nuclear Operations (US Army)"
+        essential: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN46285-ADP_3-37-000-WEB-2.pdf"
+        title: "ADP 3-37: Protection (US Army)"
+        essential: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN43965-ATP_3-07.6-001-WEB-3.pdf"
+        title: "ATP 3-07.6: Protection of Civilians (US Army)"
+        essential: true
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN37194-FM_3-98-000-WEB-1.pdf"
+        title: "FM 3-98: Reconnaissance and Security Operations (US Army)"
+        essential: true
+      - epub: "https://www.gutenberg.org/cache/epub/26184/pg26184.epub"
+        title: "Simple Sabotage Field Manual (OSS, 1944)"
+        essential: true
+
+  power:
+    name: "Power & energy"
+    icon: "⚡"
+    blurb: "Solar, batteries, generators, off-grid electricity, stoves"
+    quick: ["solar panel", "battery", "inverter", "generator", "biogas"]
+    items:
+      - zim: appropedia_en_all_maxi
+        essential: true
+        priority: 2
+      - zim: energypedia_en_all_maxi
+        essential: true
+        priority: 2
+      - zim: solar.lowtechmagazine.com_mul_all
+        priority: 2
+      - zim: sustainability.stackexchange.com_en_all
+        priority: 2
+
+  repair:
+    name: "Repair & building"
+    icon: "🔧"
+    blurb: "Tools, engines, plumbing, wiring, woodworking, electronics"
+    quick: ["small engine", "plumbing", "welding", "woodworking", "soldering"]
+    items:
+      - zim: restarters_en_all_maxi
+        essential: true
+        priority: 2
+      - zim: cd3wdproject.org_en_all
+        priority: 2
+      - zim: diy.stackexchange.com_en_all
+        priority: 2
+      - zim: mechanics.stackexchange.com_en_all
+        priority: 2
+      - zim: electronics.stackexchange.com_en_all
+        priority: 2
+      - zim: woodworking.stackexchange.com_en_all
+        priority: 2
+      - zim: engineering.stackexchange.com_en_all
+        priority: 2
+      - zim: bicycles.stackexchange.com_en_all
+        priority: 2
+      - zim: crafts.stackexchange.com_en_all
+        priority: 2
+      - zim: ifixit_en_all
+        priority: 2
+      - zim: arduino.stackexchange.com_en_all
+        priority: 3
+      - zim: raspberrypi.stackexchange.com_en_all
+        priority: 3
+      - zim: robotics.stackexchange.com_en_all
+        priority: 3
+
+  comms:
+    name: "Radio & comms"
+    icon: "📻"
+    blurb: "Ham radio, emergency communications, mesh networks"
+    quick: ["antenna", "Winlink", "repeater", "Morse code", "ICS 213"]
+    items:
+      - zim: ham.stackexchange.com_en_all
+        priority: 2
+      - zim: crosstalk-solutions
+        priority: 3
+      - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN44497-ATP_6-02.53-000-WEB-1.pdf"
+        title: "ATP 6-02.53: Techniques for Tactical Radios and Retransmission (US Army)"
+        essential: true
+      - pdf: "https://www.arrl.org/files/file/Regulatory/Band%20Chart/Hambands4_Color_11x8_5.pdf"
+        title: "ARRL US Amateur Radio Bands chart"
+        essential: true
+        print: true
+      - pdf: "https://training.fema.gov/emiweb/is/icsresource/assets/nims%20ics%20forms%20booklet.v3.pdf"
+        title: "NIMS ICS Forms Booklet incl. ICS-213/214 (FEMA 502-2)"
+        essential: true
+        print: true
+
+  learning:
+    name: "Learning & school"
+    icon: "🎓"
+    blurb: "Courses and lessons for every age: math, science, reading, history"
+    quick: ["fractions", "photosynthesis", "grammar", "algebra"]
+    items:
+      - zim: khanacademy_en_all
+        priority: 3
+      - zim: crashcourse_en_all
+        priority: 3
+      - zim: phet_en_all
+        priority: 3
+      - zim: libretexts.org_en_bio
+        priority: 3
+      - zim: libretexts.org_en_chem
+        priority: 3
+      - zim: libretexts.org_en_eng
+        priority: 3
+      - zim: libretexts.org_en_geo
+        priority: 3
+      - zim: libretexts.org_en_human
+        priority: 3
+      - zim: libretexts.org_en_math
+        priority: 3
+      - zim: libretexts.org_en_phys
+        priority: 3
+      - zim: libretexts.org_en_biz
+        priority: 3
+      - zim: wikiversity_en_all_maxi
+        priority: 3
+      - zim: ted_mul_ted-conference
+        priority: 3
+      - zim: ted_mul_ted-ed
+        priority: 3
+      - zim: freecodecamp_en_all
+        priority: 3
+      - course: "c9d7f950ab6b5a1199e3d6c10d7f0103"
+        title: "Khan Academy"
+        priority: 3
+
+  reference:
+    name: "Reference"
+    icon: "📚"
+    blurb: "Encyclopedias, dictionaries, travel guides, classic books"
+    quick: ["encyclopedia", "dictionary"]
+    items:
+      - zim: wikipedia_en_all_nopic
+        essential: true
+      - zim: wikipedia_en_all_maxi
+        priority: 2
+      - zim: chemistry.stackexchange.com_en_all
+        priority: 2
+      - zim: biology.stackexchange.com_en_all
+        priority: 2
+      - zim: physics.stackexchange.com_en_all
+        priority: 2
+      - zim: earthscience.stackexchange.com_en_all
+        priority: 2
+      - zim: parenting.stackexchange.com_en_all
+        priority: 2
+      - zim: law.stackexchange.com_en_all
+        priority: 2
+      - zim: gutenberg_en_all
+        priority: 3
+      - zim: wikivoyage_en_all_maxi
+        priority: 3
+      - zim: wiktionary_en_all_nopic
+        priority: 3
+      - zim: theworldfactbook_en_all
+        priority: 3
+      - zim: wikispecies_en_all_nopic
+        priority: 3
+      - zim: wikibooks_en_all_maxi
+        priority: 3
+      - zim: devdocs_en_bash
+        priority: 3
+      - zim: devdocs_en_python
+        priority: 3
+
+  family:
+    name: "Family documents"
+    icon: "🗂️"
+    blurb: "Our own papers, manuals and notes"
+    quick: []
+    items: []
+
+# Things to get by hand (no free download). The website lists them on the Status page.
+by_hand:
+  - { title: "Where There Is No Animal Doctor", where: "buy from store.hesperian.org (WikiVet and FAO poultry are in the library meanwhile)" }
+  - { title: "TCCC guidelines + All Service Members card", where: "Deployed Medicine app/site (ATP 4-02.11 in the library covers TCCC and first aid)" }
+  - { title: "The Ship Captain's Medical Guide, 24th ed.", where: "sold by TSO/MCA, no free copy (the SOF and Special Forces medical handbooks cover similar ground)" }
+  - { title: "So Easy to Preserve", where: "buy from the University of Georgia (the USDA canning guide is in the library)" }
+  - { title: "State extension: livestock, food preservation", where: "your state's land-grant university extension site" }
+  - { title: "FAO technical manuals (fish ponds, food storage, farm structures)", where: "openknowledge.fao.org" }
+  - { title: "Manuals for every firearm, radio, generator, vehicle and appliance you own", where: "manufacturer sites" }
+  - { title: "Local repeater list, ARES/RACES plan", where: "your county ARES / RepeaterBook" }
+  - { title: "USGS topo maps (GeoPDF) for your county", where: "ngmdb.usgs.gov/topoview" }
+  - { title: "Purchased books (ARRL Handbook, Foxfire, Machinery's Handbook, ...)", where: "your own copies, into /srv/library/personal" }
+
+# Phone apps to keep in /srv/core/share/apps (the website's Downloads page).
+phone_apps:
+  - { title: "Kiwix (Android)", where: "download.kiwix.org/release/kiwix-android/" }
+  - { title: "Organic Maps (Android) + offline map files", where: "github.com/organicmaps/organicmaps/releases" }
+  - { title: "MeshCore companion app (Android)", where: "meshcore.co.uk" }
+  - { title: "F-Droid (Android app store; for further offline APKs)", where: "f-droid.org" }

@@ -1,0 +1,10 @@
+{{ {
+  "paths": {"core": core_dir, "library": library_mount, "state": library_state,
+            "list": app_dir ~ "/library.yaml",
+            "power": state_dir ~ "/power.json", "last_backup": state_dir ~ "/last-backup"},
+  "library_is_folder": library_is_folder | default(false) | bool,
+  "fetch_priority": fetch_priority,
+  "site": {"name": "Homestead Library", "ssid": hotspot_ssid, "lan_name": lan_name, "region": region_state},
+  "ai": {"ollama": "http://127.0.0.1:" ~ ollama_port, "model": ai_models.main, "helper": ai_models.helper},
+  "tools": tools | map('dict2items') | map('rejectattr', 'key', 'in', ['backend', 'local_port']) | map('items2dict') | list,
+} | to_nice_json }}

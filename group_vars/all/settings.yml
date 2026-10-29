@@ -15,7 +15,6 @@ homestead_dir: /opt/homestead
 homestead_data: /opt/homestead/data
 state_dir: /var/lib/homestead
 core_dir: /srv/core                  # NVMe: essentials library (always available)
-hub_dir: /opt/homestead/hub          # the Hub's code (copied from hub/ in this repo)
 library_label: LIBRARY               # external 5TB USB HDD, ext4
 library_mount: /srv/library
 library_temp_size: 180G              # internal stand-in when no LIBRARY drive is attached ('0' = off);
@@ -32,76 +31,11 @@ hotspot_ip: 10.42.0.1
 hotspot_channel: 6
 lan_name: library.lan
 
-# Apps, their ports and containers: group_vars/all/apps.yml (the app registry).
-apps_by_id: "{{ dict(homestead_apps | map(attribute='id') | zip(homestead_apps)) }}"
-hub_port: 8700                       # the Hub's backend (portal, Library manager, API); public on port 80
-hub_admin_port: 7090                 # the Library manager (admin password); the public site never links it
-# Caddy adds this header to requests that passed the admin password; the Hub trusts nothing else.
-hub_admin_header: "{{ lookup('ansible.builtin.password', '/etc/homestead/hub-admin-header', chars=['ascii_letters', 'digits'], length=32) }}"
-# Homebox won't start without this; made once, never rotated (that would void its API keys).
-homebox_api_key_pepper: "{{ lookup('ansible.builtin.password', '/etc/homestead/homebox-pepper', chars=['ascii_letters', 'digits'], length=64) }}"
-# The inventory's one shared family login (Homebox can't be browsed without one); printed on the WiFi sign.
-homebox_family_email: family@homestead.local
-homebox_family_password: "{{ lookup('ansible.builtin.password', '/etc/homestead/homebox-family', chars=['ascii_lowercase', 'digits'], length=12) }}"
-# Registration stays open until the family account exists, then closes.
-homebox_registration: "{{ 'false' if lookup('ansible.builtin.fileglob', '/etc/homestead/homebox-family-created') else 'true' }}"
-ollama_port: 11435                   # host port of the AI engine (backend; Caddy and containers only)
-
-# --- Container images ---------------------------------------------------
-# Pin to the versions that worked on first install; `homestead-export-offline`
-# saves them to the backup drive so a rebuild needs no internet.
-images:
-  ollama: ollama/ollama:0.33.3
-  open_webui: ghcr.io/open-webui/open-webui:main
-  kiwix: ghcr.io/kiwix/kiwix-serve:3.8.1
-  grocy: lscr.io/linuxserver/grocy:latest
-  mealie: ghcr.io/mealie-recipes/mealie:latest
-  paperless: ghcr.io/paperless-ngx/paperless-ngx:latest
-  redis: redis:7-alpine
-  openwebrx: slechev/openwebrxplus:1.2.126
-  calibreweb: linuxserver/calibre-web:0.6.26-ls386
-  kolibri: learningequality/kolibri:0.19.4
-  jellyfin: jellyfin/jellyfin:10.11.11
-  flatnotes: dullage/flatnotes:v5.5.4
-  homebox: ghcr.io/sysadminsmedia/homebox:0.26.2
-  vaultwarden: vaultwarden/server:1.36.0
-  stirling_pdf: ghcr.io/stirling-tools/s-pdf:2.13.1
-  cyberchef: ghcr.io/gchq/cyberchef:10.24.0
-  it_tools: ghcr.io/corentinth/it-tools:2024.10.22-7ca5933
-  excalidraw: excalidraw/excalidraw:sha-4bfc5bb
-  meshcore_web: ghcr.io/axistem-dev/meshcore-web:v1.45.0
-  meshtastic_web: ghcr.io/meshtastic/web:2.7.1
-  dozzle: amir20/dozzle:v10.0
-  filebrowser: filebrowser/filebrowser:v2
+# The website, its tools, the AI and the container images: group_vars/all/website.yml
 
 # --- Web SDR (OpenWebRX+) -------------------------------------------------
 # Location shown on its map (ADS-B, APRS). Rough is fine; CHANGE-ME to your town.
 sdr_gps: { lat: 42.3, lon: -71.8 }
-
-# --- AI ------------------------------------------------------------------
-# CPU-only (i7-8700T, 32GB). Revisit names at install time for newer releases
-# in the same size classes.
-# Non-thinking models answer straight away; on this CPU a thinking model spends
-# minutes reasoning first, so it's a separate pick for hard planning questions.
-ai_models:
-  planner: qwen3:30b-instruct        # Qwen3-30B-A3B-Instruct-2507: MoE 30B / 3B active, ~19GB RAM
-  thinker: qwen3:30b-thinking        # Thinking-2507 version of the same model, ~19GB RAM
-  fast: qwen3:4b-instruct            # titles and search rewrites for Open WebUI
-  vision: gemma3:4b
-  embed: nomic-embed-text
-ai_context: 8192
-# Library tiers the download service fetches (1 = critical, 2 = sustainability,
-# 3 = everything). It skips anything that won't fit on the drive.
-content_tier: 3
-# Chat model + the fast task model + the small embedding model stay loaded together,
-# so titles and knowledge-base indexing don't evict the chat model mid-answer
-# (reloading it means reading 19GB from disk). ~22GB together.
-ai_max_loaded_models: 3
-ai_keep_alive: 30m
-ai_personas:
-  - { name: homestead-planner, base: "{{ ai_models.planner }}", temperature: 0.4, title: "Homestead planner", description: "Answers directly. The default.", knowledge: true }
-  - { name: homestead-thinker, base: "{{ ai_models.thinker }}", temperature: 0.6, title: "Homestead thinker (slow)", description: "Reasons step by step before answering, for hard planning questions. Takes minutes.", knowledge: true }
-  - { name: homestead-quick, base: "{{ ai_models.fast }}", temperature: 0.4, title: "Homestead quick", description: "Small and fast. Short answers, less detail. Doesn't search the library.", knowledge: false }
 
 # --- Power (Victron VE.Direct) ------------------------------------------
 power_eco_soc: 35                    # % : stop AI + video

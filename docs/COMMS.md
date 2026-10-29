@@ -4,7 +4,7 @@ The server is a radio workstation: **receive** weather and news, **send** email 
 
 ## Web radio receiver (OpenWebRX+)
 
-http://homestead.local:7020 (or the **Radio receiver** tile on the portal): a radio receiver in the browser, for anyone on the WiFi. Pick a band from the profile list (NOAA weather, 2m/70cm ham repeaters, APRS, FRS/GMRS, marine, airband, FM, aircraft ADS-B map, shortwave and 40m/80m ham), then click a signal in the waterfall or a bookmark. Several people can listen at once, to different signals inside the band on screen.
+http://homestead.local:7020 (or **Radio receiver** on the website's Tools page): a radio receiver in the browser, for anyone on the WiFi. Pick a band from the profile list (NOAA weather, 2m/70cm ham repeaters, APRS, FRS/GMRS, marine, airband, FM, aircraft ADS-B map, shortwave and 40m/80m ham), then click a signal in the waterfall or a bookmark. Several people can listen at once, to different signals inside the band on screen.
 
 Settings (bands, gain, bookmarks, background decoders): the gear icon, then the admin web password, then OpenWebRX's own login, user `dennis`, password from `sudo cat /etc/homestead/openwebrx-admin`.
 
@@ -44,7 +44,7 @@ Weather satellites: **SatDump** decodes Meteor-M LRPT images (137 MHz, needs a V
 - Nodes: Heltec V3, RAK4631, LilyGo T-Deck, and similar. Flash **companion** firmware for handhelds paired to phones, **repeater** firmware for hilltop or roof relays, and **room server** firmware for a neighborhood bulletin board.
 - **Flash while online** from the MeshCore web flasher, and save the firmware .bin files for every board you own into `/srv/core/share/meshcore/`. Offline flashing: `esptool.py --chip esp32s3 write_flash 0x0 firmware.bin` (ESP32 boards). nRF boards (RAK) take a UF2 file drag-and-drop.
 - On the server: `meshcore-cli -s /dev/ttyUSB0 infos` (companion node on USB). MeshCore Web (port 7017) gives a chat UI in the browser via Web Serial or Bluetooth. It needs Chrome or Edge (Firefox and Safari can't talk to radios). On the server's screen use the **MeshCore radio** launcher, which opens it in Chrome; from a laptop with Chrome, use https://homestead.local:7017. Meshtastic nodes: the **Meshtastic radio** launcher, or https://homestead.local:7018.
-- Phones: install the MeshCore app APK from the portal's Downloads.
+- Phones: install the MeshCore app APK from the website's Tools page (downloads).
 - Decide family channel names and keys now and write them on the recovery sheet.
 
 ## Plan to print

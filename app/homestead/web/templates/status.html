@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Status · Homestead Library{% endblock %}
+{% block body %}
+<h1>Status</h1>
+<div id="stripfull">{% include "_strip.html" %}</div>
+
+<h2 class="label">Disks</h2>
+<div class="cards">
+{% for name, d in disks.items() %}
+  <div class="card static"><span><b>{{ name }}</b>
+  {% if d and d.ok %}<span class="meter"><span style="width:{{ (100 * d.used / d.total) | round(1) }}%"></span></span>
+  <small>{{ d.used | human }} used of {{ d.total | human }} · {{ d.free | human }} free</small>
+  {% else %}<small class="bad">Not plugged in: only the essentials (internal disk) are available.</small>{% endif %}</span></div>
+{% endfor %}
+</div>
+
+<h2 class="label">Background jobs</h2>
+<div class="cards">
+{% for j, label in job_names.items() %}{% set s = jobs[j] %}
+  <div class="card static"><span><b>{{ label }}</b>
+  {% if s %}<small class="{{ 'bad' if s.state == 'failed' else 'warn' if s.state == 'running' else '' }}">{{ s.state }} · started {{ s.started | when }}{% if s.finished %} · finished {{ s.finished | when }}{% endif %}</small>
+    {% if s.state == 'running' and s.total %}<span class="meter"><span style="width:{{ (100 * s.done / s.total) | round(1) }}%"></span></span><small>{{ s.done }} of {{ s.total }}{% if s.step %} · {{ s.step }}{% endif %}</small>{% endif %}
+    {% if s.log %}<small>{{ s.log[-1] }}</small>{% endif %}
+  {% else %}<small>not run yet</small>{% endif %}</span></div>
+{% endfor %}
+</div>
+
+<h2 class="label">The library</h2>
+<p class="meta">{{ items | selectattr('here') | list | length }} of {{ items | length }} items are here.</p>
+{% if missing %}
+<details class="box"><summary>Not here yet ({{ missing | length }})</summary>
+<ul>{% for i in missing %}<li>{{ i.title }} <span class="meta">{{ i.state }}{% if i.note %}: {{ i.note }}{% endif %}</span></li>{% endfor %}</ul></details>
+{% endif %}
+{% if by_hand %}
+<details class="box"><summary>To get by hand ({{ by_hand | length }})</summary>
+<ul>{% for b in by_hand %}<li><b>{{ b.title }}</b> <span class="meta">{{ b.where }}</span></li>{% endfor %}</ul></details>
+{% endif %}
+{% endblock %}

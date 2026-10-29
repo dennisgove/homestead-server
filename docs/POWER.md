@@ -26,7 +26,7 @@ Double the battery for a whole household (lights, radios, phone charging).
 ## How the server uses it
 
 - `homestead-power` reads the Victron over `/dev/victron` every 20s. Values are in `/etc/homestead/power.conf` (from `group_vars/all/settings.yml`).
-  - SOC ≤ 35% → **eco**: the AI (Ask page) and Kolibri stop
+  - SOC ≤ 35% → **eco**: the AI (the Ask page) stops
   - SOC ≥ 45% → back to normal
   - SOC ≤ 15% for 3 readings → clean shutdown
   - MPPT-only setups (no SOC) use voltage: eco 12.9 V, shutdown 12.4 V. LiFePO4 voltage is flat, so a SmartShunt is better.
@@ -36,7 +36,7 @@ Double the battery for a whole household (lights, radios, phone charging).
 ## Test it
 
 ```bash
-echo 30 | sudo tee /etc/homestead/power-override   # eco mode within ~20s; portal shows it
+echo 30 | sudo tee /etc/homestead/power-override   # eco mode within ~20s; the website shows it
 echo 60 | sudo tee /etc/homestead/power-override   # back to normal
 sudo rm /etc/homestead/power-override
 journalctl -u homestead-power -f

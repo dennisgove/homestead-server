@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · Homestead Library{% endblock %}
+{% block body %}
+<p class="crumbs">{% if t %}<a href="/t/{{ t.id }}">{{ t.name }}</a> /{% endif %} <a href="{{ file }}" download>Download the ebook</a></p>
+<h1>{{ title }}</h1>
+<article class="prose">
+{% for c in chapters %}{{ c | safe }}{% if not loop.last %}<hr>{% endif %}{% endfor %}
+</article>
+{% endblock %}
