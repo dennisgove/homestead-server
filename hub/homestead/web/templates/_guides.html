@@ -1,5 +1,0 @@
-{% if not guides %}<p class="muted">No guides downloaded yet.</p>{% endif %}
-{% for cat, docs in guides | dictsort %}
-<details {% if open_all %}open{% endif %}><summary>{{ cats.get(cat, cat) }} ({{ docs | length }})</summary>
-<ul>{% for d in docs %}<li><a href="{{ d.path }}">{{ d.title }}</a></li>{% endfor %}</ul></details>
-{% endfor %}

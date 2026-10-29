@@ -1,14 +1,29 @@
 {% extends "base.html" %}
 {% block title %}Medical Emergency{% endblock %}
+{% set cat = 'medical' %}
 {% block body %}
-<header class="top">
-  <h1>Medical Emergency</h1>
-  <p class="sub"><b>Scene safe? Then: massive bleeding → airway → breathing → circulation → hypothermia.</b>
-  If there is any way to reach a medic or 911, do that first.</p>
-</header>
 <main>
-  <div class="grid">{% for t in p.emergency %}{% with href=search(t.q) %}{% include "_tile.html" %}{% endwith %}{% endfor %}</div>
-  <section><h2>Field medicine guides</h2><div class="docs">{% with open_all=True %}{% include "_guides.html" %}{% endwith %}</div></section>
+  <div class="alert">
+    <h1>🚑 Medical emergency</h1>
+    <p><b>Scene safe? Then: massive bleeding → airway → breathing → circulation → keep them warm.</b>
+    If there is any way to reach a medic or 911, do that first.</p>
+  </div>
+  <div class="emergency-grid">
+    {% for t in p.emergency %}
+    <a href="/search?topic=medical&q={{ t.q | urlencode }}"><span>{{ t.icon }}</span><b>{{ t.label }}</b><small>{{ t.hint }}</small></a>
+    {% endfor %}
+  </div>
+  <p><a href="/ask">🤖 Ask the AI</a> · <a href="/topic/medical">All medical guides and libraries</a></p>
+
+  <h2 class="section">Field medicine guides</h2>
+  <ul class="doclist">
+    {% for d in docs %}
+    <li>{% if d.parts %}<details><summary><span class="dtitle">📘 {{ d.title }}</span> <span class="meta">{{ d.parts | length }} chapters</span></summary>
+      <ol class="parts">{% for p in d.parts %}<li><a href="{{ p.url }}">{{ p.title }}</a></li>{% endfor %}</ol></details>
+    {% else %}<a class="dtitle" href="{{ d.url }}">📄 {{ d.title }}</a>{% endif %}</li>
+    {% endfor %}
+  </ul>
+
   <section class="card"><h2>If the computer is down</h2>
   <p>The printed binder (red tab: MEDICAL) has the same first pages: bleeding control, CPR, choking, burns,
   fractures, shock, dehydration (oral rehydration: 1 L clean water + 6 level tsp sugar + ½ level tsp salt).</p></section>

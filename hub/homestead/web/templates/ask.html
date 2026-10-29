@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Ask · Homestead Library{% endblock %}
+{% block body %}
+<main class="ask">
+  <h1>🤖 Ask</h1>
+  <p class="lead">Ask in plain words. The AI looks it up in the library first and shows where the answer came from.
+  It runs on this computer: slow on long answers, and it can be wrong. For anything medical, check the cited page.</p>
+  <div id="chat" aria-live="polite"></div>
+  <form id="askform" class="big-search">
+    <textarea id="question" rows="2" placeholder="e.g. How much water does a family of four need for two weeks?" aria-label="Your question">{{ q }}</textarea>
+    <button type="submit" id="send">Ask</button>
+  </form>
+  <p class="small muted"><button type="button" class="link" id="newchat">Start over</button> · Nothing you ask is saved on the server.</p>
+</main>
+<script src="/static/ask.js"></script>
+{% endblock %}

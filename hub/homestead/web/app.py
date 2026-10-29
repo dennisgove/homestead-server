@@ -1,7 +1,9 @@
 """Homestead Hub web app.
 
-Public pages: portal, emergency, guides, maps, binder, status.
-Admin pages (behind the admin password at Caddy): the Library manager.
+Public pages (port 80, never a login): home, topics, search, ask, emergency,
+maps, videos, tools, binder, status.
+Admin pages (the Library manager): only through Caddy's admin port, which
+checks the admin password; the public site doesn't link to them.
 API: /api/... for pages, the AI filter, and future apps.
 
 Run: uvicorn homestead.web.app:app (homestead-hub.service)
@@ -12,22 +14,24 @@ import shutil
 import sqlite3
 import subprocess
 import time
+import urllib.parse
 from pathlib import Path
 
 import yaml
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from .. import catalog, config, kiwix, librarysearch, status
+from .. import ask, catalog, config, content, docindex, epub, kiwix, librarysearch, status
 from ..jobs.common import human, read_status
 
 HERE = Path(__file__).parent
 JOB_UNITS = {"fetch": "homestead-fetch", "fetch-plan": "homestead-fetch-plan", "catalog-apply": "homestead-catalog-apply",
-             "books": "homestead-books", "maps": "homestead-maps", "kb-sync": "homestead-kb-sync"}
+             "books": "homestead-books", "maps": "homestead-maps", "kb-sync": "homestead-kb-sync",
+             "docindex": "homestead-docindex"}
 JOB_LABELS = {"fetch": "Download library", "fetch-plan": "Check sizes & updates", "catalog-apply": "Apply catalog",
-              "books": "Update books library", "maps": "Build maps", "kb-sync": "Update AI knowledge"}
+              "docindex": "Index documents for search", "maps": "Build maps"}
 
 app = FastAPI(title="Homestead Hub", docs_url="/api/docs", redoc_url=None)
 app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
@@ -86,50 +90,98 @@ def require_admin(request: Request):
         raise HTTPException(403, "admin only")
 
 
-def core_search_url(request: Request, q: str) -> str:
-    cfg = config.load()
-    a = next(x for x in cfg["apps"] if x["id"] == cfg["kiwix"]["core_app"])
-    return app_url(request, {**a, "path": "/search?" + "pattern=" + q.replace(" ", "+")})
+# --- public pages: nothing here asks for a login --------------------------------------
 
+def topic_info(key: str) -> dict:
+    """A topic's name (catalog) plus its icon, blurb and quick searches (portal.yaml)."""
+    cats = catalog.merged().get("categories", {})
+    extra = portal_data().get("topics", {}).get(key, {})
+    return {"key": key, "name": cats.get(key, key.capitalize()), **extra}
 
-# --- documents on disk -------------------------------------------------------------
-
-def guides(category: str | None = None) -> dict[str, list[dict]]:
-    docs = config.path("docs")
-    titles = catalog.doc_titles()
-    out: dict[str, list[dict]] = {}
-    if not docs.is_dir():
-        return out
-    for f in sorted(docs.rglob("*")):
-        if not f.is_file() or f.name.startswith(".") or "/.homestead-partial" in str(f):
-            continue
-        rel = f.relative_to(docs)
-        cat = rel.parts[0]
-        if category and cat != category:
-            continue
-        out.setdefault(cat, []).append({"title": catalog.doc_title(f, titles), "path": "/docs/" + str(rel)})
-    for v in out.values():
-        v.sort(key=lambda d: d["title"].lower())
-    return out
-
-
-# --- public pages --------------------------------------------------------------------
 
 @app.get("/", response_class=HTMLResponse)
-def portal(request: Request):
-    p = portal_data()
-    return page(request, "portal.html", p=p, guides=guides(), search=lambda q: core_search_url(request, q))
+def home(request: Request):
+    topics = [{**topic_info(t["key"]), **t} for t in content.topics()]
+    return page(request, "home.html", p=portal_data(), topics=topics)
+
+
+@app.get("/topic/{key}", response_class=HTMLResponse)
+def topic(request: Request, key: str):
+    cats = catalog.merged().get("categories", {})
+    if key not in cats:
+        raise HTTPException(404, "No such topic")
+    return page(request, "topic.html", t=topic_info(key), docs=content.documents(key),
+                libs=content.libraries(key), courses=content.courses() if key == "education" else [],
+                learn=next((a for a in config.load()["apps"] if a["id"] == "learn"), None))
 
 
 @app.get("/emergency", response_class=HTMLResponse)
 def emergency(request: Request):
-    return page(request, "emergency.html", p=portal_data(), guides=guides("medical"),
-                search=lambda q: core_search_url(request, q))
+    docs = [d for d in content.documents("medical")]
+    return page(request, "emergency.html", p=portal_data(), docs=docs)
 
 
-@app.get("/search")
-def search(request: Request, q: str = ""):
-    return RedirectResponse(core_search_url(request, q) if q else "/")
+def search_results(q: str, cat: str | None) -> dict:
+    cfg = config.load()["kiwix"]
+    docs = docindex.search(q, category=cat, limit=15)
+    for d in docs:
+        d["url"] = content.doc_url(d["path"])
+    books = None
+    if cat:
+        books = [b["stem"] for b in content.libraries(cat)]
+    base, public = cfg["search_url"], cfg["public_url"]
+    lib = kiwix.search_local(base, q, count=25, books=books) if books != [] else []
+    if not lib and books != []:  # USB drive missing: the essentials still search
+        base, public = cfg["core_search_url"], cfg["core_public_url"]
+        lib = kiwix.search_local(base, q, count=25, books=books)
+    for h in lib:
+        h["url"] = public.rstrip("/") + h["link"]
+    more = public.rstrip("/") + "/search?" + urllib.parse.urlencode(
+        [("pattern", q)] + [("books.name", b) for b in (books or [])])
+    places = api_places(q, limit=5) if not cat else []
+    return {"docs": docs, "lib": lib, "more": more, "places": places}
+
+
+@app.get("/search", response_class=HTMLResponse)
+def search(request: Request, q: str = "", topic: str = ""):
+    cats = catalog.merged().get("categories", {})
+    cat = topic if topic in cats else None
+    res = search_results(q, cat) if q.strip() else None
+    return page(request, "search.html", q=q, cat=cat, cat_name=cats.get(cat, ""), res=res, cats=cats)
+
+
+@app.get("/ask", response_class=HTMLResponse)
+def ask_page(request: Request, q: str = ""):
+    return page(request, "ask.html", q=q)
+
+
+@app.post("/api/ask")
+async def api_ask(request: Request):
+    body = await request.json()
+    question = str(body.get("question", "")).strip()[:2000]
+    if not question:
+        raise HTTPException(400, "empty question")
+    history = body.get("history") if isinstance(body.get("history"), list) else []
+    return StreamingResponse(ask.stream(question, history), media_type="application/x-ndjson")
+
+
+@app.get("/tools", response_class=HTMLResponse)
+def tools(request: Request):
+    return page(request, "tools.html")
+
+
+@app.get("/read", response_class=HTMLResponse)
+def read(request: Request, path: str):
+    """Ebooks (EPUB) as a web page: browsers can't open them on their own."""
+    f = content.doc_path(path)
+    if f is None or f.suffix.lower() != ".epub":
+        raise HTTPException(404, "No such book")
+    try:
+        title, body = epub.to_html(f)
+    except Exception as e:  # a damaged file shouldn't break the page
+        raise HTTPException(500, f"Couldn't open this ebook: {e}")
+    return page(request, "read.html", title=title or catalog.doc_title(f), body=body,
+                download="/docs/" + urllib.parse.quote(path))
 
 
 @app.get("/maps", response_class=HTMLResponse)

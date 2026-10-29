@@ -1,4 +1,4 @@
-<div class="cards" id="jobs" hx-get="/library/partials/jobs" hx-trigger="every 10s" hx-swap="outerHTML">
+<div class="cards" id="jobs" {% if not readonly %}hx-get="/library/partials/jobs" hx-trigger="every 10s" hx-swap="outerHTML"{% endif %}>
 {% for j, label in job_labels.items() %}{% set s = jobs.get(j) %}
 <div class="card"><h3>{{ label }}</h3>
 {% if s %}<p class="small"><b class="state-{{ 'downloading' if s.state == 'running' else s.state }}">{{ s.state }}</b>
@@ -7,6 +7,6 @@
 <p class="small">{{ s.done }} / {{ s.total }}{% if s.current %} · {{ s.current }}{% endif %}</p>{% endif %}
 <p class="small muted">{{ s.message }}</p>
 {% else %}<p class="small muted">not run yet</p>{% endif %}
-<form method="post" action="/library/jobs/{{ j }}"><button {% if s and s.state == 'running' %}disabled{% endif %}>Run now</button></form>
+{% if not readonly %}<form method="post" action="/library/jobs/{{ j }}"><button {% if s and s.state == 'running' %}disabled{% endif %}>Run now</button></form>{% endif %}
 </div>{% endfor %}
 </div>

@@ -35,7 +35,7 @@ Turning the monitor off saves 10–20W. Phones and laptops on the hotspot cost t
 |---|---|---|
 | Anyone at the keyboard | `guest` (auto-login; password on the sign) | Library, AI, maps, notes, pantry, office apps, radio apps, USB sticks, shut down |
 | Anyone on the WiFi | (browser) | Same web apps; AI needs an approved account |
-| dennis | `dennis` | Everything: Library manager (http://library.lan/library), vault, Winlink, `sudo` |
+| dennis | `dennis` | Everything: Library manager (http://library.lan:7090), vault, Winlink, `sudo` |
 | Break-glass | `root` | Console login with the sealed password |
 
 ## Common problems

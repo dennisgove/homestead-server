@@ -42,76 +42,14 @@
   loop_control: { label: "{{ item.persona.name }}" }
   when: item.changed or item.persona.name not in have.stdout
 
-- name: Open WebUI settings for homestead-webui-setup
-  ansible.builtin.template:
-    src: webui.json.j2
-    dest: /etc/homestead/webui.json
-    mode: "0644"
+- name: Open WebUI extras (settings, library filter, knowledge bases)
+  ansible.builtin.include_tasks: openwebui.yml
+  when: "'ai' in apps_by_id"
 
-- name: Library-search filter for Open WebUI (installed into it by homestead-webui-setup)
-  ansible.builtin.copy:
-    src: homestead_library_filter.py
-    dest: /usr/local/share/homestead/
-    mode: "0644"
-
-- name: Open WebUI setup tool (homestead-kb-sync runs it with a key from Open WebUI's database)
-  ansible.builtin.copy:
-    src: homestead-webui-setup
-    dest: /usr/local/bin/homestead-webui-setup
-    mode: "0755"
-
-- name: Open WebUI admin key reader (root only)
-  ansible.builtin.template:
-    src: homestead-webui-token.j2
-    dest: /usr/local/sbin/homestead-webui-token
-    mode: "0700"
-
-- name: Knowledge-base sync (load new PDFs, attach them to the models)
-  ansible.builtin.template:
-    src: homestead-kb-sync.j2
-    dest: /usr/local/sbin/homestead-kb-sync
-    mode: "0755"
-
-- name: Knowledge-base sync service and daily timer
-  ansible.builtin.copy:
-    dest: "/etc/systemd/system/{{ item.name }}"
-    mode: "0644"
-    content: "{{ item.content }}"
-  loop:
-    - name: homestead-kb-sync.service
-      content: |
-        [Unit]
-        Description=Load new library PDFs into the AI's knowledge bases
-        After=docker.service
-        [Service]
-        Type=oneshot
-        Nice=10
-        IOSchedulingClass=idle
-        ExecStart=/usr/local/sbin/homestead-kb-sync
-    - name: homestead-kb-sync.timer
-      content: |
-        [Unit]
-        Description=Load new library PDFs into the AI's knowledge bases (daily)
-        [Timer]
-        OnCalendar=daily
-        RandomizedDelaySec=1h
-        Persistent=true
-        [Install]
-        WantedBy=timers.target
-
-- name: Knowledge-base sync timer on
+- name: No knowledge-base sync without Open WebUI
   ansible.builtin.systemd_service:
     name: homestead-kb-sync.timer
-    enabled: true
-    state: started
-    daemon_reload: true
-
-- name: Knowledge-base seeding tool
-  ansible.builtin.copy:
-    src: homestead-kb-seed
-    dest: /usr/local/bin/homestead-kb-seed
-    mode: "0755"
-
-- name: Sync the knowledge bases now (runs in the background; hours the first time)
-  ansible.builtin.command: systemctl start --no-block homestead-kb-sync.service
-  changed_when: false
+    enabled: false
+    state: stopped
+  when: "'ai' not in apps_by_id"
+  failed_when: false

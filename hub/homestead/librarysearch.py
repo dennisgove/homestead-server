@@ -1,7 +1,7 @@
 """Library search for the AI: question -> search terms -> Kiwix full-text search
 across every ZIM -> the best passages, with their titles, to put in the prompt.
 
-Used by the Open WebUI filter (via /api/library/context) and by the Hub's own AI endpoint.
+Used by the Hub's Ask page, and by the Open WebUI filter (via /api/library/context) when that is enabled.
 """
 import json
 import re
@@ -12,7 +12,8 @@ from . import config, kiwix
 
 STOP = set("""a an and are as at be but by can do does for from how i if in into is it its me my of on or
 should so than that the their them then there these they this to was what when where which who why will
-with would you your about after before during without we our us have has had get got make made need""".split())
+with would you your about after before during without we our us have has had get got make made need
+long much many best way use using tell know want""".split())
 
 
 def keywords_simple(question: str) -> str:
@@ -55,11 +56,19 @@ def best_passage(text: str, terms: list[str], size: int = 1200) -> str:
     return text[best:best + size]
 
 
-def context(question: str, max_articles: int = 3) -> dict:
+def relevant(hit: dict, words: list[str]) -> bool:
+    """Does a search hit's title or snippet mention at least half the search words?
+    (Kiwix still returns its closest pages when nothing really matches.)"""
+    text = (hit["title"] + " " + hit["snippet"]).lower()
+    stems = {w[:5] for w in words if len(w) > 2}
+    return bool(stems) and sum(1 for s in stems if s in text) * 2 >= len(stems)
+
+
+def context(question: str, max_articles: int = 3, start: int = 1, terms: str | None = None) -> dict:
     cfg = config.load()
     base = cfg["kiwix"]["search_url"]
     public = cfg["kiwix"]["public_url"]
-    terms = keywords_ai(question)
+    terms = terms or keywords_ai(question)
     simple = keywords_simple(question)
 
     def search(b):
@@ -73,9 +82,10 @@ def context(question: str, max_articles: int = 3) -> dict:
         base, public = cfg["kiwix"]["core_search_url"], cfg["kiwix"]["core_public_url"]
         hits = search(base)
     seen, picked = set(), []
+    words = terms.lower().split()
     for h in hits:
         key = h["title"].lower()
-        if key in seen:
+        if key in seen or not relevant(h, words):
             continue
         seen.add(key)
         picked.append(h)
@@ -83,7 +93,7 @@ def context(question: str, max_articles: int = 3) -> dict:
             break
     tl = [t for t in (terms + " " + simple).lower().split() if len(t) > 2]
     sources, parts = [], []
-    for n, h in enumerate(picked, 1):
+    for n, h in enumerate(picked, start):
         text = kiwix.article_text(base, h["link"], limit=20000)
         passage = best_passage(text, tl) if text else h["snippet"]
         url = public.rstrip("/") + h["link"]

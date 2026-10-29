@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Tools · Homestead Library{% endblock %}
+{% block body %}
+<main>
+  <h1>🧰 Tools</h1>
+  <p class="lead">Apps on this computer. None of them need an account.</p>
+  {% for section, heading in [('tools', 'Everyday'), ('radio', 'Radio & comms')] %}
+  {% set list = apps | selectattr('section', 'equalto', section) | list %}
+  {% if list %}
+  <h2 class="section">{{ heading }}</h2>
+  <div class="quick">
+    {% for a in list %}<a href="{{ app_url(a) }}"><span>{{ a.icon }}</span>{{ a.title }}<small>{{ a.hint }}{% if a.scheme == 'https' %} · the browser warns once about the certificate: choose Advanced → Continue{% endif %}</small></a>{% endfor %}
+    {% if section == 'tools' %}<a href="/share/"><span>📲</span>Phone apps &amp; downloads<small>Install offline apps on phones</small></a>{% endif %}
+  </div>
+  {% endif %}
+  {% endfor %}
+</main>
+{% endblock %}

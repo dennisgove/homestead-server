@@ -72,12 +72,14 @@
   changed_when: "'Started' in up.stderr or 'Recreated' in up.stderr or 'Created' in up.stderr"
 
 - name: Calibre-Web setup tool
+  when: "'books' in apps_by_id"   # only while the app is enabled in the registry
   ansible.builtin.copy:
     src: homestead-calibreweb-setup
     dest: /usr/local/sbin/homestead-calibreweb-setup
     mode: "0700"
 
 - name: Calibre-Web points at the books library, anyone can browse, admin password set
+  when: "'books' in apps_by_id"   # only while the app is enabled in the registry
   ansible.builtin.command: /usr/local/sbin/homestead-calibreweb-setup
   environment:
     CALIBREWEB_DB: "{{ homestead_data }}/calibreweb/app.db"
@@ -102,12 +104,14 @@
   failed_when: false
 
 - name: Mealie setup tool
+  when: "'recipes' in apps_by_id"   # only while the app is enabled in the registry
   ansible.builtin.copy:
     src: homestead-mealie-setup
     dest: /usr/local/sbin/homestead-mealie-setup
     mode: "0700"
 
 - name: Recipes readable without logging in (Mealie public group and household)
+  when: "'recipes' in apps_by_id"   # only while the app is enabled in the registry
   ansible.builtin.command: /usr/local/sbin/homestead-mealie-setup
   environment:
     MEALIE_URL: "http://127.0.0.1:{{ apps_by_id.recipes.backend }}"
@@ -134,12 +138,14 @@
     mode: "0644"
 
 - name: Homebox setup tool
+  when: "'inventory' in apps_by_id"   # only while the app is enabled in the registry
   ansible.builtin.copy:
     src: homestead-homebox-setup
     dest: /usr/local/sbin/homestead-homebox-setup
     mode: "0700"
 
 - name: Inventory's shared family account (password on the WiFi sign)
+  when: "'inventory' in apps_by_id"   # only while the app is enabled in the registry
   ansible.builtin.command: /usr/local/sbin/homestead-homebox-setup
   environment:
     HOMEBOX_URL: "http://127.0.0.1:{{ apps_by_id.inventory.backend }}"
@@ -152,7 +158,7 @@
   no_log: true
 
 - name: Close Homebox registration now the family account exists
-  when: homebox_family is changed
+  when: "'inventory' in apps_by_id and homebox_family is changed"
   block:
     - name: Compose file again (registration off)
       ansible.builtin.template:

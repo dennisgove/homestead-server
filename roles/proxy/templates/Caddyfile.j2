@@ -30,7 +30,8 @@
 	}
 }
 
-# --- The Hub: portal, maps, binder, status, Library manager (also the captive-portal page)
+# --- The Hub: the website (also the captive-portal page). Nothing on it asks for a login;
+# the Library manager is only on the admin port below.
 :80 {
 	@probe host connectivitycheck.gstatic.com clients3.google.com captive.apple.com www.apple.com www.msftconnecttest.com detectportal.firefox.com nmcheck.gnome.org
 	redir @probe http://{{ lan_name }}/ 302
@@ -58,13 +59,21 @@
 	}
 	@admin path /library /library/* /api/admin/*
 	handle @admin {
-		import admin_auth
-		reverse_proxy 127.0.0.1:{{ hub_port }} {
-			header_up X-Homestead-Admin {{ hub_admin_header }}
-		}
+		error "Not here" 404
 	}
 	handle {
 		reverse_proxy 127.0.0.1:{{ hub_port }}
+	}
+	encode gzip
+}
+
+# --- The Library manager (admin password). Not linked from the website.
+:{{ hub_admin_port }} {
+	request_header -X-Homestead-Admin
+	import admin_auth
+	redir / /library 302
+	reverse_proxy 127.0.0.1:{{ hub_port }} {
+		header_up X-Homestead-Admin {{ hub_admin_header }}
 	}
 	encode gzip
 }

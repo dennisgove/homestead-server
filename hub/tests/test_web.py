@@ -10,12 +10,16 @@ def client():
 
 def test_pages_render(site):
     c = client()
-    for path in ["/", "/emergency", "/maps", "/binder", "/status", "/videos", "/library", "/library/items", "/library/add",
+    for path in ["/", "/emergency", "/maps", "/binder", "/status", "/videos", "/topic/medical", "/topic/personal",
+                 "/search", "/search?q=bleeding", "/search?q=bleeding&topic=medical", "/ask", "/tools",
+                 "/library", "/library/items", "/library/add",
                  "/library/health", "/library/updates", "/api/apps", "/api/catalog", "/api/status"]:
         r = c.get(path)
         assert r.status_code == 200, (path, r.text[:500])
-    assert "MEDICAL EMERGENCY" in c.get("/").text
-    assert "stop-the-bleed" in c.get("/").text
+    home = c.get("/").text
+    assert "Medical emergency" in home and "/topic/medical" in home
+    assert "/docs/medical/stop-the-bleed.pdf" in c.get("/topic/medical").text
+    assert c.get("/topic/nonsense").status_code == 404
 
 
 def test_health_finds_orphans_and_dupes(site):
@@ -106,6 +110,48 @@ def test_split_book_parts_titled_the_same_everywhere(site):
     (d / "Where There Is No Doctor - Vocabulary.pdf").write_bytes(b"%PDF")
     (d / "other_part.pdf").write_bytes(b"%PDF")
     want = {"Where There Is No Doctor - Vocabulary", "Where There Is No Doctor (Hesperian): other part"}
-    from homestead.web.app import guides
-    assert want <= {g["title"] for g in guides("medical")["medical"]}
     assert want <= {t for f, t, _ in books.sources()}
+    from homestead import content
+    book = next(d for d in content.documents("medical") if d["parts"])
+    assert book["title"] == "Where There Is No Doctor (Hesperian)"
+    assert {p["title"] for p in book["parts"]} == {"Vocabulary", "other part"}
+
+
+def test_document_index_and_search(site):
+    from homestead import docindex
+    from homestead.jobs import docindex as job
+    (site["core"] / "docs" / "water").mkdir()
+    (site["core"] / "docs" / "water" / "boiling.txt").write_text("Bring water to a rolling boil for one minute.")
+    job.main()
+    hits = docindex.search("rolling boil")
+    assert hits and hits[0]["path"] == "water/boiling.txt" and "<mark>" in hits[0]["pages"][0]["snippet_html"]
+    assert docindex.search("rolling boil", category="medical") == []
+    assert "boiling.txt" in client().get("/search", params={"q": "rolling boil"}).text
+    (site["core"] / "docs" / "water" / "boiling.txt").unlink()
+    job.main()
+    assert docindex.search("rolling boil") == []
+
+
+def test_epub_reader(site):
+    import zipfile
+    f = site["core"] / "docs" / "medical" / "book.epub"
+    with zipfile.ZipFile(f, "w") as z:
+        z.writestr("META-INF/container.xml", '<container xmlns="urn:oasis:names:tc:opendocument:xmlns:container">'
+                   '<rootfiles><rootfile full-path="OEBPS/c.opf"/></rootfiles></container>')
+        z.writestr("OEBPS/c.opf", '<package xmlns="http://www.idpf.org/2007/opf" xmlns:dc="http://purl.org/dc/elements/1.1/">'
+                   '<metadata><dc:title>Field Book</dc:title></metadata><manifest><item id="a" href="a.xhtml"/></manifest>'
+                   '<spine><itemref idref="a"/></spine></package>')
+        z.writestr("OEBPS/a.xhtml", '<html><body><h1 class="x">Splints</h1><p onclick="x()">Pad it.</p>'
+                   '<script>alert(1)</script></body></html>')
+    r = client().get("/read", params={"path": "medical/book.epub"})
+    assert r.status_code == 200 and "<h1>Splints</h1>" in r.text and "<p>Pad it.</p>" in r.text
+    assert "alert(1)" not in r.text and "onclick" not in r.text
+    assert client().get("/read", params={"path": "../hub.json"}).status_code == 404
+
+
+def test_ask_streams_sources_then_reports_the_ai_down(site):
+    import json
+    r = client().post("/api/ask", json={"question": "how do I stop bleeding"})
+    lines = [json.loads(l) for l in r.text.splitlines() if l.strip()]
+    assert any("sources" in m for m in lines)
+    assert "error" in lines[-1]  # no Ollama in tests

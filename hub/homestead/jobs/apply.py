@@ -4,7 +4,7 @@
 - renames the parts of split books to their catalog names
 - rebuilds the Kiwix library (one library.xml for both disks; newest release of
   each ZIM, essentials copy preferred) so the library server shows exactly what's on disk
-- then starts the books import and the AI knowledge-base sync
+- then starts the document index (and the books import / Open WebUI sync if enabled)
 """
 import shutil
 import subprocess
@@ -97,8 +97,12 @@ def main(argv=None):
         rename_parts(job)
         rebuild_kiwix_library(job)
         job.log("applied")
-    start_unit("homestead-books.service")
-    start_unit("homestead-kb-sync.service")
+    start_unit("homestead-docindex.service")
+    enabled = {a["id"] for a in config.load()["apps"]}
+    if "books" in enabled:  # Calibre-Web and Open WebUI have logins; off unless re-enabled
+        start_unit("homestead-books.service")
+    if "ai" in enabled:
+        start_unit("homestead-kb-sync.service")
 
 
 if __name__ == "__main__":

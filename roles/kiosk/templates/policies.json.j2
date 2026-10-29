@@ -1,9 +1,7 @@
 {%- set h = 'http://' ~ lan_name -%}
-{%- set marks = [('🚑 Emergency', h ~ '/emergency'), ('Home', h ~ '/'), ('Maps', h ~ '/maps')] -%}
-{%- for id in ['core-library', 'library', 'ai', 'books', 'learn', 'pantry', 'notes'] if id in apps_by_id -%}
-{%- set a = apps_by_id[id] -%}
-{%- set _ = marks.append((a.title, a.scheme | default('http') ~ '://' ~ lan_name ~ ':' ~ a.port ~ a.path | default('/'))) -%}
-{%- endfor -%}
+{#- Only the website's own pages: nothing here leads to a login. -#}
+{%- set marks = [('🚑 Emergency', h ~ '/emergency'), ('Topics', h ~ '/'), ('Ask', h ~ '/ask'), ('Maps', h ~ '/maps'),
+                 ('Videos', h ~ '/videos'), ('Tools', h ~ '/tools')] -%}
 {
   "policies": {
     "Homepage": { "URL": "{{ h }}/", "Locked": true, "StartPage": "homepage" },
@@ -19,7 +17,7 @@
       "Add": [
         {
           "Name": "Homestead Library",
-          "URLTemplate": "{{ h }}:{{ apps_by_id['core-library'].port }}/search?pattern={searchTerms}",
+          "URLTemplate": "{{ h }}/search?q={searchTerms}",
           "Method": "GET",
           "Alias": "lib"
         }

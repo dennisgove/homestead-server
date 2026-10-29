@@ -1,11 +1,11 @@
 # The library jobs (hub/homestead/jobs). Each is a systemd oneshot; the Hub's
 # Library manager starts them, timers repeat them, and they chain:
-#   fetch -> catalog-apply -> books + kb-sync
+#   fetch -> catalog-apply -> docindex (+ books, kb-sync while those apps are enabled)
 # Status for the Hub's pages: {{ state_dir }}/status/<job>.json
 
 - name: Tools the jobs use
   ansible.builtin.apt:
-    name: [aria2, calibre, sqlite3]
+    name: [aria2, calibre, sqlite3, poppler-utils]   # poppler: pdftotext for the document index
     update_cache: "{{ not offline }}"
     install_recommends: false
 
@@ -45,6 +45,7 @@
     - { name: fetch-plan, module: fetch, args: "--plan", desc: "Check library sizes and newer releases" }
     - { name: catalog-apply, module: apply, desc: "Apply the catalog: removals, Kiwix library index" }
     - { name: books, module: books, desc: "Keep the Calibre books library in step with the documents" }
+    - { name: docindex, module: docindex, desc: "Full-text index of the documents (the Hub's search and Ask)" }
     - { name: maps, module: maps, desc: "Build the offline maps (needs internet)" }
   loop_control: { label: "{{ item.name }}" }
 

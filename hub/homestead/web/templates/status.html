@@ -7,7 +7,7 @@
 <h2>Apps</h2>
 <table class="items"><tr><th>App</th><th>Port</th><th>Up</th><th>Response</th></tr>
 {% for a in apps %}{% set r = s.apps.get(a.id, {}) %}
-<tr><td>{{ a.icon }} <a href="{{ app_url(a) }}">{{ a.title }}</a></td><td>{{ a.port }}</td>
+<tr><td>{{ a.icon }} {% if a.access == 'public' and a.section not in ('admin', 'hidden') %}<a href="{{ app_url(a) }}">{{ a.title }}</a>{% else %}{{ a.title }}{% endif %}</td><td>{{ a.port }}</td>
 <td class="{{ 'state-on-disk' if r.up else 'state-failed' if r.up == false else '' }}">{{ 'up' if r.up else 'DOWN' if r.up == false else '–' }}</td>
 <td>{{ (r.ms ~ ' ms') if r.ms is defined else '' }}</td></tr>{% endfor %}
 </table>
@@ -16,6 +16,6 @@
 {% if d %}<div class="bar-meter"><span style="width:{{ (100 * d.used / d.total) | round(1) }}%"></span></div>
 <p class="small">{{ d.used | human }} used of {{ d.total | human }}, {{ d.free | human }} free</p>{% else %}<p class="muted">not available</p>{% endif %}</div>{% endfor %}</div>
 <h2>Library jobs</h2>
-{% with jobs=s.jobs %}{% include "library/_jobs.html" %}{% endwith %}
+{% with jobs=s.jobs, readonly=True %}{% include "library/_jobs.html" %}{% endwith %}
 </main>
 {% endblock %}

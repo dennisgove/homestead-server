@@ -21,8 +21,9 @@
 #   library   true = data on the LIBRARY drive: restarted when the drive is plugged back in
 #   admin_paths  extra paths of a public app that need the admin password
 #   extra_ports  more public ports for the same app: [{port, backend}]
+#   disabled  true = not run and not on the website (apps with their own login); data kept
 
-homestead_apps:
+homestead_app_registry:
   # --- Libraries ---------------------------------------------------------------------
   - id: library
     title: Full library
@@ -63,6 +64,7 @@ homestead_apps:
         volumes: ["{{ core_dir }}/zim:/data:ro"]
 
   - id: books
+    disabled: true          # has its own login; off (its data stays in /opt/homestead/data)
     title: Book library
     icon: "📕"
     hint: Manuals, PDFs, ebooks
@@ -115,6 +117,7 @@ homestead_apps:
     path: /videos           # the Hub's page; plays files straight from the video folder
 
   - id: jellyfin
+    disabled: true          # has its own login; off (its data stays in /opt/homestead/data)
     title: Jellyfin (video server)
     icon: "🎞️"
     hint: Needs an account; for managing the collection
@@ -149,6 +152,7 @@ homestead_apps:
 
   # --- Tools ---------------------------------------------------------------------------
   - id: ai
+    disabled: true          # has its own login; off (its data stays in /opt/homestead/data)
     title: Ask the AI
     icon: "🤖"
     hint: Planning, questions, checklists; searches the library
@@ -235,6 +239,7 @@ homestead_apps:
         volumes: ["{{ homestead_data }}/grocy:/config"]
 
   - id: recipes
+    disabled: true          # has its own login; off (its data stays in /opt/homestead/data)
     title: Recipes
     icon: "🍲"
     hint: Cooking from storage
@@ -275,6 +280,7 @@ homestead_apps:
         volumes: ["{{ homestead_data }}/flatnotes:/data"]
 
   - id: inventory
+    disabled: true          # has its own login; off (its data stays in /opt/homestead/data)
     title: Inventory
     icon: "📦"
     hint: Track everything you own (family login on the WiFi sign)
@@ -295,6 +301,7 @@ homestead_apps:
         volumes: ["{{ homestead_data }}/homebox:/data"]
 
   - id: passwords
+    disabled: true          # has its own login; off (its data stays in /opt/homestead/data)
     title: Passwords
     icon: "🔐"
     hint: Family password manager (Bitwarden apps work too)
@@ -530,3 +537,7 @@ homestead_apps:
           - "{{ core_dir }}/docs:/srv/essentials-docs"
           - "{{ library_mount }}/books/incoming:/srv/my-books"
           - "{{ library_mount }}/video:/srv/videos"
+
+# What actually runs: everything in the registry that isn't `disabled: true`.
+# A disabled app's container is removed and its port closed; its data folder stays.
+homestead_apps: "{{ homestead_app_registry | rejectattr('disabled', 'defined') | list }}"

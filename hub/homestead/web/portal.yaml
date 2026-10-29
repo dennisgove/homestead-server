@@ -1,26 +1,62 @@
-# Portal content that isn't an app: emergency shortcuts and topic searches.
-# (Apps and their tiles come from the app registry, group_vars/all/apps.yml.)
-emergency:
-  - { icon: "🩸", label: "Severe bleeding", hint: "Tourniquet, wound packing, pressure", q: "tourniquet hemorrhage control" }
-  - { icon: "❤️", label: "CPR", hint: "Not breathing / no pulse", q: "cardiopulmonary resuscitation" }
-  - { icon: "😮", label: "Choking", hint: "Heimlich, infants", q: "choking abdominal thrusts" }
-  - { icon: "🔥", label: "Burns", hint: "Cooling, dressing, fluids", q: "burn first aid" }
-  - { icon: "🦴", label: "Fractures & sprains", hint: "Splinting", q: "splint fracture first aid" }
-  - { icon: "🥶", label: "Shock & hypothermia", hint: "Keep warm, legs up", q: "shock hypothermia treatment" }
-  - { icon: "💧", label: "Dehydration / diarrhea", hint: "Oral rehydration", q: "oral rehydration solution" }
-  - { icon: "🐍", label: "Bites & stings", hint: "Snake, spider, allergic", q: "snakebite first aid anaphylaxis" }
-  - { icon: "🤒", label: "Infection & fever", hint: "Wound infection, sepsis", q: "wound infection sepsis" }
-  - { icon: "🤰", label: "Childbirth", hint: "Emergency delivery", q: "emergency childbirth delivery" }
-  - { icon: "💊", label: "Medicines", hint: "Doses, interactions", q: "drug dosage" }
-  - { icon: "🦷", label: "Dental", hint: "Toothache, abscess", q: "dental abscess" }
+# What the website says about each topic (the topics themselves, and what's in
+# them, come from the catalog: content/catalog.yaml), and the emergency shortcuts.
+# Each `q` is a search across the documents and every library.
+
 topics:
-  - { icon: "💧", label: "Water", hint: "Find, filter, disinfect, store", q: "water purification" }
-  - { icon: "🌱", label: "Food & garden", hint: "Growing, seeds, soil, foraging", q: "vegetable garden" }
-  - { icon: "🥫", label: "Preserving food", hint: "Canning, drying, smoking, root cellar", q: "home canning" }
-  - { icon: "🐔", label: "Livestock", hint: "Chickens, goats, rabbits, vet care", q: "poultry husbandry" }
-  - { icon: "🛡️", label: "Defense & security", hint: "Army manuals, perimeter, tactics", q: "physical security" }
-  - { icon: "🏕️", label: "Survival & shelter", hint: "Fire, shelter, navigation, knots", q: "survival shelter" }
-  - { icon: "⚡", label: "Power & energy", hint: "Solar, batteries, generators", q: "solar panel battery" }
-  - { icon: "🔧", label: "Repair & build", hint: "Tools, engines, plumbing, wiring", q: "repair" }
-  - { icon: "☢️", label: "CBRN & disasters", hint: "Fallout, pandemic, storms", q: "fallout shelter" }
-  - { icon: "🧼", label: "Sanitation & hygiene", hint: "Latrines, soap, waste", q: "latrine sanitation" }
+  medical:
+    icon: "🩺"
+    blurb: First aid, trauma, illness, medicines, dental, childbirth
+    quick: [tourniquet, CPR, burns, fracture splint, infection, oral rehydration, childbirth, drug dosage, dental abscess]
+  water:
+    icon: "💧"
+    blurb: Finding, filtering, disinfecting and storing water; sanitation
+    quick: [water purification, boiling water, bleach disinfection, rainwater collection, well, latrine]
+  food:
+    icon: "🌱"
+    blurb: Gardening, seeds, livestock, foraging, canning and preserving
+    quick: [home canning, pressure canning, seed saving, chickens, compost, food drying, root cellar]
+  survival:
+    icon: "🏕️"
+    blurb: Shelter, fire, navigation, cold and heat, disasters
+    quick: [shelter, fire starting, navigation compass, hypothermia, knots, fallout shelter]
+  defense:
+    icon: "🛡️"
+    blurb: Security, Army field manuals, CBRN, tactics
+    quick: [physical security, perimeter, camouflage, CBRN decontamination, rifle marksmanship]
+  power:
+    icon: "⚡"
+    blurb: Solar, batteries, generators, off-grid electricity
+    quick: [solar panel, battery bank, inverter, generator, wiring]
+  repair:
+    icon: "🔧"
+    blurb: Tools, engines, plumbing, building, electronics
+    quick: [small engine repair, plumbing, welding, woodworking, electronics repair]
+  comms:
+    icon: "📻"
+    blurb: Ham radio, emergency communications, mesh networks
+    quick: [antenna, Winlink, emergency communications, repeater, Morse code]
+  education:
+    icon: "🎓"
+    blurb: School subjects, courses, books for every age
+    quick: [arithmetic, reading, science experiments, history]
+  reference:
+    icon: "📚"
+    blurb: Encyclopedias, dictionaries, how-to sites, classic books
+    quick: [encyclopedia, dictionary, how to]
+  personal:
+    icon: "🗂️"
+    blurb: Our own documents and notes
+
+emergency:
+  - { icon: "🩸", label: "Severe bleeding", hint: "Tourniquet, wound packing, pressure", q: "tourniquet hemorrhage" }
+  - { icon: "❤️", label: "CPR", hint: "Not breathing / no pulse", q: "cardiopulmonary resuscitation" }
+  - { icon: "😮", label: "Choking", hint: "Abdominal thrusts, infants", q: "choking" }
+  - { icon: "🔥", label: "Burns", hint: "Cooling, dressing, fluids", q: "burns" }
+  - { icon: "🦴", label: "Fractures & sprains", hint: "Splinting", q: "fracture splint" }
+  - { icon: "🥶", label: "Shock & hypothermia", hint: "Keep warm, legs up", q: "shock" }
+  - { icon: "💧", label: "Dehydration / diarrhea", hint: "Oral rehydration", q: "oral rehydration" }
+  - { icon: "🐍", label: "Bites & stings", hint: "Snake, spider, allergic", q: "snakebite" }
+  - { icon: "🤒", label: "Infection & fever", hint: "Wound infection, sepsis", q: "wound infection" }
+  - { icon: "🤰", label: "Childbirth", hint: "Emergency delivery", q: "childbirth" }
+  - { icon: "💊", label: "Medicines", hint: "Doses, interactions", q: "dosage" }
+  - { icon: "🦷", label: "Dental", hint: "Toothache, abscess", q: "toothache" }

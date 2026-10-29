@@ -22,12 +22,21 @@ EDITABLE = ("title", "category", "tier", "disk", "ai", "binder", "update")
 ZIM_FILE = re.compile(r"^(?P<name>.+)_(?P<date>\d{4}-\d{2})(?P<rev>[a-z]?)\.zim$")
 
 
+_parsed: dict[str, tuple[tuple, dict]] = {}
+
+
 def _read(path: Path) -> dict:
+    """A YAML file's contents, parsed once per change of the file (pages read the catalog often)."""
     try:
-        with open(path) as f:
-            return yaml.safe_load(f) or {}
+        st = os.stat(path)
     except FileNotFoundError:
         return {}
+    key = (st.st_mtime_ns, st.st_size, st.st_ino)
+    hit = _parsed.get(str(path))
+    if hit is None or hit[0] != key:
+        with open(path) as f:
+            hit = _parsed[str(path)] = (key, yaml.safe_load(f) or {})
+    return copy.deepcopy(hit[1])
 
 
 def baseline() -> dict:

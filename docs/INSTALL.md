@@ -135,7 +135,7 @@ It asks for:
 - the root password (break-glass, goes on the recovery sheet)
 - the dennis password (replaces the temporary one)
 - the guest password (simple; it will be posted)
-- the admin web password (Library manager, vault documents, Winlink, logs, file browser, radio receiver settings)
+- the admin web password (the admin pages only: Library manager, vault documents, Winlink, logs, file browser, radio receiver settings). The website itself never asks for one.
 - your SSH public key (on the Mac: `cat ~/.ssh/id_ed25519.pub`; blank to skip)
 - the hotspot WiFi password
 - the borg passphrase: **leave it blank on a first install**, and it generates one. On a rebuild, type the one from the recovery sheet.
@@ -150,7 +150,7 @@ The first run takes a while (container images, AI models). Everything after it h
 
 **Upgrading an older install that used Project NOMAD?** Run `sudo scripts/migrate-from-nomad.sh` once, before this step. It moves NOMAD's ZIMs, courses, videos and app data into the new layout (renames on the same disk, so it's quick) and retires NOMAD.
 
-## 8. The Library manager (http://homestead.local/library; dennis + admin web password)
+## 8. The Library manager (http://homestead.local:7090; dennis + admin web password)
 
 Everything about the library's content, from a web page:
 - **Overview:** what's downloaded, disk space (including whether pending downloads will fit), the jobs and their progress, with **Run now** buttons.
@@ -178,19 +178,15 @@ Some documents have no download link: **Health & checklist** lists them. Upload 
 
 Phone apps (Kiwix, Organic Maps + map files, MeshCore, F-Droid) go into `/srv/core/share/apps/`.
 
-## 10. AI (automatic)
+## 10. Search and AI (automatic)
 
-Nothing to click. `bootstrap.sh`:
-- creates the Open WebUI admin on a fresh install: user `dennis@homestead.local`, password from `sudo cat /etc/homestead/openwebui-admin`. If you'd already made an account, that account stays the admin.
-- applies the settings that keep chat fast on this CPU (built-in tools off, background jobs on the small model) and sets up the model menu;
-- installs the **library search**: before the planner or thinker answers, it searches every ZIM in the library for the question and adds the best passages, so answers cite library articles (nothing has to be indexed);
-- loads every PDF in `/srv/core/docs` into knowledge bases by category and attaches them to the planner and thinker (`homestead-kb-sync`; hours the first time). It runs again daily and after each content download. The Library manager's **use in AI** switch leaves a document out.
+Nothing to click, and nobody needs an account:
+- **Search** (the box on every page of http://homestead.local) looks through the text of every PDF, page by page, and every encyclopedia. The documents' index (`homestead-docindex`) is rebuilt after each library change, in under a minute.
+- **Ask** (http://homestead.local/ask): the AI searches the same way, gives the planner model the best passages, and streams the answer with numbered links to its sources. It runs on this CPU: the answer starts after 10–30 seconds (a couple of minutes if the model has to load first). Nothing is saved on the server.
 
 ```bash
-systemctl status homestead-kb-sync         # journalctl -u homestead-kb-sync -f to follow
+systemctl status homestead-docindex        # journalctl -u homestead-docindex to see what it read
 ```
-
-The model menu at http://homestead.local:7007: **Homestead planner** (answers directly, the default; searches the library), **Homestead thinker** (reasons step by step first: slower, for hard planning questions; searches the library), **Homestead quick** (small and fast; no library search), and **Photo helper**. Family members sign up, and dennis approves them (Admin → Users).
 
 ## 11. Vault
 
@@ -211,7 +207,7 @@ See [COMMS.md](COMMS.md): `pat configure` (callsign, grid), Digirig audio levels
 1. Plug in BACKUP-A. The first backup starts automatically and takes many hours. Then do BACKUP-B. (No backup drive yet? The portal shows "Last backup never". The daily desktop reminder only starts after the first backup. Until then you have **no backup**.)
 2. Make the first **Clonezilla image** (RESTORE.md §Clonezilla).
 3. Do the **restore drill** (RESTORE.md §Drill) before you rely on it.
-4. Print the binder: http://homestead.local/binder lists everything marked **in binder** in the Library manager, by tab ([PRINT-BINDER.md](PRINT-BINDER.md)). Also the WiFi sign (`/srv/core/share/print/wifi-sign.html`).
+4. Print the binder: http://homestead.local/binder lists everything marked **in binder** (set in the Library manager), by tab ([PRINT-BINDER.md](PRINT-BINDER.md)). Also the WiFi sign (`/srv/core/share/print/wifi-sign.html`).
 5. Test `sudo homestead-mode griddown` with a phone, then `gridup`.
 
 ## Adding the drives later
@@ -220,7 +216,7 @@ See [COMMS.md](COMMS.md): `pat configure` (callsign, grid), Digirig audio levels
 ```bash
 lsblk                                         # find the new USB drive, e.g. /dev/sda
 sudo homestead-library-migrate /dev/sdX       # erases it, copies, swaps labels
-# check the portal and the Library manager, then free the NVMe space:
+# check the website and the Library manager, then free the NVMe space:
 sudo lvremove vg_sys/lv_library
 sudo systemctl start --no-block homestead-fetch   # now download the rest (also happens weekly on its own)
 ```

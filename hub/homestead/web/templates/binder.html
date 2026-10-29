@@ -3,7 +3,7 @@
 {% block body %}
 <main>
 <h1>Printed binder</h1>
-<p class="noprint">Everything marked <b>in binder</b> in the <a href="/library/items">Library manager</a>, by tab. Print this page as the
+<p class="noprint">The documents to keep on paper, by tab. Print this page as the
 index, then print each document. Reprint after changes. <button onclick="window.print()">🖨️ Print this list</button></p>
 {% set tabs = {'medical': 'RED: MEDICAL', 'water': 'BLUE: WATER', 'food': 'GREEN: FOOD', 'defense': 'BLACK: SECURITY', 'survival': 'BLACK: SECURITY', 'comms': 'YELLOW: COMMS'} %}
 {% for cat, docs in items | groupby('category') %}

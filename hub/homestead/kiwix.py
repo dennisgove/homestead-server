@@ -63,9 +63,13 @@ def _text(s: str) -> str:
     return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", s or ""))).strip()
 
 
-def search_local(base: str, pattern: str, count: int = 5, lang: str = "eng") -> list[dict]:
-    """Full-text search across every book on a kiwix-serve. Each hit: title, book, link, snippet."""
-    q = urllib.parse.urlencode({"pattern": pattern, "format": "xml", "pageLength": count, "books.filter.lang": lang})
+def search_local(base: str, pattern: str, count: int = 5, lang: str = "eng",
+                 books: list[str] | None = None) -> list[dict]:
+    """Full-text search across the books on a kiwix-serve (all of them, or just `books`, by file
+    stem). Each hit: title, book, link, snippet."""
+    params = [("pattern", pattern), ("format", "xml"), ("pageLength", count)]
+    params += [("books.name", b) for b in books] if books else [("books.filter.lang", lang)]
+    q = urllib.parse.urlencode(params)
     try:
         root = ET.fromstring(_get(f"{base.rstrip('/')}/search?{q}", timeout=20))
     except (OSError, ET.ParseError):

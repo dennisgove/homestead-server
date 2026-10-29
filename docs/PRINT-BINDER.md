@@ -96,4 +96,4 @@ cd /opt/homestead/repo/docs && libreoffice --headless --convert-to pdf --outdir 
 
 ## Sealed envelope (not in the binder)
 
-Root password, dennis password, admin web password, borg passphrase, vault passphrase, BIOS password, Open WebUI admin, Paperless admin. Keep a copy with BACKUP-B.
+Root password, dennis password, admin web password, borg passphrase, vault passphrase, BIOS password, Paperless admin. Keep a copy with BACKUP-B.

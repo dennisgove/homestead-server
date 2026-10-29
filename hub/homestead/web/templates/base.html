@@ -9,15 +9,34 @@
 {% block head %}{% endblock %}
 </head>
 <body class="{% block bodyclass %}{% endblock %}">
-<nav class="bar noprint">
-  <a href="/" {% if request.url.path == '/' %}class="here"{% endif %}>Home</a>
-  <a href="/emergency" {% if request.url.path == '/emergency' %}class="here"{% endif %}>🚑 Emergency</a>
-  <a href="/maps">🗺️ Maps</a>
-  <a href="/binder" {% if request.url.path == '/binder' %}class="here"{% endif %}>🖨️ Binder</a>
-  <a href="/status" {% if request.url.path == '/status' %}class="here"{% endif %}>Status</a>
-  {% for m in module_menu %}<a href="{{ m.href }}" {% if request.url.path.startswith(m.href) %}class="here"{% endif %}>{{ m.label }}</a>
-  {% endfor %}<a href="/library" {% if request.url.path.startswith('/library') %}class="here"{% endif %}>Library manager</a>
-</nav>
+{% set path = request.url.path %}
+<header class="site noprint">
+  <div class="site-row">
+    <a class="brand" href="/">🏡 Homestead Library</a>
+    <form class="site-search" action="/search" role="search">
+      <input name="q" type="search" value="{{ q | default('') }}" placeholder="Search everything: water, burns, canning…" aria-label="Search everything" autocomplete="off">
+      {% if cat %}<input type="hidden" name="topic" value="{{ cat }}">{% endif %}
+      <button type="submit">Search</button>
+    </form>
+    <a class="sos" href="/emergency">🚑 Emergency</a>
+  </div>
+  <nav class="site-nav">
+    <a href="/" {% if path == '/' %}class="here"{% endif %}>Topics</a>
+    <a href="/ask" {% if path == '/ask' %}class="here"{% endif %}>🤖 Ask</a>
+    <a href="/maps" {% if path == '/maps' %}class="here"{% endif %}>🗺️ Maps</a>
+    <a href="/videos" {% if path == '/videos' %}class="here"{% endif %}>🎬 Videos</a>
+    <a href="/tools" {% if path == '/tools' %}class="here"{% endif %}>🧰 Tools</a>
+    <a href="/binder" {% if path == '/binder' %}class="here"{% endif %}>🖨️ Binder</a>
+    {% for m in module_menu %}<a href="{{ m.href }}" {% if path.startswith(m.href) %}class="here"{% endif %}>{{ m.label }}</a>{% endfor %}
+    <a href="/status" class="right {% if path == '/status' %}here{% endif %}">Status</a>
+  </nav>
+</header>
 {% block body %}{% endblock %}
+{% block footer %}
+<footer class="site-foot noprint">
+  <div class="status" hx-get="/partials/strip" hx-trigger="load, every 60s" aria-live="polite"></div>
+  <p>Everything here works without internet and without an account. Phones: join WiFi <b>{{ site.ssid }}</b>, then open <b>http://{{ site.lan_name }}</b>.</p>
+</footer>
+{% endblock %}
 </body>
 </html>

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block body %}
+<main>
+  <section class="hero">
+    <h1>What do you need?</h1>
+    <form class="big-search" action="/search" role="search">
+      <input name="q" type="search" placeholder="Search every book, manual and encyclopedia" aria-label="Search" autocomplete="off" autofocus>
+      <button type="submit">Search</button>
+    </form>
+    <p class="muted">Or <a href="/ask">ask a question</a> and the AI answers from the library, with sources.</p>
+  </section>
+
+  <a class="sos-band" href="/emergency"><span>🚑</span><b>Medical emergency</b><small>Bleeding, CPR, choking, burns, breaks, shock, childbirth</small></a>
+
+  <h2 class="section">Topics</h2>
+  <div class="topics">
+    {% for t in topics %}
+    <a class="topic" href="/topic/{{ t.key }}">
+      <span class="ticon">{{ t.icon | default('📁') }}</span>
+      <span class="tname">{{ t.name }}</span>
+      <span class="tblurb">{{ t.blurb | default('') }}</span>
+      <span class="tcount">{% if t.libraries %}{{ t.libraries }} librar{{ 'y' if t.libraries == 1 else 'ies' }}{% endif %}{% if t.libraries and t.docs %} · {% endif %}{% if t.docs %}{{ t.docs }} guide{{ '' if t.docs == 1 else 's' }}{% endif %}</span>
+    </a>
+    {% endfor %}
+  </div>
+
+  <h2 class="section">Also here</h2>
+  <div class="quick">
+    <a href="/ask"><span>🤖</span>Ask the AI</a>
+    <a href="/maps"><span>🗺️</span>Offline maps</a>
+    <a href="/videos"><span>🎬</span>Videos</a>
+    <a href="/topic/education"><span>🎓</span>Courses &amp; school</a>
+    <a href="/tools"><span>🧰</span>Tools: pantry, notes, radio…</a>
+    <a href="/share/"><span>📲</span>Phone apps &amp; downloads</a>
+  </div>
+</main>
+{% endblock %}
