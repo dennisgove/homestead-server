@@ -4,7 +4,6 @@ Nothing here asks for a login.
 """
 import html
 import json
-import os
 import time
 import urllib.parse
 from pathlib import Path
@@ -326,7 +325,7 @@ def status(request: Request):
         items.append({"title": it.title or it.id, "kind": it.kind, "topic": it.topic,
                       "here": it.on_disk(), "state": st.get("state", ""), "note": st.get("note", "")})
     return page(request, "status.html", disks=disks, jobs={j: jobs.read(j) for j in jobs.JOBS}, job_names=jobs.JOBS,
-                items=items, power=_power(), backup=_backup(), by_hand=library.by_hand(),
+                items=items, power=_power(), backup=_backup(), drive=settings.library_drive_ok(), by_hand=library.by_hand(),
                 missing=[i for i in items if not i["here"]])
 
 

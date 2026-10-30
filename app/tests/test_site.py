@@ -61,6 +61,16 @@ def test_encyclopedia_pages_get_the_bar_and_keep_their_links(site):
     assert c.get("/wiki/test-medicine_en_all/Nope").status_code == 404
 
 
+def test_drive_shows_connected_wherever_the_strip_is(site, monkeypatch):
+    from homestead import settings
+    c = client()
+    for p in ("/status", "/strip"):
+        assert "Library drive connected" in c.get(p).text, p
+    monkeypatch.setattr(settings, "library_drive_ok", lambda: False)
+    for p in ("/status", "/strip"):
+        assert "Library drive not connected" in c.get(p).text, p
+
+
 def test_files_stay_inside_their_folders(site):
     c = client()
     assert c.get("/files/docs/medical/stop-the-bleed.pdf").status_code == 200
