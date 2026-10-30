@@ -65,22 +65,29 @@
     mode: "0644"
   notify: restart avahi
 
-- name: Printable hotspot sign with QR code
+- name: Printable hotspot sign with QR code (rewritten when the network name or password changes)
   ansible.builtin.shell: |
     set -e
     d={{ core_dir }}/share/print
     mkdir -p "$d"
-    qrencode -t SVG -o "$d/wifi-qr.svg" "WIFI:T:WPA;S:{{ hotspot_ssid }};P:{{ hotspot_psk }};;"
-    qrencode -t SVG -o "$d/portal-qr.svg" "http://{{ lan_name }}/"
-    cat > "$d/wifi-sign.html" <<'EOF'
+    t=$(mktemp -d)
+    qrencode -t SVG -o "$t/wifi-qr.svg" "WIFI:T:WPA;S:{{ hotspot_ssid }};P:{{ hotspot_psk }};;"
+    qrencode -t SVG -o "$t/portal-qr.svg" "http://{{ lan_name }}/"
+    cat > "$t/wifi-sign.html" <<'EOF'
     <!doctype html><meta charset="utf-8"><title>WiFi sign</title>
     <style>body{font:28px system-ui;text-align:center;margin:40px}img{width:320px}</style>
     <h1>Homestead Library WiFi</h1>
     <p>Network: <b>{{ hotspot_ssid }}</b><br>Password: <b>{{ hotspot_psk }}</b></p>
     <img src="wifi-qr.svg" alt="WiFi QR"><p>Then open <b>http://{{ lan_name }}</b></p>
-    <p style="font-size:60%">Inventory login: <b>{{ homebox_family_email }}</b> / <b>{{ homebox_family_password }}</b></p>
+    <p style="font-size:60%">Nothing on it needs a login.</p>
     <img src="portal-qr.svg" alt="Portal QR">
     EOF
-  args:
-    creates: "{{ core_dir }}/share/print/wifi-sign.html"
+    changed=
+    for f in wifi-qr.svg portal-qr.svg wifi-sign.html; do
+      if ! cmp -s "$t/$f" "$d/$f"; then install -m 0644 "$t/$f" "$d/$f"; changed=1; fi
+    done
+    rm -rf "$t"
+    [ -z "$changed" ] || echo changed
+  register: sign
+  changed_when: "'changed' in sign.stdout"
   no_log: true
