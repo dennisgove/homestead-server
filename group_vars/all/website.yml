@@ -18,9 +18,10 @@ ollama_port: 11435                   # backend; only the website and this comput
 ai_models:
   main: qwen3:30b-instruct           # answers questions (MoE 30B / 3B active, ~19GB RAM)
   helper: qwen3:4b-instruct          # turns questions into search words (fast)
+  embed: embeddinggemma              # meaning search: what each page and lesson is about (~700MB RAM)
 ai_context: 8192
 ai_keep_alive: 30m
-ai_max_loaded_models: 2
+ai_max_loaded_models: 3              # main + helper + embed, all kept loaded
 
 # --- Tools: programs linked from the Tools page --------------------------------
 # port: public port (7000-7099)   backend: where it listens (firewalled)   group: Tools page section

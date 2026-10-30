@@ -1,7 +1,8 @@
 """Ask: the local AI answers a question from the library.
 
 1. A small model turns the question into a few search words.
-2. Those words find the best document pages and encyclopedia articles.
+2. Those words, and the question's meaning, find the best document pages and
+   encyclopedia articles.
 3. The main model answers from those passages, citing them as [1], [2]…, streamed
    to the page as it writes. Nothing is stored.
 """
@@ -9,7 +10,7 @@ import json
 import re
 import urllib.request
 
-from . import documents, search, settings, zims
+from . import documents, search, semantic, settings, zims
 
 PROMPT = """You answer questions on an offline homestead library computer. The internet,
 hospitals and stores may be unavailable. The person asking may be stressed, injured,
@@ -51,10 +52,10 @@ def search_words(question: str) -> str:
 
 def passages(question: str) -> tuple[list[dict], str]:
     """(sources, text for the model): up to 2 document pages and 2 encyclopedia articles."""
+    qv = search._pool.submit(semantic.query_vector, question)
     terms = search_words(question)
     own = " ".join(search.words(question))
-    hits = (documents.search(terms, limit=2, per_doc=1) or documents.search(own, limit=2, per_doc=1)
-            or documents.search(f"{terms} {own}", limit=2, per_doc=1, any_word=True))
+    hits, _ = search.pages([terms, own], qv, limit=2, per_doc=1)
     key = [w for w in f"{terms} {own}".lower().split() if len(w) > 2]
     sources, parts = [], []
     for h in hits:

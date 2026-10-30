@@ -7,6 +7,7 @@ the channel's own database for the lessons, and its files for the videos.
 Videos play in the website. Practice exercises need Khan Academy's own exercise
 engine, so they aren't shown.
 """
+import html
 import sqlite3
 from dataclasses import dataclass
 
@@ -207,5 +208,25 @@ def search(q: str, limit: int = 12) -> list[dict]:
         return []
     finally:
         con.close()
-    return [{"title": t, "place": p, "url": f"/learn/{c}/{n}", "kind": k, "snippet": documents._mark(s)}
+    return [{"title": t, "place": p, "url": f"/learn/{c}/{n}", "kind": k, "node": n, "snippet": documents._mark(s)}
             for t, p, c, n, k, s in rows]
+
+
+def lessons_by_node(nodes: list[str]) -> dict[str, dict]:
+    """{node: lesson} for lessons found some other way (meaning search), with the start of their description."""
+    con = documents.connect()
+    if con is None or not nodes:
+        return {}
+    try:
+        rows = con.execute("SELECT title, place, channel, node, kind, description FROM lessons WHERE node IN "
+                           f"({','.join('?' * len(nodes))})", nodes).fetchall()
+    except sqlite3.Error:
+        return {}
+    finally:
+        con.close()
+    out = {}
+    for t, p, c, n, k, d in rows:
+        d = d or ""
+        out[n] = {"title": t, "place": p, "url": f"/learn/{c}/{n}", "kind": k, "node": n,
+                  "snippet": html.escape(d[:200] + ("…" if len(d) > 200 else ""))}
+    return out

@@ -31,7 +31,10 @@ that reads the library's files itself:
   courses. A book that comes as one PDF per chapter shows as one book, with each chapter named from
   its own first page.
 - **Search:** one box on every page. It searches the text of every document (page by page, with
-  links straight to the page), every encyclopedia, every lesson, and map places.
+  links straight to the page), every encyclopedia, every lesson, and map places. Documents and
+  lessons are found by their words and by their meaning, so a page that answers the question in
+  other words still comes up. Words listed as meaning the same thing
+  (`app/homestead/synonyms.txt`) find each other everywhere, encyclopedias included.
 - **Ask:** the AI answers in plain words from the library and links the pages it used.
 - **Encyclopedias** (Wikipedia, WikiMed, WikEM, Army manuals, StackExchange, Gutenberg, iFixit,
   and more) are read straight from their ZIM files, inside the website.

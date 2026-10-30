@@ -24,7 +24,7 @@ from concurrent.futures import ThreadPoolExecutor
 from html.parser import HTMLParser
 from pathlib import Path
 
-from . import courses, documents, jobs, library, settings
+from . import courses, documents, jobs, library, semantic, settings
 
 UA = {"User-Agent": "homestead/1.0 (offline preparedness library)"}
 OPDS = "https://opds.library.kiwix.org/catalog/v2/entries"
@@ -268,6 +268,9 @@ def index():
         job.say(f"documents: {r['files']} ({r['read']} read, {r['dropped']} dropped, {len(r['failed'])} unreadable)")
         c = courses.build(log=job.say)
         job.say(f"courses: {c['channels']} channels indexed")
+        m = semantic.build(log=job.say, progress=lambda text, n, t: job.step(text, n, t))
+        if "skipped" not in m:
+            job.say(f"meaning search: {m['pages']:,} page pieces and {m['lessons']:,} lessons added")
 
 
 def remove_files(it: library.Item):

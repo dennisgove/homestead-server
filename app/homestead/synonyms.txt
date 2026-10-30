@@ -1,0 +1,144 @@
+# Words that mean the same thing, one group per line, separated by commas.
+# A search for any of them also finds the others (documents, lessons and encyclopedias).
+#
+# - Endings don't need listing: "bleed" already finds "bleeding" and "bleeds".
+# - Little words (to, of, a, the, for…) are ignored, so leave them out of phrases.
+# - Only list things that really are the same: "pressure cooker" is NOT a "pressure canner".
+
+# --- medical ---
+bleeding, hemorrhage, haemorrhage
+tourniquet, tq
+cpr, cardiopulmonary resuscitation, chest compressions
+heart attack, myocardial infarction
+stroke, cerebrovascular accident, brain attack
+broken bone, fracture
+sprain, sprained ankle, twisted ankle
+concussion, head injury, traumatic brain injury
+choking, airway obstruction, heimlich, abdominal thrusts
+hypovolemia, hypovolaemia, hypovolemic shock, blood loss shock
+diarrhea, diarrhoea, loose stools
+vomiting, emesis, throwing up
+oral rehydration salts, oral rehydration solution, ors, rehydration drink
+dehydration, fluid loss
+fever, high temperature, pyrexia
+hypothermia, low body temperature
+heat stroke, heatstroke, hyperthermia
+frostbite, frost bite
+snake bite, snakebite, envenomation
+bee sting, wasp sting, insect sting
+anaphylaxis, anaphylactic shock, severe allergic reaction
+epinephrine, adrenaline, epipen
+sepsis, septicemia, septicaemia, blood poisoning
+infected wound, wound infection
+painkiller, pain reliever, analgesic
+acetaminophen, paracetamol, tylenol
+ibuprofen, advil, motrin
+aspirin, acetylsalicylic acid
+high blood sugar, hyperglycemia, hyperglycaemia
+low blood sugar, hypoglycemia, hypoglycaemia
+high blood pressure, hypertension
+anemia, anaemia
+pediatric, paediatric
+pregnancy, pregnant
+prenatal, antenatal
+childbirth, giving birth, delivering baby
+miscarriage, pregnancy loss
+burn, scald
+sutures, stitches, suturing
+toothache, tooth pain, dental pain
+tooth extraction, extracting teeth, pulling teeth
+seizure, convulsion
+unconscious, unresponsive
+fainting, syncope, passing out, passed out
+stomach ache, abdominal pain, belly pain
+urinary tract infection, uti, bladder infection
+lice, head lice, nits
+feces, faeces, poop
+tumor, tumour
+esophagus, oesophagus
+gonorrhea, gonorrhoea
+radiation sickness, acute radiation syndrome
+potassium iodide, ki tablets, iodide tablets
+
+# --- water and sanitation ---
+water purification, water treatment, disinfecting water, purify water
+drinking water, potable water, safe water
+bleach, sodium hypochlorite, chlorine bleach
+water filter, water filtration
+well water, groundwater
+rainwater harvesting, rain barrel, rainwater collection
+latrine, outhouse, privy, pit toilet
+composting toilet, humanure
+greywater, gray water, grey water
+septic tank, septic system
+
+# --- food ---
+green beans, snap beans, string beans
+zucchini, courgette
+eggplant, aubergine
+cilantro, coriander leaves
+corn, maize
+scallions, green onions, spring onions
+bell pepper, sweet pepper, capsicum
+chickpeas, garbanzo beans
+canning, bottling
+canning jar, mason jar, ball jar
+botulism, clostridium botulinum
+dehydrating, food drying, dehydrator
+jerky, dried meat
+root cellar, cold storage
+food storage, food stockpile
+freeze dried, freeze drying
+lacto fermentation, fermenting vegetables, sauerkraut
+smokehouse, smoking meat
+butchering, butchery, processing meat
+sourdough starter, wild yeast
+hardtack, ship biscuit
+
+# --- garden and animals ---
+manure, animal dung
+seed saving, saving seeds
+heirloom seeds, open pollinated
+pest control, garden pests
+aphids, greenfly
+chickens, poultry, laying hens
+beekeeping, apiculture, honey bees
+livestock, farm animals
+veterinary, animal health, vet care
+
+# --- power ---
+solar panel, photovoltaic, pv panel, solar module
+charge controller, solar charge controller, solar regulator
+lifepo4, lithium iron phosphate, lfp battery
+lead acid battery, deep cycle battery
+generator, genset
+wood stove, woodstove, wood burning stove
+firewood, cordwood
+
+# --- comms ---
+ham radio, amateur radio
+cb radio, citizens band
+walkie talkie, handheld radio, two way radio
+gmrs, general mobile radio service
+frs, family radio service
+shortwave, hf radio
+morse code, cw
+emergency broadcast, emergency alert system
+noaa weather radio, weather radio
+
+# --- survival and security ---
+fire starting, firecraft, fire making
+ferro rod, ferrocerium, fire steel
+bug out bag, go bag, 72 hour kit
+shelter building, emergency shelter
+land navigation, orienteering, map compass
+knots, knot tying, rope work
+foraging, wild edibles, edible plants
+trapping, snares
+hunting, game animals
+fishing, angling
+fallout shelter, nuclear shelter
+nbc, cbrn, chemical biological radiological nuclear
+gas mask, respirator
+home defense, home defence
+night vision, nvg

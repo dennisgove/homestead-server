@@ -3,7 +3,7 @@
 
 - name: What the program needs
   ansible.builtin.apt:
-    name: [python3-fastapi, python3-uvicorn, python3-jinja2, python3-yaml, python3-multipart, python3-libzim,
+    name: [python3-fastapi, python3-uvicorn, python3-jinja2, python3-yaml, python3-multipart, python3-libzim, python3-numpy,
            poppler-utils, aria2, sqlite3, caddy]
     update_cache: "{{ not offline }}"
     install_recommends: false

@@ -5,6 +5,6 @@
   "library_is_folder": library_is_folder | default(false) | bool,
   "fetch_priority": fetch_priority,
   "site": {"name": "Homestead Library", "ssid": hotspot_ssid, "lan_name": lan_name, "region": region_state},
-  "ai": {"ollama": "http://127.0.0.1:" ~ ollama_port, "model": ai_models.main, "helper": ai_models.helper},
+  "ai": {"ollama": "http://127.0.0.1:" ~ ollama_port, "model": ai_models.main, "helper": ai_models.helper, "embed": ai_models.embed},
   "tools": tools | map('dict2items') | map('rejectattr', 'key', 'in', ['backend', 'local_port']) | map('items2dict') | list,
 } | to_nice_json }}

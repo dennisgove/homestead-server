@@ -10,13 +10,14 @@ import re
 import threading
 from concurrent.futures import ThreadPoolExecutor, wait
 from dataclasses import dataclass
+from itertools import zip_longest
 from pathlib import Path
 
 from libzim.reader import Archive
 from libzim.search import Query, Searcher
 from libzim.suggestion import SuggestionSearcher
 
-from . import library
+from . import library, terms
 
 _lock = threading.Lock()
 _open: dict[str, tuple[float, Archive]] = {}   # path -> (mtime, archive)
@@ -186,14 +187,18 @@ def page_text(book: Book, path: str, limit: int = 30000) -> tuple[str, str]:
 
 
 def search_book(book: Book, q: str, start: int = 0, count: int = 10, snippets: bool = True) -> dict:
-    """Full-text search in one book: {total, hits: [{title, url, snippet}]}."""
-    words = re.findall(r"\w+", q)
+    """Full-text search in one book: {total, hits: [{title, url, snippet}]}. Synonyms count too (terms.py)."""
+    words = terms.every_word(q) or re.findall(r"\w+", q)
     a = archive(book.path)
     paths, total = [], 0
     if a.has_fulltext_index:
-        s = Searcher(a).search(Query().set_query(q))
-        total = s.getEstimatedMatches()
-        paths = list(s.getResults(start, count))
+        # the question as typed, and with other words for the same thing, taken in turn
+        lists = []
+        for v in terms.variants(q):
+            s = Searcher(a).search(Query().set_query(v))
+            total += s.getEstimatedMatches()
+            lists.append(list(s.getResults(0, start + count)))
+        paths = list(dict.fromkeys(p for row in zip_longest(*lists) for p in row if p))[start:start + count]
     if not paths and a.has_title_index:   # small books without a text index: titles only
         s = SuggestionSearcher(a).suggest(q)
         total = s.getEstimatedMatches()
@@ -239,7 +244,7 @@ def search_all(q: str, topic: str | None = None, per_book: int = 3, max_books: i
         a = archive(b.path)
         if not a.has_fulltext_index:
             return b, 0
-        return b, Searcher(a).search(Query().set_query(q)).getEstimatedMatches()
+        return b, sum(Searcher(a).search(Query().set_query(v)).getEstimatedMatches() for v in terms.variants(q))
 
     futs = [_pool.submit(count, b) for b in pool]
     done, _ = wait(futs, timeout=timeout)

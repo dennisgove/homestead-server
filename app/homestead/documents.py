@@ -12,7 +12,7 @@ import zipfile
 import xml.etree.ElementTree as ET
 from pathlib import Path, PurePosixPath
 
-from . import library, settings
+from . import library, settings, terms
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS docs (
@@ -219,25 +219,22 @@ def connect(readonly: bool = True) -> sqlite3.Connection | None:
 
 
 def match_query(q: str, any_word: bool = False) -> str:
-    words = re.findall(r"\w+", q.lower())
-    if not words:
-        return ""
-    parts = [f'"{w}"' for w in words[:-1]] + [f'"{words[-1]}"*']
-    return (" OR " if any_word else " ").join(parts)
+    """The FTS query for q: every word (or any), each also as its synonyms (terms.py)."""
+    return terms.fts(q, any_word)
 
 
 def _mark(snip: str) -> str:
     return html.escape(snip).replace("\x02", "<mark>").replace("\x03", "</mark>")
 
 
-def search(q: str, topic: str | None = None, limit: int = 20, per_doc: int = 3, any_word: bool = False) -> list[dict]:
-    """[{path, title, item, topic, pages: [{page, snippet}]}], best first."""
+def hits(q: str, topic: str | None = None, limit: int = 200, any_word: bool = False) -> list[dict]:
+    """Matching pages, best first: [{id, path, title, item, topic, page, snippet}] (id: the page's rowid)."""
     m = match_query(q, any_word)
     con = connect()
     if not m or con is None:
         return []
     try:
-        sql = ("SELECT pages.path, pages.title, docs.item, pages.topic, pages.page, "
+        sql = ("SELECT pages.rowid, pages.path, pages.title, docs.item, pages.topic, pages.page, "
                "snippet(pages, 0, char(2), char(3), ' … ', 26), bm25(pages, 1.0, 5.0) AS r "
                "FROM pages LEFT JOIN docs ON docs.path = pages.path WHERE pages MATCH ?")
         args: list = [m]
@@ -245,19 +242,47 @@ def search(q: str, topic: str | None = None, limit: int = 20, per_doc: int = 3, 
             sql += " AND pages.topic = ?"
             args.append(topic)
         sql += " ORDER BY r LIMIT ?"
-        args.append(limit * per_doc * 4)
+        args.append(limit)
         rows = con.execute(sql, args).fetchall()
     except sqlite3.Error:
         return []
     finally:
         con.close()
+    return [{"id": i, "path": path, "title": title, "item": item, "topic": top, "page": int(page), "snippet": _mark(snip)}
+            for i, path, title, item, top, page, snip, _ in rows]
+
+
+def pages_by_id(ids: list[int]) -> dict[int, dict]:
+    """{rowid: {id, path, title, item, topic, page, text}} for pages found some other way."""
+    con = connect()
+    if con is None or not ids:
+        return {}
+    try:
+        rows = con.execute("SELECT pages.rowid, pages.path, pages.title, docs.item, pages.topic, pages.page, pages.text "
+                           "FROM pages LEFT JOIN docs ON docs.path = pages.path WHERE pages.rowid IN "
+                           f"({','.join('?' * len(ids))})", ids).fetchall()
+    except sqlite3.Error:
+        return {}
+    finally:
+        con.close()
+    return {r[0]: {"id": r[0], "path": r[1], "title": r[2], "item": r[3], "topic": r[4], "page": int(r[5]), "text": r[6]}
+            for r in rows}
+
+
+def group(found: list[dict], limit: int = 20, per_doc: int = 3) -> list[dict]:
+    """Pages, best first, as documents, best first: [{path, url, title, item, topic, pages: [{page, snippet}]}]."""
     out: dict[str, dict] = {}
-    for path, title, item, top, page, snip, _ in rows:
-        d = out.setdefault(path, {"path": path, "url": f"/read/{settings.url_path(path)}", "title": title, "item": item,
-                                  "topic": top, "pages": []})
+    for h in found:
+        d = out.setdefault(h["path"], {"path": h["path"], "url": f"/read/{settings.url_path(h['path'])}",
+                                       "title": h["title"], "item": h["item"], "topic": h["topic"], "pages": []})
         if len(d["pages"]) < per_doc:
-            d["pages"].append({"page": int(page), "snippet": _mark(snip)})
+            d["pages"].append({"page": h["page"], "snippet": h["snippet"]})
     return list(out.values())[:limit]
+
+
+def search(q: str, topic: str | None = None, limit: int = 20, per_doc: int = 3, any_word: bool = False) -> list[dict]:
+    """Documents with every word of q (or any), best first, with their best pages."""
+    return group(hits(q, topic, limit * per_doc * 4, any_word), limit, per_doc)
 
 
 def page_text(path: str, page: int) -> str:
