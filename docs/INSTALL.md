@@ -146,7 +146,7 @@ After the first run, the firewall allows SSH only from **wired ethernet** (never
 
 To update the server from the Mac later, copy the folder again and re-run `bootstrap.sh`. That keeps the existing passwords and passphrase (`/opt/homestead/repo/secrets.yml`).
 
-The first run takes a while (container images, AI models). Everything after it happens in the background: the library download, the search index and the maps. Watch it on the website's **Status** page. The first search index also works out what every page and lesson is about (meaning search), which takes two to three hours; search works by words alone until then.
+The first run takes a while (container images, AI models). Everything after it happens in the background: the library download, the search index and the maps. Watch it on the website's **Status** page. The first search index also works out what every page and lesson is about (meaning search), which takes about four hours on this machine; search works by words alone until then.
 
 An older install (Kiwix, Kolibri and the earlier web pages) is converted on this run: its downloaded files move into the new layout (renames on the same disk; nothing is downloaded again), and its containers and services are removed.
 
