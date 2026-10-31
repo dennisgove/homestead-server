@@ -109,6 +109,12 @@ topics:
       - pdf: "https://iris.who.int/server/api/core/bitstreams/3bda1306-da5d-487d-b2ad-aff995112a7a/content"
         title: "WHO Managing Complications in Pregnancy and Childbirth (2017)"
         essential: true
+      - pdf: "https://archive.org/download/MManuals/UsMarinesMwtcWildernessMedicineCourse2002.pdf"
+        title: "Wilderness Medicine Course handbook (USMC Mountain Warfare Training Center, 2002)"
+        essential: true
+      - pdf: "https://archive.org/download/MManuals/UsArmyMedicalAspectsOfHarshEnvironmentsV12001.pdf"
+        title: "Medical Aspects of Harsh Environments, vol. 1 (Borden Institute, 2001)"
+        priority: 2
 
   water:
     name: "Water & sanitation"
@@ -185,6 +191,12 @@ topics:
       - pdf: "https://www.fao.org/3/y5169e/y5169e.pdf"
         title: "Small-Scale Poultry Production (FAO)"
         essential: true
+      - pdf: "https://archive.org/download/fm-3-05.213-sf-use-of-pack-animals-2004/FM%203-05.213%20SF%20Use%20of%20Pack%20Animals%202004.pdf"
+        title: "FM 3-05.213: Special Forces Use of Pack Animals (US Army, 2004)"
+        priority: 2
+      - pdf: "https://archive.org/download/MManuals/Tm5-633NaturalResourcesFishWildlifeManagement.pdf"
+        title: "TM 5-633: Fish and Wildlife Management (US Army)"
+        priority: 2
 
   survival:
     name: "Survival & shelter"
@@ -196,7 +208,11 @@ topics:
         essential: true
       - zim: zimgit-knots_en
         essential: true
-      - zim: www.ready.gov_en
+      - zim: ready.gov_en_all
+        essential: true
+      - zim: wikiciv_en_all
+        essential: true
+      - zim: wikipedia_en_knots
         essential: true
       - zim: trueprepper.com_en_all
         essential: true
@@ -245,6 +261,52 @@ topics:
         title: "CERT Basic Training Participant Manual (FEMA, 2019)"
         essential: true
         print: true
+      - pdf: "https://archive.org/download/afh-10-644-sere-operations-27-mar-2017/AFH%2010-644%20SERE%20Operations%2027Mar2017.pdf"
+        title: "AFH 10-644: Survival, Evasion, Resistance, Escape (SERE) Operations (US Air Force, 2017)"
+        essential: true
+      - pdf: "https://armyrotc.mst.edu/media/academic/armyrotc/documents/manualsadpadrpfmetc/TC%203-25.26.pdf"
+        title: "TC 3-25.26: Map Reading and Land Navigation (US Army, 2013)"
+        essential: true
+      - pdf: "https://rib.msb.se/filer/pdf/31523.pdf"
+        title: "In Case of Crisis or War (Swedish civil defence, 2024)"
+        essential: true
+        print: true
+      - pdf: "https://archive.org/download/lds-preparedness-manual/LDS%20Preparedness%20Manual.pdf"
+        title: "LDS Preparedness Manual"
+        essential: true
+      - pdf: "https://archive.org/download/MManuals/UsMarinesMwtcSummerSurvivalCourse2002.pdf"
+        title: "Summer Survival Course handbook (USMC Mountain Warfare Training Center, 2002)"
+        essential: true
+      - pdf: "https://archive.org/download/MManuals/UsMarinesMwtcWinterSurvivalCourse2002.pdf"
+        title: "Winter Survival Course handbook (USMC Mountain Warfare Training Center, 2002)"
+        essential: true
+      - pdf: "https://trueprepper.com/wp-content/uploads/Navy-Marine-Corps-SERE-Student-Handbook.pdf"
+        title: "SERE Student Handbook (US Navy and Marine Corps)"
+        essential: true
+      - pdf: "https://archive.org/download/MManuals/Fm21-76Survival.pdf"
+        title: "FM 21-76: Survival (US Army, 1992)"
+        priority: 2
+      - pdf: "https://archive.org/download/MManuals/Mcrp3-02fUsMarinesSurvivalHandbookUsmc1992.pdf"
+        title: "MCRP 3-02F: Survival (US Marine Corps, 1992)"
+        priority: 2
+      - pdf: "https://archive.org/download/MManuals/Fm31-70BasicColdWeatherManual.pdf"
+        title: "FM 31-70: Basic Cold Weather Manual (US Army)"
+        priority: 2
+      - pdf: "https://archive.org/download/MManuals/Fm90-5UsArmyJungleOperations1982.pdf"
+        title: "FM 90-5: Jungle Operations (US Army, 1982)"
+        priority: 2
+      - pdf: "https://archive.org/download/MManuals/Fm90-3UsArmy-marinesDesertOperations1993.pdf"
+        title: "FM 90-3: Desert Operations (US Army and Marine Corps, 1993)"
+        priority: 2
+      - pdf: "https://archive.org/download/MManuals/BasicVisualTracking.pdf"
+        title: "Basic Visual Tracking"
+        priority: 2
+      - pdf: "https://archive.org/download/MManuals/CanadianMilitaryFeildcraft.pdf"
+        title: "Military Fieldcraft (Canadian Forces)"
+        priority: 2
+      - pdf: "https://archive.org/download/MManuals/WaterSurvivalTrainingTc21-21.pdf"
+        title: "TC 21-21: Water Survival Training (US Army)"
+        priority: 2
 
   security:
     name: "Security & defense"
@@ -293,6 +355,9 @@ topics:
       - epub: "https://www.gutenberg.org/cache/epub/26184/pg26184.epub"
         title: "Simple Sabotage Field Manual (OSS, 1944)"
         essential: true
+      - pdf: "https://archive.org/download/MManuals/Fm5-103Survivability.pdf"
+        title: "FM 5-103: Survivability (fighting positions and protective shelters, US Army)"
+        priority: 2
 
   power:
     name: "Power & energy"
@@ -355,6 +420,8 @@ topics:
         priority: 2
       - zim: crosstalk-solutions
         priority: 3
+      - zim: s2underground_en_all
+        priority: 3
       - pdf: "https://armypubs.army.mil/epubs/DR_pubs/DR_a/ARN44497-ATP_6-02.53-000-WEB-1.pdf"
         title: "ATP 6-02.53: Techniques for Tactical Radios and Retransmission (US Army)"
         essential: true
@@ -378,6 +445,8 @@ topics:
       - zim: crashcourse_en_all
         priority: 3
       - zim: phet_en_all
+        priority: 3
+      - zim: rabbitwaves.ca_en_all
         priority: 3
       - zim: libretexts.org_en_bio
         priority: 3

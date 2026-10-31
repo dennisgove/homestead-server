@@ -44,4 +44,4 @@ def test_every_old_document_has_a_place_in_the_new_list():
                 expected.add(f"{tid}/{slug(it['title'])}" + ("" if kind == "book" else f".{kind}"))
     layout = json.loads((ROLE / "old-layout.json").read_text())
     targets = {new for new in layout["files"].values() if new.count("/") == 1} | set(layout["folders"].values())
-    assert targets == expected
+    assert targets <= expected     # documents added to the list since are simply downloaded
