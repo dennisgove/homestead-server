@@ -115,6 +115,89 @@ topics:
       - pdf: "https://archive.org/download/MManuals/UsArmyMedicalAspectsOfHarshEnvironmentsV12001.pdf"
         title: "Medical Aspects of Harsh Environments, vol. 1 (Borden Institute, 2001)"
         priority: 2
+      - pdf: "https://www.icrc.org/en/doc/assets/files/other/icrc-002-0973.pdf"
+        title: "War Surgery, vol. 1: Working with Limited Resources (ICRC, 2009)"
+        essential: true
+      - pdf: "https://www.icrc.org/fre/assets/files/publications/icrc-002-4105.pdf"
+        title: "War Surgery, vol. 2: wounds by body region (ICRC, 2013)"
+        priority: 2
+      - pdf: "https://www.icrc.org/en/doc/assets/files/other/icrc-002-0870.pdf"
+        title: "First Aid in Armed Conflicts and Other Situations of Violence (ICRC)"
+        essential: true
+      - pdf: "https://medicalguidelines.msf.org/sites/default/files/2026-05/guideline-170-en.pdf"
+        title: "Clinical Guidelines: Diagnosis and Treatment Manual (MSF)"
+        essential: true
+      - pdf: "https://www.afro.who.int/sites/default/files/2017-06/pocket_booklet_hospital_care.pdf"
+        title: "Pocket Book of Hospital Care for Children (WHO, 2005)"
+        essential: true
+
+  mind:
+    name: "Stress & planning"
+    icon: "🧠"
+    blurb: "Coping under strain, helping others and children through it, family plans and paperwork"
+    quick: ["panic", "grief", "sleep", "anger", "psychological first aid", "children after a disaster"]
+    items:
+      - zim: psychology.stackexchange.com_en_all
+        priority: 3
+      - pdf: "https://digitallibrary.un.org/record/3861161/files/whodoingwhatmattersntimesstress.pdf"
+        title: "Doing What Matters in Times of Stress: an illustrated guide (WHO, 2020)"
+        essential: true
+        print: true
+      - pdf: "https://www.medschool.lsuhsc.edu/tdc/docs/Adults_Tips%20for%20Survivors%20of%20Disasters_Managing%20Stress_SAMHSA.pdf"
+        title: "Tips for Survivors of a Disaster: Managing Stress (SAMHSA)"
+        essential: true
+        print: true
+      - pdf: "https://psychiatry.uw.edu/wp-content/uploads/2020/04/2.-NCTSN-pfa_field_operations_guide.pdf"
+        title: "Psychological First Aid Field Operations Guide, 2nd ed. (National Center for PTSD and NCTSN)"
+        essential: true
+      - pdf: "https://mhpsshub.org/wp-content/uploads/2018/10/9789241548205_eng.pdf"
+        title: "Psychological First Aid: Guide for Field Workers (WHO, 2011)"
+        essential: true
+      - pdf: "https://psychiatry.uw.edu/wp-content/uploads/2020/07/SPR_Manual.pdf"
+        title: "Skills for Psychological Recovery Field Operations Guide (National Center for PTSD and NCTSN)"
+        priority: 2
+      - pdf: "https://arq.org/sites/default/files/2022-08/WHO%20PM%2B%20handboek.pdf"
+        title: "Problem Management Plus: help for adults overwhelmed by distress (WHO, 2018)"
+        priority: 2
+      - pdf: "https://archive.org/download/MManuals/Fm90-44UsmcCombatStressMcrp611c.pdf"
+        title: "FM 90-44 / MCRP 6-11C: Combat Stress (US Army, Marine Corps and Navy, 2000)"
+        priority: 2
+      - pdf: "https://arotc.illinoisstate.edu/downloads/resources/FM_7-22_October%202020.pdf"
+        title: "FM 7-22: Holistic Health and Fitness (sleep, nutrition, mental readiness; US Army, 2020)"
+        priority: 3
+      - pdf: "https://www.nctsn.org/sites/default/files/resources/pfa_parent_tips_for_helping_infants_and_toddlers_after_disasters.pdf"
+        title: "Parent Tips: Infants and Toddlers after Disasters (NCTSN)"
+        essential: true
+        print: true
+      - pdf: "https://www.nctsn.org/sites/default/files/resources/pfa_parent_tips_for_helping_preschool_age_children_after_disasters.pdf"
+        title: "Parent Tips: Preschool-Age Children after Disasters (NCTSN)"
+        essential: true
+        print: true
+      - pdf: "https://www.nctsn.org/sites/default/files/resources/pfa_parent_tips_for_helping_school_age_children_after_disasters.pdf"
+        title: "Parent Tips: School-Age Children after Disasters (NCTSN)"
+        essential: true
+        print: true
+      - pdf: "https://www.nctsn.org/sites/default/files/resources/pfa_parent_tips_for_helping_adolescents_after_disasters.pdf"
+        title: "Parent Tips: Adolescents after Disasters (NCTSN)"
+        essential: true
+        print: true
+      - pdf: "https://namibia.un.org/sites/default/files/2020-04/My%20Hero%20is%20You%2C%20Storybook%20for%20Children%20on%20COVID-19.pdf"
+        title: "My Hero Is You: a storybook for children about coping (IASC, 2020)"
+        priority: 2
+      - pdf: "https://sesameworkshop.org/wp-content/uploads/2023/04/Emergency-Family-Guide-English.pdf"
+        title: "Let's Get Ready: Planning Together for Emergencies, family guide (Sesame Workshop)"
+        essential: true
+      - pdf: "https://www.weather.gov/media/ilx/Hydro/FSAW/family-communication-plan_fillable-card.pdf"
+        title: "Family Emergency Communication Plan, fill-in card (FEMA P-1095)"
+        essential: true
+        print: true
+      - pdf: "https://www.ready.gov/sites/default/files/2020-03/ready_emergency-financial-first-aid-toolkit.pdf"
+        title: "Emergency Financial First Aid Kit (FEMA P-2063)"
+        essential: true
+      - pdf: "https://www.ready.gov/sites/default/files/2020-03/ready_emergency-financial-first-aid-toolkit-checklists-and-forms.pdf"
+        title: "Emergency Financial First Aid Kit: checklists and forms (FEMA P-2063)"
+        essential: true
+        print: true
 
   water:
     name: "Water & sanitation"
@@ -358,6 +441,22 @@ topics:
       - pdf: "https://archive.org/download/MManuals/Fm5-103Survivability.pdf"
         title: "FM 5-103: Survivability (fighting positions and protective shelters, US Army)"
         priority: 2
+      - pdf: "https://www.vdf.virginia.gov/pdf/Training/FM%203-19.30.pdf"
+        title: "FM 3-19.30: Physical Security (barriers, lighting, locks, access control; US Army, 2001)"
+        essential: true
+      - pdf: "https://archive.org/download/milmanual-fm-3-06.11-combined-arms-operations-in-urban-terrain/fm_3-06.11_combined_arms_operations_in_urban_terrain.pdf"
+        title: "FM 3-06.11: Combined Arms Operations in Urban Terrain (defending and clearing buildings; US Army, 2002)"
+        priority: 2
+      - pdf: "https://www.redmond.gov/DocumentCenter/View/1580/Neighborhood-Watch-Manual-PDF"
+        title: "Neighborhood Watch Manual (USAonWatch, US Justice Department)"
+        essential: true
+      - pdf: "https://newtools.cira.state.tx.us/upload/page/12213/docs/SR/FEMA%20Publication%20P-320.pdf"
+        title: "FEMA P-320: Taking Shelter from the Storm, safe room plans (2021)"
+        priority: 2
+      - pdf: "https://www.ready.gov/sites/default/files/2020-03/home-builder-guide-construction-defensible-space.pdf"
+        title: "Defensible space around your home against wildfire (FEMA)"
+        essential: true
+        print: true
 
   power:
     name: "Power & energy"
@@ -526,6 +625,7 @@ topics:
 by_hand:
   - { title: "Where There Is No Animal Doctor", where: "buy from store.hesperian.org (WikiVet and FAO poultry are in the library meanwhile)" }
   - { title: "TCCC guidelines + All Service Members card", where: "Deployed Medicine app/site (ATP 4-02.11 in the library covers TCCC and first aid)" }
+  - { title: "Where There Is No Psychiatrist, 2nd ed. (Patel and Hanlon)", where: "buy from Cambridge University Press (WHO and NCTSN psychological first aid guides are in the library meanwhile)" }
   - { title: "The Ship Captain's Medical Guide, 24th ed.", where: "sold by TSO/MCA, no free copy (the SOF and Special Forces medical handbooks cover similar ground)" }
   - { title: "So Easy to Preserve", where: "buy from the University of Georgia (the USDA canning guide is in the library)" }
   - { title: "State extension: livestock, food preservation", where: "your state's land-grant university extension site" }

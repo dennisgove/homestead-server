@@ -41,7 +41,7 @@ documents as PDFs and print them from your phone or laptop.{% endif %}</p>
 <h2 class="label">The binder: what to keep on paper</h2>
 <p class="lead noprint">If this computer fails, these are the documents you'll want on paper, in a binder with coloured tabs.
 Print this page as the binder's index, then print each document. <button type="button" onclick="window.print()">Print the binder's index</button></p>
-{% set tabs = {'medical': 'RED tab', 'water': 'BLUE tab', 'food': 'GREEN tab', 'security': 'BLACK tab',
+{% set tabs = {'medical': 'RED tab', 'mind': 'PURPLE tab', 'water': 'BLUE tab', 'food': 'GREEN tab', 'security': 'BLACK tab',
                'survival': 'BLACK tab', 'comms': 'YELLOW tab'} %}
 {% for tid, group in docs | groupby('topic') %}
 <section class="tab">

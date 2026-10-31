@@ -33,6 +33,20 @@ Items marked **(get by hand)** aren't downloaded automatically: the website's **
 | Drug doses and interactions | http://homestead.local/search?q=paracetamol (change the drug name) | `/srv/core/zim/` (NHS medicines A-Z) |
 | Family medication list and allergies | write it and keep it in the vault: http://homestead.local:7092 | vault (Paperless) |
 
+## PURPLE: STRESS & PLANNING
+
+| Item | Link | On disk |
+|---|---|---|
+| Doing What Matters in Times of Stress (WHO) | http://homestead.local/read/mind/doing-what-matters-in-times-of-stress-an-illustrated-guide-who-2020.pdf | `/srv/core/docs/mind/doing-what-matters-in-times-of-stress-an-illustrated-guide-who-2020.pdf` |
+| Managing stress after a disaster (SAMHSA tip sheet) | http://homestead.local/read/mind/tips-for-survivors-of-a-disaster-managing-stress-samhsa.pdf | `/srv/core/docs/mind/tips-for-survivors-of-a-disaster-managing-stress-samhsa.pdf` |
+| Helping infants and toddlers after a disaster | http://homestead.local/read/mind/parent-tips-infants-and-toddlers-after-disasters-nctsn.pdf | `/srv/core/docs/mind/parent-tips-infants-and-toddlers-after-disasters-nctsn.pdf` |
+| Helping preschool children after a disaster | http://homestead.local/read/mind/parent-tips-preschool-age-children-after-disasters-nctsn.pdf | `/srv/core/docs/mind/parent-tips-preschool-age-children-after-disasters-nctsn.pdf` |
+| Helping school-age children after a disaster | http://homestead.local/read/mind/parent-tips-school-age-children-after-disasters-nctsn.pdf | `/srv/core/docs/mind/parent-tips-school-age-children-after-disasters-nctsn.pdf` |
+| Helping teenagers after a disaster | http://homestead.local/read/mind/parent-tips-adolescents-after-disasters-nctsn.pdf | `/srv/core/docs/mind/parent-tips-adolescents-after-disasters-nctsn.pdf` |
+| Family emergency communication plan (fill in by hand) | http://homestead.local/read/mind/family-emergency-communication-plan-fill-in-card-fema-p-1095.pdf | `/srv/core/docs/mind/family-emergency-communication-plan-fill-in-card-fema-p-1095.pdf` |
+| Financial and legal papers checklist (fill in by hand) | http://homestead.local/read/mind/emergency-financial-first-aid-kit-checklists-and-forms-fema-p-2063.pdf | `/srv/core/docs/mind/emergency-financial-first-aid-kit-checklists-and-forms-fema-p-2063.pdf` |
+| Psychological first aid: what to say and do | http://homestead.local/search?q=psychological+first+aid | `/srv/core/docs/mind/` |
+
 ## BLUE: WATER
 
 | Item | Link | On disk |
@@ -64,6 +78,7 @@ Items marked **(get by hand)** aren't downloaded automatically: the website's **
 | Physical security (FM 3-19.30) | http://homestead.local/search?q=FM+3-19.30 | `/srv/core/zim/` |
 | CBRN (FM 3-11) | http://homestead.local/search?q=FM+3-11 | `/srv/core/zim/` |
 | Nuclear War Survival Skills | http://homestead.local/read/survival/nuclear-war-survival-skills-kearny.pdf | `/srv/core/docs/survival/nuclear-war-survival-skills-kearny.pdf` |
+| Defensible space against wildfire (FEMA) | http://homestead.local/read/security/defensible-space-around-your-home-against-wildfire-fema.pdf | `/srv/core/docs/security/defensible-space-around-your-home-against-wildfire-fema.pdf` |
 | CERT Basic Training manual | http://homestead.local/read/survival/cert-basic-training-participant-manual-fema-2019.pdf | `/srv/core/docs/survival/cert-basic-training-participant-manual-fema-2019.pdf` |
 | Firearm safety rules and manuals for your guns and gear (get by hand: manufacturers) | http://homestead.local/t/security | `/srv/core/docs/security/` |
 | Area maps with routes marked | http://homestead.local/maps (find the place, **Print this view**, then mark by hand) | `/srv/core/maps/` |
