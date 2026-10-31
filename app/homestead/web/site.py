@@ -4,16 +4,19 @@ Nothing here asks for a login.
 """
 import html
 import json
+import re
 import time
 import urllib.parse
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.background import BackgroundTask
 
-from .. import ask, courses, documents, jobs, library, maps, search, settings, zims
+from .. import ask, courses, documents, jobs, library, maps, printing, search, settings, zims
 
 HERE = Path(__file__).parent
 app = FastAPI(title="Homestead library", docs_url=None, redoc_url=None, openapi_url=None)
@@ -111,7 +114,8 @@ def read(request: Request, rel: str):
             nav = {"book": d, "prev": d["parts"][i - 1] if i > 0 else None,
                    "next": d["parts"][i + 1] if 0 <= i < len(urls) - 1 else None}
     return page(request, "read_pdf.html", title=title, label=info.get("label", ""), book_title=book_title,
-                t=t, nav=nav, file=f"/files/docs/{urllib.parse.quote(rel)}", pages=info.get("pages"))
+                t=t, nav=nav, file=f"/files/docs/{urllib.parse.quote(rel)}", pages=info.get("pages"),
+                print_url=f"/print/{settings.url_path(rel)}")
 
 
 # --- encyclopedias ----------------------------------------------------------------------------
@@ -284,9 +288,72 @@ def emergency(request: Request):
 
 
 @app.get("/print", response_class=HTMLResponse)
-def print_page(request: Request):
-    docs = [d for d in documents.shelf() if d["print"]]
-    return page(request, "print.html", docs=docs, wifi_sign=(settings.path("share") / "print" / "wifi-sign.html").is_file())
+def print_page(request: Request, sent: str = "", to: str = "", n: int = 0):
+    every = printing.everything()
+    return page(request, "print.html", docs=[d for d in every if d.get("print")], every=every,
+                printers=printing.printers(), queue=printing.queue(), sent=sent, to=to, n=n,
+                wifi_sign=(settings.path("share") / "print" / "wifi-sign.html").is_file())
+
+
+def print_target(rel: str) -> dict:
+    t = printing.target(rel)
+    if not t:
+        raise HTTPException(404, "That document isn't here.")
+    return t
+
+
+def print_form(request: Request, t: dict, status: int = 200, **form) -> HTMLResponse:
+    read = "/book/" + t["rel"].rsplit("/", 1)[-1] if t["kind"] == "book" else "/read/" + settings.url_path(t["rel"])
+    form = {"chosen": [x["rel"] for x in t["parts"]], "pages": "", "copies": 1, "two_sided": True,
+            "color": False, "printer": "", "error": ""} | form
+    return page(request, "print_doc.html", status=status, d=t, printers=printing.printers(), read_url=read,
+                t=library.topics().get(t["topic"], {}), pdf_url="/print-pdf/" + settings.url_path(t["rel"]), **form)
+
+
+@app.get("/print/{rel:path}", response_class=HTMLResponse)
+def print_doc(request: Request, rel: str):
+    return print_form(request, print_target(rel))
+
+
+@app.get("/print-pdf/{rel:path}")
+def print_pdf(rel: str, part: list[str] = Query(default=[]), pages: str = ""):
+    """Just the chosen chapters and pages as one PDF, for printing from this device."""
+    t = print_target(rel)
+    if t["kind"] not in ("pdf", "book"):
+        raise HTTPException(404, "Only PDFs can be put together for printing.")
+    try:
+        chosen, rs, _ = printing.choose(t, part, pages)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    path, temp = printing.pdf(t, chosen, rs)
+    name = re.sub(r"[^\w.,()' -]+", "", t["title"])[:100] + ".pdf"
+    return FileResponse(path, media_type="application/pdf", content_disposition_type="inline", filename=name,
+                        background=BackgroundTask(path.unlink, missing_ok=True) if temp else None)
+
+
+@app.post("/print/{rel:path}", response_class=HTMLResponse)
+async def print_send(request: Request, rel: str):
+    t = print_target(rel)
+    f = await request.form()
+    form = {"chosen": f.getlist("part"), "pages": str(f.get("pages", "")), "printer": str(f.get("printer", "")),
+            "two_sided": f.get("sides") != "one", "color": f.get("color") == "color"}
+    copies = str(f.get("copies") or "1")
+    form["copies"] = int(copies) if copies.isdigit() else 1
+    try:
+        chosen, rs, n = printing.choose(t, form["chosen"], form["pages"])
+        await run_in_threadpool(printing.send, t, chosen, rs, form["printer"], form["copies"],
+                                form["two_sided"], form["color"])
+    except ValueError as e:
+        return print_form(request, t, status=400, error=str(e), **form)
+    label = next((p["label"] for p in printing.printers() if p["name"] == form["printer"]), form["printer"])
+    q = urllib.parse.urlencode({"sent": t["title"], "to": label, "n": n * form["copies"]})
+    return RedirectResponse(f"/print?{q}#queue", status_code=303)
+
+
+@app.post("/print-cancel/{job}")
+def print_cancel(job: int):
+    printing.cancel(job)
+    return RedirectResponse("/print#queue", status_code=303)
 
 
 @app.get("/tools", response_class=HTMLResponse)

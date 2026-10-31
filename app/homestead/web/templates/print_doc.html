@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Print {{ d.title }} · Homestead Library{% endblock %}
+{% block body %}
+<p class="crumbs"><a href="/print">Print</a> / {% if t %}<a href="/t/{{ t.id }}">{{ t.name }}</a> /{% endif %}</p>
+<h1>🖨️ {{ d.title }}</h1>
+<p class="lead">{% if d.pages %}{{ '{:,}'.format(d.pages) }} page{{ 's' if d.pages != 1 }}{% endif %}{% if d.kind == 'book' %} in {{ d.parts | length }} chapters{% endif %}
+  · <a href="{{ read_url }}">Read it first</a></p>
+
+{% if error %}<p class="empty bad" role="alert">{{ error }}</p>{% endif %}
+
+{% if d.kind == 'epub' %}
+<p class="empty">This is an ebook: open it in the <a href="{{ read_url }}">reader</a> and use your browser's
+<b>Print</b> (on a phone: Share → Print). The whole book is on that one page.</p>
+{% else %}
+<form method="post" class="printform" id="pf">
+  {% if d.kind == 'book' %}
+  <fieldset>
+    <legend>Chapters <button type="button" class="plain" data-all="1">all</button> · <button type="button" class="plain" data-all="0">none</button></legend>
+    <ol class="chapters picks">
+      {% for p in d.parts %}
+      <li><label><input type="checkbox" name="part" value="{{ p.rel }}" data-pages="{{ p.pages or 0 }}" {% if p.rel in chosen %}checked{% endif %}>
+        {% if p.label and p.label != p.title %}<span class="num">{{ p.label }}</span>{% endif %}<span>{{ p.title }}</span></label>
+        {% if p.pages %}<small>{{ p.pages }} p.</small>{% endif %}</li>
+      {% endfor %}
+    </ol>
+  </fieldset>
+  {% endif %}
+
+  {% if d.pages %}
+  <label class="row">Pages <input name="pages" id="pages" value="{{ pages }}" placeholder="all" inputmode="numeric" autocomplete="off">
+    <small>like <code>5</code> or <code>10-20, 31</code>{% if d.kind == 'book' %}, counted through the chapters picked{% endif %}. Leave empty for all.</small></label>
+  {% endif %}
+
+  {% if printers %}
+  <fieldset class="row">
+    <legend>Print on the printer</legend>
+    <label>Printer <select name="printer">
+      {% for p in printers %}<option value="{{ p.name }}" {% if p.name == printer or (not printer and loop.first) %}selected{% endif %}>{{ p.label }}{% if not p.ready %} (switched off?){% endif %}</option>{% endfor %}
+    </select></label>
+    <label>Copies <input name="copies" type="number" min="1" max="20" value="{{ copies }}" class="short"></label>
+    <label><input type="radio" name="sides" value="two" {% if two_sided %}checked{% endif %}> Both sides</label>
+    <label><input type="radio" name="sides" value="one" {% if not two_sided %}checked{% endif %}> One side</label>
+    <label><input type="radio" name="color" value="gray" {% if not color %}checked{% endif %}> Black &amp; white</label>
+    <label><input type="radio" name="color" value="color" {% if color %}checked{% endif %}> Colour</label>
+  </fieldset>
+  <p><button type="submit" class="go" id="send">Print</button></p>
+  {% else %}
+  <p class="empty">The server can't see a printer right now (is it switched on and on the network?).
+  You can still print from this device: open it as a PDF below, then use Print.</p>
+  {% endif %}
+
+  {% if d.kind != 'text' %}
+  <p><button type="submit" formmethod="get" formaction="{{ pdf_url }}" formtarget="_blank">Open as a PDF to print from this device</button>
+    <small>{{ 'just the chapters and pages picked' if d.kind == 'book' else 'just the pages picked' }}</small></p>
+  {% endif %}
+</form>
+<script>
+(() => {
+  const f = document.getElementById("pf"), btn = document.getElementById("send");
+  const boxes = [...f.querySelectorAll("input[name=part]")], pages = document.getElementById("pages");
+  f.querySelectorAll("[data-all]").forEach(b => b.onclick = () => { boxes.forEach(x => x.checked = b.dataset.all === "1"); count(); });
+  function count() {
+    if (!btn) return;
+    let total = boxes.length ? boxes.filter(x => x.checked).reduce((n, x) => n + +x.dataset.pages, 0) : {{ d.pages or 0 }};
+    let n = total;
+    const text = pages ? pages.value.trim() : "";
+    if (text) {
+      n = 0;
+      for (const bit of text.split(/[,\s]+/).filter(Boolean)) {
+        const m = bit.match(/^(\d*)-(\d*)$|^(\d+)$/);
+        if (!m) { n = NaN; break; }
+        const a = m[3] ? +m[3] : +(m[1] || 1), b = m[3] ? +m[3] : +(m[2] || total);
+        n += Math.max(0, Math.min(b, total) - a + 1);
+      }
+    }
+    const copies = Math.max(1, +f.copies.value || 1);
+    btn.textContent = isNaN(n) || !total ? "Print" : `Print ${(n * copies).toLocaleString()} page${n * copies === 1 ? "" : "s"}`;
+    btn.disabled = boxes.length > 0 && !boxes.some(x => x.checked);
+  }
+  f.addEventListener("input", count);
+  count();
+})();
+</script>
+{% endif %}
+{% endblock %}

@@ -14,6 +14,7 @@
   <div class="acts">
     {% if nav and nav.prev %}<a href="{{ nav.prev.url }}" title="{{ nav.prev.title }}">← Previous</a>{% endif %}
     {% if nav and nav.next %}<a href="{{ nav.next.url }}" title="{{ nav.next.title }}">Next →</a>{% endif %}
+    <a href="{{ print_url }}">🖨️ Print</a>
     <a href="{{ file }}" target="_blank" rel="noopener">Open full screen</a>
     <a href="{{ file }}" download>Download</a>
   </div>

@@ -155,9 +155,19 @@ def pdf_pages(path: Path) -> list[str]:
     if r.returncode != 0:
         raise RuntimeError(r.stderr.decode("utf-8", "replace").strip()[:200] or "pdftotext failed")
     pages = r.stdout.decode("utf-8", "replace").split("\f")
-    while pages and not pages[-1].strip():
+    if pages and not pages[-1].strip():      # after the last page's form feed: not a page
         pages.pop()
     return pages
+
+
+def page_count(path: Path) -> int:
+    """How many pages a PDF has (blank and scanned ones too), 0 if it can't be read."""
+    try:
+        out = subprocess.run(["pdfinfo", str(path)], capture_output=True, text=True, timeout=60).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        return 0
+    m = re.search(r"^Pages:\s+(\d+)", out, re.M)
+    return int(m[1]) if m else 0
 
 
 KEEP = re.compile(r"</?(p|h[1-6]|ul|ol|li|blockquote|pre|em|strong|b|i|br|hr|table|tr|td|th|dl|dt|dd)\b[^>]*>", re.I)
@@ -370,6 +380,14 @@ def build(log=print, progress=None) -> dict:
         con.execute("INSERT INTO docs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (r, it.id if it else None, topic, title, label, sort_key, len(pages), int(st.st_mtime), st.st_size))
         con.commit()
+    if con.execute("PRAGMA user_version").fetchone()[0] < 1:
+        # Indexes made before 2026-10-31 counted only up to the last page with text on it
+        # (a scanned book came out as a few pages): count them again, without reading them again.
+        for r, in con.execute("SELECT path FROM docs WHERE path LIKE '%.pdf'").fetchall():
+            if r in want:
+                con.execute("UPDATE docs SET npages = ? WHERE path = ?", (page_count(want[r]), r))
+        con.execute("PRAGMA user_version = 1")
+        con.commit()
     con.execute("INSERT INTO pages(pages) VALUES ('optimize')")
     con.commit()
     con.close()
@@ -382,7 +400,7 @@ def build(log=print, progress=None) -> dict:
 def shelf(topic: str | None = None) -> list[dict]:
     """The documents of a topic for the website, books with their chapters in order.
 
-    [{item, title, kind, url, size, print, parts: [{title, label, url, pages}]}]
+    [{item, title, kind, topic, rel, url, size, print, pages, parts: [{title, label, rel, url, pages}]}]
     """
     out = []
     for it in library.items():
@@ -397,11 +415,13 @@ def shelf(topic: str | None = None) -> list[dict]:
             for f in files:
                 m = meta.get(rel(f), {})
                 parts.append({"title": m.get("title") or part_label(f.name) or f.stem, "label": m.get("label", ""),
+                              "rel": rel(f),
                               "url": f"/read/{settings.url_path(rel(f))}", "pages": m.get("pages"),
                               "sort": m.get("sort", part_order(f.name)[0] * 1000 + part_order(f.name)[1])})
             parts.sort(key=lambda p: (p["sort"], p["title"].lower()))
         first = meta.get(rel(files[0]), {})
         out.append({"item": it.id, "title": it.title or first.get("title") or it.id, "kind": it.kind, "topic": it.topic,
+                    "rel": rel(it.book_dir()) if it.kind == "book" else rel(files[0]),
                     "url": f"/book/{it.id}" if it.kind == "book" else f"/read/{settings.url_path(rel(files[0]))}",
                     "size": sum(f.stat().st_size for f in files), "print": it.print, "parts": parts,
                     "pages": first.get("pages")})
@@ -423,6 +443,6 @@ def loose(topic: str | None = None) -> list[dict]:
         r = rel(f)
         if r in owned or (topic and not r.startswith(topic + "/")):
             continue
-        out.append({"title": re.sub(r"[_-]+", " ", f.stem).strip().capitalize(), "url": f"/read/{settings.url_path(r)}",
+        out.append({"title": re.sub(r"[_-]+", " ", f.stem).strip().capitalize(), "url": f"/read/{settings.url_path(r)}", "rel": r,
                     "size": f.stat().st_size, "topic": r.split("/", 1)[0]})
     return out

@@ -4,7 +4,7 @@ The computer can fail. Print these and keep them in a binder next to it, with co
 
 The links work from any browser on the home network or the hotspot (on the hotspot, `library.lan` works in place of `homestead.local`). There are two kinds of source:
 
-- **Documents** in `/srv/core/docs/<topic>/`. Open the link and print (a book's link lists its chapters).
+- **Documents** in `/srv/core/docs/<topic>/`. Print them from the website's **Print** page: pick the chapters or pages, then send them to the printer or open them as one PDF.
 - **Encyclopedias** in `/srv/core/zim/`. An encyclopedia holds a whole collection, so the links below are searches on the website. Open the article you want and print it from the browser.
 
 Items marked **(get by hand)** aren't downloaded automatically: the website's **Status** page lists them, and the library manager's **Add → a file from this computer** puts them in the right place. Save them under the filename shown, and the link will work. Books published chapter by chapter link to their folder.

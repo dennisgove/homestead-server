@@ -39,7 +39,9 @@ that reads the library's files itself:
 - **Encyclopedias** (Wikipedia, WikiMed, WikEM, Army manuals, StackExchange, Gutenberg, iFixit,
   and more) are read straight from their ZIM files, inside the website.
 - **Learn:** Khan Academy's lessons and videos, browsed and played inside the website.
-- **Emergency, Maps, Videos, Tools, Print, Status.**
+- **Print:** any document, some of a book's chapters, or a few pages, sent to a printer the
+  server can see (CUPS) or opened as one PDF to print from your own phone or laptop.
+- **Emergency, Maps, Videos, Tools, Status.**
 
 Every link on it is relative, so it works by whatever name or address you reach it by.
 

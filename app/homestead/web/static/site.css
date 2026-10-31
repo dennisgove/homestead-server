@@ -164,6 +164,26 @@ audio.player { background: none; }
 #found { list-style: none; margin: 4px 0 0; padding: 0; max-height: 50vh; overflow: auto; }
 #found button { width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--rule); border-radius: 0; }
 
+/* print */
+.printform { max-width: 820px; }
+.printform fieldset { border: 1px solid var(--rule); border-radius: 14px; background: var(--card); padding: 10px 16px 12px; margin: 0 0 14px; min-width: 0; }
+.printform legend { font-weight: 700; padding: 0 6px; }
+.printform .row { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; margin: 0 0 14px; }
+.printform label { display: inline-flex; gap: 6px; align-items: center; }
+.printform .row > small { flex-basis: 100%; }
+.printform input.short { width: 5.5em; }
+.picks { border: 0; padding: 0 0 0 4px; list-style: none; max-height: 55vh; overflow: auto; }
+.picks li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 8px; }
+.picks label { display: flex; gap: 8px; align-items: baseline; font-weight: 600; cursor: pointer; min-width: 0; }
+@media (max-width: 640px) {
+  .picks label { display: grid; grid-template-columns: auto 1fr; column-gap: 8px; }
+  .picks label input { grid-row: span 2; } .picks .num { min-width: 0; font-size: .85rem; }
+}
+.go { background: var(--green); color: var(--green-ink); border-color: var(--green); font-weight: 700; font-size: 1.1rem; padding: 10px 22px; }
+input.wide { width: 100%; max-width: 520px; margin: 0 0 6px; }
+.pgroup h3 { margin: 18px 0 8px; font-size: 1.05rem; }
+.list li form.end { margin-left: auto; }
+
 @media print {
   header.top, footer.bottom, .mapui, .noprint, .readbar { display: none !important; }
   body { background: #fff; color: #000; font-size: 12pt; }

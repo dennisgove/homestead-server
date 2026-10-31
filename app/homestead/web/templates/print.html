@@ -1,9 +1,46 @@
 {% extends "base.html" %}
 {% block title %}Print · Homestead Library{% endblock %}
 {% block body %}
-<h1>🖨️ What to keep on paper</h1>
+<h1>🖨️ Print</h1>
+<p class="lead noprint">Print any document, some of a book's chapters, or just a few pages.
+{% if printers %}It goes to <b>{{ printers[0].label }}</b>{% if not printers[0].ready %} (which looks switched off){% endif %},
+or to a printer of your own from your phone or laptop.{% else %}The server can't see a printer right now, so open
+documents as PDFs and print them from your phone or laptop.{% endif %}</p>
+
+{% if sent %}<p class="empty good noprint" role="status">Sent to {{ to }}: <b>{{ sent }}</b>{% if n %}, {{ '{:,}'.format(n) }} pages{% endif %}.</p>{% endif %}
+
+{% if queue %}
+<section class="noprint" id="queue">
+<h2 class="label">Printing now</h2>
+<ul class="list">
+  {% for j in queue %}
+  <li><span class="title">{{ j.title }}</span> <span class="meta">{{ j.state }} on {{ j.printer }} · {{ j.size | human }}</span>
+    <form method="post" action="/print-cancel/{{ j.job }}" class="end"><button class="plain">Cancel</button></form></li>
+  {% endfor %}
+</ul>
+</section>
+{% endif %}
+
+<section class="noprint">
+<h2 class="label">Every document <small>({{ every | length }})</small></h2>
+<input type="search" id="filter" placeholder="Find a document to print" aria-label="Find a document to print" class="wide" autocomplete="off">
+{% for tid, group in every | groupby('topic') %}
+<section class="pgroup">
+  <h3>{{ topics[tid].icon if tid in topics }} {{ topics[tid].name if tid in topics else tid }}</h3>
+  <ul class="list">
+    {% for d in group %}
+    <li><a class="title" href="{{ d.print_url }}">{{ '📘' if d.kind == 'book' else '📄' }} {{ d.title }}</a>
+      <span class="meta">{% if d.kind == 'book' %}{{ d.parts | length }} chapters{% if d.total %}, {{ '{:,}'.format(d.total) }} pages{% endif %}{% elif d.total %}{{ '{:,}'.format(d.total) }} page{{ 's' if d.total != 1 }}{% elif d.kind == 'epub' %}ebook{% endif %}{% if d.print %} · binder{% endif %}</span></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endfor %}
+{% if not every %}<p class="empty">No documents yet.</p>{% endif %}
+</section>
+
+<h2 class="label">The binder: what to keep on paper</h2>
 <p class="lead noprint">If this computer fails, these are the documents you'll want on paper, in a binder with coloured tabs.
-Print this page as the binder's index, then print each document. <button type="button" onclick="window.print()">Print this list</button></p>
+Print this page as the binder's index, then print each document. <button type="button" onclick="window.print()">Print the binder's index</button></p>
 {% set tabs = {'medical': 'RED tab', 'water': 'BLUE tab', 'food': 'GREEN tab', 'security': 'BLACK tab',
                'survival': 'BLACK tab', 'comms': 'YELLOW tab'} %}
 {% for tid, group in docs | groupby('topic') %}
@@ -11,8 +48,8 @@ Print this page as the binder's index, then print each document. <button type="b
   <h2 class="label">{{ topics[tid].name if tid in topics else tid }}{% if tid in tabs %} · {{ tabs[tid] }}{% endif %}</h2>
   <ul class="list">
     {% for d in group %}
-    <li><a class="title" href="{{ d.url }}">{{ '📘' if d.kind == 'book' else '📄' }} {{ d.title }}</a>
-      <span class="meta">{% if d.kind == 'book' %}{{ d.parts | length }} chapters{% elif d.pages %}{{ d.pages }} pages{% endif %}</span></li>
+    <li><a class="title" href="{{ d.print_url }}">{{ '📘' if d.kind == 'book' else '📄' }} {{ d.title }}</a>
+      <span class="meta">{% if d.kind == 'book' %}{{ d.parts | length }} chapters{% elif d.total %}{{ d.total }} page{{ 's' if d.total != 1 }}{% endif %}</span></li>
     {% endfor %}
   </ul>
 </section>
@@ -21,4 +58,20 @@ Print this page as the binder's index, then print each document. <button type="b
 <section class="box tab"><h2>Also print</h2>
 <ul>{% if wifi_sign %}<li><a href="/files/share/print/wifi-sign.html">The WiFi sign</a>, for the wall</li>{% endif %}
 <li>The server's runbook and restore guide (on the server: <code>libreoffice --headless --convert-to pdf /opt/homestead/repo/docs/*.md</code>)</li></ul></section>
+<script>
+(() => {
+  const f = document.getElementById("filter");
+  f.addEventListener("input", () => {
+    const words = f.value.toLowerCase().split(/\s+/).filter(Boolean);
+    document.querySelectorAll(".pgroup").forEach(g => {
+      let any = false;
+      g.querySelectorAll("li").forEach(li => {
+        const hit = words.every(w => li.textContent.toLowerCase().includes(w));
+        li.hidden = !hit; any = any || hit;
+      });
+      g.hidden = !any;
+    });
+  });
+})();
+</script>
 {% endblock %}
