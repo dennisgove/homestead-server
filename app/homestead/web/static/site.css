@@ -193,7 +193,7 @@ input.wide { width: 100%; max-width: 520px; margin: 0 0 6px; }
 .bgroup h2 small { font-weight: 400; margin-left: 8px; }
 .spine { display: inline-block; width: 12px; height: 1.1em; border-radius: 3px; margin-right: 8px; vertical-align: -3px; border: 1px solid var(--rule); }
 .spine-red { background: #c62828; } .spine-blue { background: #1565c0; } .spine-green { background: #2e7d32; }
-.spine-black { background: #111; } .spine-purple { background: #6a1b9a; } .spine-orange { background: #ef6c00; } .spine-yellow { background: #f9a825; }
+.spine-black { background: #111; } .spine-white { background: #fff; } .spine-purple { background: #6a1b9a; } .spine-orange { background: #ef6c00; } .spine-yellow { background: #f9a825; }
 .binder li.sub + li.sub { padding-top: 0; } .binder li.sub h3 small { font-weight: 400; }
 
 @media print {

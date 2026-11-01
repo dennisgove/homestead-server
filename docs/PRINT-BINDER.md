@@ -2,7 +2,7 @@
 
 The computer can fail. Print these and keep them in a binder next to it, with colored tabs. Reprint after changes.
 
-The website's **Binder** page (`/binder`, linked from **Print**) is the full list to print: nine half-inch binders of similar things (about 100 sheets each), with the right chapters and pages already picked and every map in `family/maps`. It comes from the `binders:` section of `library.yaml`. This file covers what the list can't: encyclopedia articles, the repo's own docs and things kept in the vault.
+The website's **Binder** page (`/binder`, linked from **Print**) is the full list to print: nine half-inch binders of similar things (about 100 sheets each), with the right chapters and pages already picked and every map in `family/maps`. It comes from the `binders:` section of `library.yaml`. This file covers what the list can't: encyclopedia articles and things kept in the vault. The repo's own guides (this one included) are the list's "This server" binder.
 
 The links work from any browser on the home network or the hotspot (on the hotspot, `library.lan` works in place of `homestead.local`). There are two kinds of source:
 
@@ -101,15 +101,12 @@ Items marked **(get by hand)** aren't downloaded automatically: the website's **
 
 | Item | Link | On disk |
 |---|---|---|
-| Grid-down runbook | print `GRID-DOWN-RUNBOOK.md` (see below) | `/opt/homestead/repo/docs/GRID-DOWN-RUNBOOK.md` |
-| Backup and restore | print `RESTORE.md` | `/opt/homestead/repo/docs/RESTORE.md` |
-| Power | print `POWER.md` | `/opt/homestead/repo/docs/POWER.md` |
+| Backup and restore | http://homestead.local/t/reference (Backup and restore guide), or binder "This server" | `/srv/core/docs/reference/server/` |
+| Grid-down runbook | http://homestead.local/t/reference (Grid-down runbook) | `/srv/core/docs/reference/server/` |
+| Power | http://homestead.local/t/reference (Power and batteries) | `/srv/core/docs/reference/server/` |
 | WiFi sign with QR code | http://homestead.local/share/print/wifi-sign.html | `/srv/core/share/print/wifi-sign.html` |
 
-To print the repo docs, turn them into PDFs on the server, then print from `~/print`:
-```bash
-cd /opt/homestead/repo/docs && libreoffice --headless --convert-to pdf --outdir ~/print *.md
-```
+The guides in this repo's `docs/` are made into PDFs on the server each time `bootstrap.sh` runs (`sudo homestead guides` makes them again by hand), so the website shows them on the Reference shelf and the Print page prints them.
 
 ## Sealed envelope (not in the binder)
 

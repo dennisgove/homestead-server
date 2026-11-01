@@ -4,6 +4,7 @@
     homestead fetch [--priority N] [ID…] download and update (needs internet), then index
     homestead index                     update the search index (after copying documents in)
     homestead maps                      build the offline maps (needs internet)
+    homestead guides                    make PDFs of the server's guides (docs/*.md) for the website and binder
     homestead find WORDS                look for encyclopedias in Kiwix's catalog
     homestead add zim NAME --topic T [--essential]
     homestead add pdf|epub|book URL --title "…" --topic T [--match REGEX] [--print]
@@ -14,7 +15,7 @@ import argparse
 import shutil
 import sys
 
-from . import fetch, jobs, library, maps, settings
+from . import fetch, guides, jobs, library, maps, settings
 
 
 def status(_):
@@ -51,6 +52,7 @@ def main(argv=None):
     f.add_argument("ids", nargs="*")
     sub.add_parser("index")
     sub.add_parser("maps")
+    sub.add_parser("guides")
     sub.add_parser("topics")
     fd = sub.add_parser("find")
     fd.add_argument("words", nargs="+")
@@ -76,6 +78,9 @@ def main(argv=None):
     elif args.cmd == "maps":
         with jobs.Job("maps") as job:
             maps.build(settings.load()["site"]["region"], log=job.say)
+    elif args.cmd == "guides":
+        r = guides.make()
+        print(f"{len(r['made'])} made, {r['kept']} unchanged, {len(r['removed'])} removed")
     elif args.cmd == "topics":
         for k, t in library.topics().items():
             print(f"{k:10} {t['name']}")

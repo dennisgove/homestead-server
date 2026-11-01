@@ -869,3 +869,10 @@ binders:
       - folder: "family/maps"
         files: ["USGS"]
         color: true
+
+  - binder: "This server"
+    color: "white"
+    note: "How to run, power, back up, restore and rebuild this computer, made from the repo's guides. Reprint after updates."
+    items:
+      - folder: "reference/server"
+        first_files: ["Backup and restore", "Grid-down"]

@@ -25,6 +25,7 @@ def path(name: str) -> Path:
     places = {
         "core": core, "library": lib, "state": state,
         "list": Path(p["list"]),                        # library.yaml
+        "repo": Path(p.get("repo", "/opt/homestead/repo")),  # this repo's copy on the server (its docs/ are the guides)
         "changes": state / "changes.yaml",              # additions and removals made on this server
         "index": state / "index.sqlite",                # documents' and courses' search index
         "status": state / "status",                     # job progress, for the Status page

@@ -1,6 +1,6 @@
 {{ {
   "paths": {"core": core_dir, "library": library_mount, "state": library_state,
-            "list": app_dir ~ "/library.yaml",
+            "list": app_dir ~ "/library.yaml", "repo": repo_dir,
             "power": state_dir ~ "/power.json", "last_backup": state_dir ~ "/last-backup"},
   "library_is_folder": library_is_folder | default(false) | bool,
   "fetch_priority": fetch_priority,
