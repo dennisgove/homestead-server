@@ -183,6 +183,14 @@ audio.player { background: none; }
 input.wide { width: 100%; max-width: 520px; margin: 0 0 6px; }
 .pgroup h3 { margin: 18px 0 8px; font-size: 1.05rem; }
 .list li form.end { margin-left: auto; }
+.binder .what { flex: 1 1 320px; min-width: 0; }
+.binder .what small { color: var(--soft); }
+.binder .acts { margin-left: auto; display: inline-flex; gap: 12px; align-items: baseline; }
+.binder .btn { background: var(--green); color: var(--green-ink); border-radius: 8px; padding: 4px 14px; font-weight: 700; text-decoration: none; }
+.binder .star { color: var(--amber); }
+.binder li.done .title, .binder li.done .what small { text-decoration: line-through; opacity: .6; }
+.binder li.sub { border-bottom: 0; padding-bottom: 0; } .binder li.sub h3 { margin: 6px 0 0; font-size: 1rem; }
+.bgroup h2 small { font-weight: 400; margin-left: 8px; }
 
 @media print {
   header.top, footer.bottom, .mapui, .noprint, .readbar { display: none !important; }

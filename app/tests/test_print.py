@@ -134,3 +134,68 @@ def test_old_indexes_get_their_page_counts_fixed(indexed):
     r = documents.build(log=lambda *a: None)
     assert r["read"] == 0                       # nothing read again
     assert documents.info(["medical/stop-the-bleed.pdf"])["medical/stop-the-bleed.pdf"]["pages"] == 1
+
+
+BINDER = """
+binder:
+  - group: Medical
+    tab: RED
+    note: Emergencies first.
+    items:
+      - { doc: Field Doctor, chapters: ["Chapter 2", "Glossary"], what: Bones and words, first: true }
+      - { doc: Stop the Bleed, pages: "1", color: true }
+      - { doc: Not In The List }
+  - group: Our maps
+    tab: ORANGE
+    folder: family/maps
+    color: true
+    first_files: ["Area"]
+"""
+
+
+def test_the_binder(indexed, cups):
+    """The binder list: chapters and pages picked, links that fill in the print form, the maps folder."""
+    from pypdf import PdfWriter
+    from conftest import make_pdf
+    indexed["list"].write_text(indexed["list"].read_text() + BINDER)
+    maps = indexed["core"] / "docs" / "family" / "maps"
+    (maps / "Routes").mkdir(parents=True)
+    make_pdf(maps / "Area 1 - Our Town.pdf", [(24, "Our Town")])
+    make_pdf(maps / "Routes" / "Route A - Highways.pdf", [(24, "Route A")])
+    w = PdfWriter()
+    w.add_blank_page(width=22 * 72, height=27 * 72)            # a full-size USGS quad
+    w.write(maps / "Quad.pdf")
+    c = client()
+    page = c.get("/binder").text
+    assert "RED tab" in page and "Emergencies first." in page and "Bones and words" in page
+    assert "Not in the library list" in page and "Also marked for the binder" not in page    # Field Doctor is listed
+    assert "Area 1 - Our Town" in page and "Route A - Highways" in page and "<h3>Routes</h3>" in page    # names keep their capitals
+    assert "Full-size sheet" in page
+    assert page.index("Area 1 - Our Town") < page.index("Quad") < page.index("Route A")      # loose files first, then subfolders
+    from homestead import printing
+    groups = printing.binder()
+    med, maps_g = groups
+    fd, bleed, missing = med["items"]
+    assert fd["pages"] == 2 and fd["first"] and bleed["pages"] == 1 and bleed["color"] and missing["problem"]
+    assert med["pages"] == 3 and med["first_pages"] == 2
+    assert maps_g["pages"] == 2                                   # the full-size sheet isn't counted
+    assert [i["first"] for i in maps_g["items"]] == [True, False, False]
+
+    form = c.get(fd["url"]).text                                  # the print form, filled in
+    assert 'value="medical/field-doctor/en_fd_02.pdf" data-pages="1" checked' in form
+    assert 'value="medical/field-doctor/en_fd_01.pdf" data-pages="1" >' in form
+    form = c.get(bleed["url"]).text
+    assert 'name="pages" id="pages" value="1"' in form and 'value="color" checked' in form
+    pdf = c.get(fd["pdf_url"])
+    assert [t.split("\n")[0] for t in texts(pdf.content)] == ["Broken Bones", "Words to Know"]
+    assert "/binder" in c.get("/print").text
+
+
+def test_every_binder_entry_is_in_the_library_list():
+    """library.yaml's binder names documents by title: a renamed document mustn't silently drop out."""
+    import yaml
+    lst = yaml.safe_load((Path(__file__).parents[2] / "library.yaml").read_text())
+    titles = {i.get("title") for t in lst["topics"].values() for i in t["items"]}
+    for g in lst["binder"]:
+        for e in g.get("items") or []:
+            assert e["doc"] in titles, e["doc"]

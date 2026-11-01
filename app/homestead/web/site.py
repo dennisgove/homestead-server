@@ -289,9 +289,15 @@ def emergency(request: Request):
 
 @app.get("/print", response_class=HTMLResponse)
 def print_page(request: Request, sent: str = "", to: str = "", n: int = 0):
-    every = printing.everything()
-    return page(request, "print.html", docs=[d for d in every if d.get("print")], every=every,
-                printers=printing.printers(), queue=printing.queue(), sent=sent, to=to, n=n,
+    return page(request, "print.html", every=printing.everything(),
+                printers=printing.printers(), queue=printing.queue(), sent=sent, to=to, n=n)
+
+
+@app.get("/binder", response_class=HTMLResponse)
+def binder_page(request: Request):
+    groups = printing.binder()
+    return page(request, "binder.html", groups=groups, pages=sum(g["pages"] for g in groups),
+                first_pages=sum(g["first_pages"] for g in groups),
                 wifi_sign=(settings.path("share") / "print" / "wifi-sign.html").is_file())
 
 
@@ -311,8 +317,12 @@ def print_form(request: Request, t: dict, status: int = 200, **form) -> HTMLResp
 
 
 @app.get("/print/{rel:path}", response_class=HTMLResponse)
-def print_doc(request: Request, rel: str):
-    return print_form(request, print_target(rel))
+def print_doc(request: Request, rel: str, part: list[str] = Query(default=[]), pages: str = "", color: str = ""):
+    """The print form; ?part=…&pages=…&color=1 fill it in (the Binder page's links)."""
+    t = print_target(rel)
+    known = [x["rel"] for x in t["parts"]]
+    chosen = [p for p in part if p in known] or known
+    return print_form(request, t, chosen=chosen, pages=pages[:200], color=bool(color))
 
 
 @app.get("/print-pdf/{rel:path}")

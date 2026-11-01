@@ -6,7 +6,9 @@ to print from whatever phone or laptop is looking at the page.
 import re
 import subprocess
 import tempfile
+from functools import lru_cache
 from pathlib import Path
+from urllib.parse import urlencode
 
 from . import documents, library, settings
 
@@ -54,11 +56,33 @@ def _counted(t: dict) -> dict:
 
 
 def pdf_pages(path: Path) -> int:
+    try:
+        st = path.stat()
+    except OSError:
+        return 0
+    return _pdf_facts(str(path), st.st_mtime_ns, st.st_size)[0]
+
+
+def pdf_large(path: Path) -> bool:
+    """Pages bigger than legal paper (a USGS quad is 22 x 27 inches): best printed full size elsewhere."""
+    try:
+        st = path.stat()
+    except OSError:
+        return False
+    return _pdf_facts(str(path), st.st_mtime_ns, st.st_size)[1]
+
+
+@lru_cache(maxsize=2048)
+def _pdf_facts(path: str, _mtime: int, _size: int) -> tuple[int, bool]:
+    """(pages, large), remembered until the file changes: opening a 700-page PDF takes a while."""
     from pypdf import PdfReader
     try:
-        return len(PdfReader(path).pages)
+        r = PdfReader(path)
+        box = r.pages[0].mediabox if len(r.pages) else None
+        large = bool(box) and max(float(box.width), float(box.height)) > 14.5 * 72
+        return len(r.pages), large
     except Exception:   # a damaged file: counted as unknown, not fatal
-        return 0
+        return 0, False
 
 
 def ranges(text: str, total: int) -> list[tuple[int, int]]:
@@ -198,3 +222,96 @@ def everything() -> list[dict]:
         d["print_url"] = "/print/" + settings.url_path(d["rel"])
         d["total"] = sum(x["pages"] or 0 for x in d["parts"]) if d.get("parts") else d.get("pages")
     return out
+
+
+# --- the binder: what to keep on paper ------------------------------------------------
+
+def binder() -> list[dict]:
+    """library.yaml's binder list, each entry ready to print: the chapters and pages picked, its link to the
+    print form with them filled in, and how many pages that is. Then documents marked print: true that the
+    list leaves out.
+
+    [{group, tab, note, pages, first_pages, items: [{title, what, why, first, color, sub, pages, url, pdf_url,
+                                                     read_url, large, problem}]}]
+    """
+    by_title = {it.title: it for it in library.items() if it.kind in ("pdf", "epub", "book")}
+    listed, out = set(), []
+    for g in library.raw_list().get("binder") or []:
+        if g.get("folder"):
+            items = _folder_items(g)
+        else:
+            items = []
+            for e in g.get("items") or []:
+                it = by_title.get(e.get("doc"))
+                listed.add(e.get("doc"))
+                items.append(_entry(e, it, g))
+        out.append(_totals({"group": g.get("group", ""), "tab": g.get("tab", ""), "note": g.get("note", ""), "items": items}))
+    extra = [_entry({"doc": it.title}, it, {}) for it in library.items() if it.print and it.title not in listed]
+    if extra:
+        out.append(_totals({"group": "Also marked for the binder", "tab": "", "note": "Marked print: true in the library list.",
+                            "items": extra}))
+    return out
+
+
+def _totals(g: dict) -> dict:
+    g["pages"] = sum(i["pages"] for i in g["items"] if not i["large"])
+    g["first_pages"] = sum(i["pages"] for i in g["items"] if i["first"] and not i["large"])
+    return g
+
+
+def _links(rel: str, parts: list[str], pages: str, color: bool) -> tuple[str, str]:
+    q = [("part", p) for p in parts] + ([("pages", pages)] if pages else []) + ([("color", "1")] if color else [])
+    tail = ("?" + urlencode(q)) if q else ""
+    return "/print/" + settings.url_path(rel) + tail, "/print-pdf/" + settings.url_path(rel) + tail
+
+
+def _entry(e: dict, it, g: dict) -> dict:
+    color = bool(e.get("color", g.get("color")))
+    row = {"title": e.get("doc", ""), "what": e.get("what", ""), "why": e.get("why", ""), "first": bool(e.get("first")),
+           "color": color, "sub": "", "pages": 0, "url": "", "pdf_url": "", "read_url": "", "large": False, "problem": ""}
+    if it is None:
+        row["problem"] = "Not in the library list."
+        return row
+    rel = documents.rel(it.book_dir() if it.kind == "book" else it.doc_path())
+    t = target(rel)
+    if t is None:
+        row["problem"] = "Not downloaded yet."
+        return row
+    row["title"] = t["title"]
+    row["read_url"] = f"/book/{it.id}" if it.kind == "book" else "/read/" + settings.url_path(rel)
+    parts = []
+    if e.get("chapters"):
+        want = [c.lower() for c in e["chapters"]]
+        parts = [x["rel"] for x in t["parts"] if (x.get("label") or "").lower() in want or (x.get("title") or "").lower() in want]
+        if len(parts) < len(want):
+            row["problem"] = "Some of these chapters aren't in the book any more."
+    try:
+        _, _, n = choose(t, parts, e.get("pages", ""))
+    except ValueError as err:
+        row["problem"] = str(err)
+        n = 0
+    row["pages"] = n
+    row["url"], row["pdf_url"] = _links(rel, parts, e.get("pages", ""), color)
+    return row
+
+
+def _folder_items(g: dict) -> list[dict]:
+    """Every PDF in a folder of the documents (and its subfolders), whole."""
+    folder = g["folder"].strip("/")
+    first = tuple(g.get("first_files") or ())
+    rows = []
+    for d in documents.loose():
+        r = d["rel"]
+        if not r.startswith(folder + "/") or not r.lower().endswith(".pdf"):
+            continue
+        sub, _, name = r[len(folder) + 1:].rpartition("/")
+        path = documents.file_for(r)
+        stem = Path(name).stem
+        large = path is not None and pdf_large(path)
+        url, pdf_url = _links(r, [], "", bool(g.get("color")))
+        rows.append({"title": stem, "what": "Full-size sheet: best printed at a print shop, or used on screen." if large else "",
+                     "why": "", "first": stem.startswith(first) if first else False, "color": bool(g.get("color")), "sub": sub,
+                     "pages": pdf_pages(path) if path else 0, "url": url, "pdf_url": pdf_url,
+                     "read_url": "/read/" + settings.url_path(r), "large": large, "problem": ""})
+    rows.sort(key=lambda x: (x["sub"] != "", x["sub"].lower(), x["title"].lower()))
+    return rows

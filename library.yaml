@@ -641,3 +641,184 @@ phone_apps:
   - { title: "Organic Maps (Android) + offline map files", where: "github.com/organicmaps/organicmaps/releases" }
   - { title: "MeshCore companion app (Android)", where: "meshcore.co.uk" }
   - { title: "F-Droid (Android app store; for further offline APKs)", where: "f-droid.org" }
+
+# The printed binder: what to keep on paper if this computer fails, a coloured tab per group, in order.
+# The website's Binder page links each entry to the print form with these chapters or pages already picked.
+#   doc:      a document's title, as in the topics above
+#   chapters: for a book printed chapter by chapter, which ones (as the website labels them: "Chapter 10", "Guide 1", ...)
+#   pages:    which pages, like "57-106" or "21-25, 65-70" (counted through the chapters picked, for a book)
+#   what:     what that part is; why: why it's worth paper
+#   first:    true = print this before the rest
+#   color:    true = print in colour (photos, coloured diagrams)
+#   folder:   instead of doc: every PDF in that folder of the documents, whole, by subfolder
+#             (first_files: names starting with these go in the first round)
+# Documents marked print: true that aren't listed here show up at the end.
+binder:
+  - group: "Medical"
+    tab: "RED"
+    note: "Emergencies first, then care over the days and weeks after."
+    items:
+      - doc: "Stop the Bleed: Save a Life booklet (American College of Surgeons)"
+        why: "Tourniquet and wound packing, step by step with pictures."
+        first: true
+        color: true
+      - doc: "ATP 4-02.11: Casualty Response, Tactical Combat Casualty Care, and First Aid (US Army)"
+        pages: "57-106"
+        what: "Bleeding, airway, breathing, shock and hypothermia: the order to treat in (chapters 4 to 8)"
+        first: true
+      - doc: "ATP 4-02.11: Casualty Response, Tactical Combat Casualty Care, and First Aid (US Army)"
+        pages: "129-164"
+        what: "Burns, broken bones and splints, bandaging (chapters 12 to 14)"
+        first: true
+      - doc: "ATP 4-02.11: Casualty Response, Tactical Combat Casualty Care, and First Aid (US Army)"
+        pages: "173-198"
+        what: "Bites and stings, heat and cold injuries (chapters 16 and 17)"
+      - doc: "Where There Is No Doctor (Hesperian)"
+        chapters: ["Chapter 3", "Chapter 10", "Chapter 13"]
+        what: "Examining a sick person, first aid, the most common sicknesses (dehydration, fever, diarrhea, worms)"
+        first: true
+      - doc: "Where There Is No Doctor (Hesperian)"
+        chapters: ["Chapter 8", "Chapter 23", "Medicines pages"]
+        what: "Measuring and giving medicine, the home medicine kit, and the Green Pages: every common medicine with its doses"
+        first: true
+      - doc: "Where There Is No Doctor (Hesperian)"
+        chapters: ["Chapter 19"]
+        what: "Pregnancy and childbirth for whoever has to help"
+      - doc: "WHO Managing Complications in Pregnancy and Childbirth (2017)"
+        pages: "173-192"
+        what: "Heavy bleeding after childbirth, the most common way a birth goes wrong"
+      - doc: "Pocket Book of Hospital Care for Children (WHO, 2005)"
+        pages: "21-56, 129-152"
+        what: "A seriously sick child: emergency signs and what to do (chapter 1); diarrhea and dehydration (chapter 5)"
+      - doc: "Clinical Guidelines: Diagnosis and Treatment Manual (MSF)"
+        pages: "325-375"
+        what: "Dressings, cleaning and closing wounds, burns, abscesses, minor procedures (chapter 10)"
+      - doc: "Where There Is No Dentist (Hesperian)"
+        chapters: ["Chapter 7", "Chapter 11"]
+        what: "Toothache, abscesses and other common problems; taking out a tooth"
+      - doc: "TB MED 507: Heat Stress Control and Heat Casualty Management (US Army)"
+        pages: "69-72"
+        what: "A one-sheet guide to preventing heat illness"
+      - doc: "TB MED 508: Prevention and Management of Cold-Weather Injuries (US Army)"
+        pages: "113-115"
+        what: "Cold-weather tips and first aid for frostbite and hypothermia"
+
+  - group: "Water and sanitation"
+    tab: "BLUE"
+    note: "Bad water and bad sanitation kill more people after a disaster than the disaster does."
+    items:
+      - doc: "ATP 3-50.21: Survival (US Army)"
+        pages: "55-70"
+        what: "Finding water, and making it safe to drink (chapter 3)"
+        first: true
+      - doc: "TC 4-02.3: Field Hygiene and Sanitation (US Army)"
+        pages: "11-32"
+        what: "Keeping clean and well: hand washing, water, food, latrines, waste and pests (chapters 2 and 3)"
+      - doc: "A Community Guide to Environmental Health (Hesperian)"
+        chapters: ["Chapter 6"]
+        what: "Protecting a water supply: springs, wells, storage, treatment"
+
+  - group: "Food and growing"
+    tab: "GREEN"
+    items:
+      - doc: "UMass Extension vegetable planting chart (Massachusetts)"
+        what: "When to plant what, here"
+        color: true
+        first: true
+      - doc: "USDA Complete Guide to Home Canning (2015)"
+        chapters: ["Guide 1", "Guide 4", "Guide 5"]
+        what: "Canning safely (botulism), then vegetables, and meat, poultry and fish: the pressure-canning tables"
+      - doc: "ATP 3-50.21: Survival (US Army)"
+        pages: "71-116"
+        what: "Wild food: edible plants, game, fish, traps and snares (chapter 4)"
+
+  - group: "Shelter and survival"
+    tab: "BLACK"
+    items:
+      - doc: "In Case of Crisis or War (Swedish civil defence, 2024)"
+        why: "The whole household plan in 32 pages: warnings, shelter, supplies, evacuation."
+        color: true
+        first: true
+      - doc: "CERT Basic Training Participant Manual (FEMA, 2019)"
+        pages: "156-184"
+        what: "Fire safety and shutting off gas, water and power (unit 6)"
+        first: true
+      - doc: "Are You Ready? (FEMA citizen preparedness)"
+        pages: "7-22"
+        what: "Hazard by hazard: what to do, the family plan, supplies, critical documents"
+      - doc: "ATP 3-50.21: Survival (US Army)"
+        pages: "117-152"
+        what: "Fire, shelter and clothing (chapters 5 and 6)"
+      - doc: "CERT Basic Training Participant Manual (FEMA, 2019)"
+        pages: "185-220"
+        what: "Light search and rescue: searching a damaged building, lifting, carrying (unit 7)"
+      - doc: "Nuclear War Survival Skills (Kearny)"
+        pages: "38-122"
+        what: "Fallout shelter, ventilation, fire, water, food, radiation meters, sanitation, medical care (chapters 5 to 13). The homemade fallout meter (appendix C) starts on page 219."
+      - doc: "TC 3-25.26: Map Reading and Land Navigation (US Army, 2013)"
+        pages: "29-56, 69-104"
+        what: "Grid coordinates, directions and the compass (chapters 4, 6 and 8): for using the maps"
+
+  - group: "Home security"
+    tab: "BLACK"
+    items:
+      - doc: "Neighborhood Watch Manual (USAonWatch, US Justice Department)"
+        why: "Organizing the neighbours: watches, communication, what to report."
+      - doc: "FM 3-19.30: Physical Security (barriers, lighting, locks, access control; US Army, 2001)"
+        pages: "47-62, 113-129, 266-270"
+        what: "Barriers, lighting, access control, locks and keys, personal protection"
+      - doc: "Defensible space around your home against wildfire (FEMA)"
+        color: true
+
+  - group: "Radio and communications"
+    tab: "YELLOW"
+    items:
+      - doc: "ARRL US Amateur Radio Bands chart"
+        color: true
+        first: true
+      - doc: "NIMS ICS Forms Booklet incl. ICS-213/214 (FEMA 502-2)"
+        pages: "21-25, 65-70"
+        what: "Blank forms: radio communications plan (205, 205A), general message (213), activity log (214)"
+        first: true
+
+  - group: "Stress and family plans"
+    tab: "PURPLE"
+    items:
+      - doc: "Family Emergency Communication Plan, fill-in card (FEMA P-1095)"
+        what: "Fill it in by hand and keep a copy in every bag"
+        color: true
+        first: true
+      - doc: "Emergency Financial First Aid Kit: checklists and forms (FEMA P-2063)"
+        pages: "4-21"
+        what: "Fill-in forms: IDs, accounts, insurance, medical information, contacts"
+        first: true
+      - doc: "Tips for Survivors of a Disaster: Managing Stress (SAMHSA)"
+        first: true
+      - doc: "Parent Tips: Infants and Toddlers after Disasters (NCTSN)"
+        first: true
+      - doc: "Parent Tips: Preschool-Age Children after Disasters (NCTSN)"
+        first: true
+      - doc: "Parent Tips: School-Age Children after Disasters (NCTSN)"
+        first: true
+      - doc: "Parent Tips: Adolescents after Disasters (NCTSN)"
+        first: true
+      - doc: "Psychological First Aid: Guide for Field Workers (WHO, 2011)"
+        pages: "20-43"
+        what: "How to help someone in shock or distress: look, listen, link (chapter 3)"
+      - doc: "Doing What Matters in Times of Stress: an illustrated guide (WHO, 2020)"
+        pages: "1-53"
+        what: "Stress and grounding: the first part of WHO's illustrated self-help guide"
+        color: true
+      - doc: "Let's Get Ready: Planning Together for Emergencies, family guide (Sesame Workshop)"
+        what: "Planning with young children"
+        color: true
+      - doc: "My Hero Is You: a storybook for children about coping (IASC, 2020)"
+        what: "A storybook to read with a frightened child"
+        color: true
+
+  - group: "Our maps"
+    tab: "ORANGE"
+    note: "Every map in the family documents' maps folder, in colour. Print at 100%, not 'fit to page', so the scales stay true."
+    folder: "family/maps"
+    color: true
+    first_files: ["0 - ", "Property", "Area 1", "Routes 0"]
