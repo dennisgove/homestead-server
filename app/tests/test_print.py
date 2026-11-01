@@ -199,3 +199,18 @@ def test_every_binder_entry_is_in_the_library_list():
     for g in lst["binder"]:
         for e in g.get("items") or []:
             assert e["doc"] in titles, e["doc"]
+
+
+def test_print_forms_start_with_what_the_binder_recommends(indexed):
+    indexed["list"].write_text(indexed["list"].read_text() + BINDER)
+    c = client()
+    form = c.get(f"/print/{BOOK}").text                            # no choices in the link: the binder's
+    assert "Picked for you" in form and "Bones and words" in form
+    assert 'value="medical/field-doctor/en_fd_02.pdf" data-pages="1" checked' in form
+    assert 'value="medical/field-doctor/en_fd_01.pdf" data-pages="1" >' in form
+    form = c.get(f"/print/{BOOK}", params={"all": "1"}).text      # the whole thing instead
+    assert "Picked for you" not in form and 'value="medical/field-doctor/en_fd_01.pdf" data-pages="1" checked' in form
+    form = c.get("/print/medical/stop-the-bleed.pdf").text
+    assert 'name="pages" id="pages" value="1"' in form and 'value="color" checked' in form
+    form = c.get("/print/family/our-plan.txt").text                # not in the binder: everything, as before
+    assert "Picked for you" not in form

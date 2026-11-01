@@ -6,6 +6,12 @@
 <p class="lead">{% if d.pages %}{{ '{:,}'.format(d.pages) }} page{{ 's' if d.pages != 1 }}{% endif %}{% if d.kind == 'book' %} in {{ d.parts | length }} chapters{% endif %}
   · <a href="{{ read_url }}">Read it first</a></p>
 
+{% if recommended and (recommended.parts or recommended.pages) %}
+<p class="box noprint">📒 Picked for you: what the <a href="/binder">binder</a> recommends printing of this
+{{ 'book' if d.kind == 'book' else 'document' }}{% if recommended.sections %}: {{ recommended.sections | join('; ') }}{% endif %}.
+<a href="{{ whole_url }}">Print the whole thing instead</a>.</p>
+{% endif %}
+
 {% if error %}<p class="empty bad" role="alert">{{ error }}</p>{% endif %}
 
 {% if d.kind == 'epub' %}

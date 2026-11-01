@@ -311,18 +311,26 @@ def print_target(rel: str) -> dict:
 def print_form(request: Request, t: dict, status: int = 200, **form) -> HTMLResponse:
     read = "/book/" + t["rel"].rsplit("/", 1)[-1] if t["kind"] == "book" else "/read/" + settings.url_path(t["rel"])
     form = {"chosen": [x["rel"] for x in t["parts"]], "pages": "", "copies": 1, "two_sided": True,
-            "color": False, "printer": "", "error": ""} | form
+            "color": False, "printer": "", "error": "", "recommended": None, "whole_url": ""} | form
     return page(request, "print_doc.html", status=status, d=t, printers=printing.printers(), read_url=read,
                 t=library.topics().get(t["topic"], {}), pdf_url="/print-pdf/" + settings.url_path(t["rel"]), **form)
 
 
 @app.get("/print/{rel:path}", response_class=HTMLResponse)
-def print_doc(request: Request, rel: str, part: list[str] = Query(default=[]), pages: str = "", color: str = ""):
-    """The print form; ?part=…&pages=…&color=1 fill it in (the Binder page's links)."""
+def print_doc(request: Request, rel: str, part: list[str] = Query(default=[]), pages: str = "", color: str = "",
+              whole: str = Query("", alias="all")):
+    """The print form; ?part=…&pages=…&color=1 fill it in (the Binder page's links). Without them it starts
+    with what the binder recommends printing of this document; ?all=1 starts with the whole thing."""
     t = print_target(rel)
     known = [x["rel"] for x in t["parts"]]
+    rec = None
+    if not (part or pages or color or whole):
+        rec = printing.recommended(t)
+        if rec:
+            part, pages, color = rec["parts"], rec["pages"], "1" if rec["color"] else ""
     chosen = [p for p in part if p in known] or known
-    return print_form(request, t, chosen=chosen, pages=pages[:200], color=bool(color))
+    return print_form(request, t, chosen=chosen, pages=pages[:200], color=bool(color), recommended=rec,
+                      whole_url="/print/" + settings.url_path(t["rel"]) + "?all=1")
 
 
 @app.get("/print-pdf/{rel:path}")

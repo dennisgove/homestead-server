@@ -315,3 +315,36 @@ def _folder_items(g: dict) -> list[dict]:
                      "read_url": "/read/" + settings.url_path(r), "large": large, "problem": ""})
     rows.sort(key=lambda x: (x["sub"] != "", x["sub"].lower(), x["title"].lower()))
     return rows
+
+
+def recommended(t: dict) -> dict | None:
+    """What the binder list recommends printing of this document, to start its print form with:
+    {parts, pages, color, sections: [what...]}, or None if the binder doesn't list it.
+
+    A document listed more than once (three parts of a manual) gets all of them together."""
+    entries = []
+    for g in library.raw_list().get("binder") or []:
+        if g.get("folder"):
+            if t["rel"].startswith(g["folder"].strip("/") + "/"):
+                entries.append({"color": g.get("color"), "what": ""})
+            continue
+        for e in g.get("items") or []:
+            it = next((i for i in library.items() if i.title == e.get("doc")), None)
+            if it and it.kind in ("pdf", "book") and documents.rel(it.book_dir() if it.kind == "book" else it.doc_path()) == t["rel"]:
+                entries.append(e)
+    if not entries:
+        return None
+    parts, pages = [], []
+    whole = any(not e.get("chapters") and not e.get("pages") for e in entries)
+    for e in entries:
+        want = [c.lower() for c in e.get("chapters") or []]
+        parts += [x["rel"] for x in t["parts"] if want and ((x.get("label") or "").lower() in want or (x.get("title") or "").lower() in want)
+                  and x["rel"] not in parts]
+        if e.get("pages"):
+            pages.append(e["pages"])
+    if whole or (parts and pages and len(entries) > 1):     # chapters of one entry and pages of another don't add up
+        parts, pages = ([], []) if whole else (parts, [])
+    order = [x["rel"] for x in t["parts"]]
+    parts.sort(key=order.index)
+    return {"parts": parts, "pages": ", ".join(pages), "color": any(e.get("color") for e in entries),
+            "sections": [e["what"] for e in entries if e.get("what")]}
