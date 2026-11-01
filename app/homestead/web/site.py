@@ -295,9 +295,9 @@ def print_page(request: Request, sent: str = "", to: str = "", n: int = 0):
 
 @app.get("/binder", response_class=HTMLResponse)
 def binder_page(request: Request):
-    groups = printing.binder()
-    return page(request, "binder.html", groups=groups, pages=sum(g["pages"] for g in groups),
-                first_pages=sum(g["first_pages"] for g in groups),
+    bs = printing.binders()
+    return page(request, "binder.html", binders=bs, pages=sum(b["pages"] for b in bs), sheets=sum(b["sheets"] for b in bs),
+                first_pages=sum(b["first_pages"] for b in bs), holds=printing.HOLDS, in_binders=sum(1 for b in bs if b["sheets"]),
                 wifi_sign=(settings.path("share") / "print" / "wifi-sign.html").is_file())
 
 

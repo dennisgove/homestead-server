@@ -137,19 +137,19 @@ def test_old_indexes_get_their_page_counts_fixed(indexed):
 
 
 BINDER = """
-binder:
-  - group: Medical
-    tab: RED
+binders:
+  - binder: First aid
+    color: red
     note: Emergencies first.
     items:
-      - { doc: Field Doctor, chapters: ["Chapter 2", "Glossary"], what: Bones and words, first: true }
+      - { doc: Field Doctor, section: Injuries, chapters: ["Chapter 2", "Glossary"], what: Bones and words, first: true }
       - { doc: Stop the Bleed, pages: "1", color: true }
-      - { doc: Not In The List }
-  - group: Our maps
-    tab: ORANGE
-    folder: family/maps
-    color: true
-    first_files: ["Area"]
+      - { doc: Not In The List, section: Other }
+  - binder: Maps
+    color: orange
+    items:
+      - { folder: family/maps, files: ["Area", "Quad", "Route"], first_files: ["Area"], color: true }
+      - { doc: Not In The List Either, section: And a guide }
 """
 
 
@@ -167,19 +167,20 @@ def test_the_binder(indexed, cups):
     w.write(maps / "Quad.pdf")
     c = client()
     page = c.get("/binder").text
-    assert "RED tab" in page and "Emergencies first." in page and "Bones and words" in page
-    assert "Not in the library list" in page and "Also marked for the binder" not in page    # Field Doctor is listed
+    assert "1. First aid" in page and "red label" in page and "Emergencies first." in page and "Bones and words" in page
+    assert "<h3>Injuries</h3>" in page and "<h3>Other</h3>" in page and "<h3>And a guide</h3>" in page
+    assert "Not in the library list" in page and "Also marked for printing" not in page    # Field Doctor is listed
     assert "Area 1 - Our Town" in page and "Route A - Highways" in page and "<h3>Routes</h3>" in page    # names keep their capitals
     assert "Full-size sheet" in page
     assert page.index("Area 1 - Our Town") < page.index("Quad") < page.index("Route A")      # loose files first, then subfolders
     from homestead import printing
-    groups = printing.binder()
-    med, maps_g = groups
+    med, maps_b = printing.binders()
     fd, bleed, missing = med["items"]
     assert fd["pages"] == 2 and fd["first"] and bleed["pages"] == 1 and bleed["color"] and missing["problem"]
-    assert med["pages"] == 3 and med["first_pages"] == 2
-    assert maps_g["pages"] == 2                                   # the full-size sheet isn't counted
-    assert [i["first"] for i in maps_g["items"]] == [True, False, False]
+    assert med["pages"] == 3 and med["sheets"] == 2 and med["first_pages"] == 2 and not med["full"]
+    assert maps_b["pages"] == 2 and maps_b["sheets"] == 2       # the full-size sheet isn't counted; each map its own sheet
+    assert [i["first"] for i in maps_b["items"]] == [True, False, False, False]
+    assert [i["section"] for i in med["items"]] == ["Injuries", "Injuries", "Other"]
 
     form = c.get(fd["url"]).text                                  # the print form, filled in
     assert 'value="medical/field-doctor/en_fd_02.pdf" data-pages="1" checked' in form
@@ -196,9 +197,9 @@ def test_every_binder_entry_is_in_the_library_list():
     import yaml
     lst = yaml.safe_load((Path(__file__).parents[2] / "library.yaml").read_text())
     titles = {i.get("title") for t in lst["topics"].values() for i in t["items"]}
-    for g in lst["binder"]:
-        for e in g.get("items") or []:
-            assert e["doc"] in titles, e["doc"]
+    for b in lst["binders"]:
+        for e in b.get("items") or []:
+            assert e.get("folder") or e["doc"] in titles, e["doc"]
 
 
 def test_print_forms_start_with_what_the_binder_recommends(indexed):

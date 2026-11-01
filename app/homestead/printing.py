@@ -226,37 +226,43 @@ def everything() -> list[dict]:
 
 # --- the binder: what to keep on paper ------------------------------------------------
 
-def binder() -> list[dict]:
-    """library.yaml's binder list, each entry ready to print: the chapters and pages picked, its link to the
-    print form with them filled in, and how many pages that is. Then documents marked print: true that the
-    list leaves out.
+HOLDS = 100        # sheets a half-inch ring binder takes
 
-    [{group, tab, note, pages, first_pages, items: [{title, what, why, first, color, sub, pages, url, pdf_url,
-                                                     read_url, large, problem}]}]
+
+def binders() -> list[dict]:
+    """library.yaml's binders, each entry ready to print: the chapters and pages picked, its link to the
+    print form with them filled in, and how many pages and sheets (printed on both sides) that is. Then
+    documents marked print: true that the list leaves out.
+
+    [{binder, color, note, pages, sheets, first_pages, full, items: [{title, what, why, first, color, section, sub,
+      pages, sheets, url, pdf_url, read_url, large, problem}]}]
     """
     by_title = {it.title: it for it in library.items() if it.kind in ("pdf", "epub", "book")}
     listed, out = set(), []
-    for g in library.raw_list().get("binder") or []:
-        if g.get("folder"):
-            items = _folder_items(g)
-        else:
-            items = []
-            for e in g.get("items") or []:
-                it = by_title.get(e.get("doc"))
+    for b in library.raw_list().get("binders") or []:
+        items, section = [], ""
+        for e in b.get("items") or []:
+            section = e.get("section", section)
+            if e.get("folder"):
+                items += [r | {"section": section} for r in _folder_items(e)]
+            else:
                 listed.add(e.get("doc"))
-                items.append(_entry(e, it, g))
-        out.append(_totals({"group": g.get("group", ""), "tab": g.get("tab", ""), "note": g.get("note", ""), "items": items}))
-    extra = [_entry({"doc": it.title}, it, {}) for it in library.items() if it.print and it.title not in listed]
+                items.append(_entry(e, by_title.get(e.get("doc"))) | {"section": section})
+        out.append(_totals({"binder": b.get("binder", ""), "color": b.get("color", ""), "note": b.get("note", ""), "items": items}))
+    extra = [_entry({"doc": it.title}, it) | {"section": ""} for it in library.items() if it.print and it.title not in listed]
     if extra:
-        out.append(_totals({"group": "Also marked for the binder", "tab": "", "note": "Marked print: true in the library list.",
+        out.append(_totals({"binder": "Also marked for printing", "color": "", "note": "Marked print: true in the library list.",
                             "items": extra}))
     return out
 
 
-def _totals(g: dict) -> dict:
-    g["pages"] = sum(i["pages"] for i in g["items"] if not i["large"])
-    g["first_pages"] = sum(i["pages"] for i in g["items"] if i["first"] and not i["large"])
-    return g
+def _totals(b: dict) -> dict:
+    kept = [i for i in b["items"] if not i["large"]]                 # full-size sheets don't go in a binder
+    b["pages"] = sum(i["pages"] for i in kept)
+    b["sheets"] = sum(i["sheets"] for i in kept)
+    b["first_pages"] = sum(i["pages"] for i in kept if i["first"])
+    b["full"] = b["sheets"] > HOLDS
+    return b
 
 
 def _links(rel: str, parts: list[str], pages: str, color: bool) -> tuple[str, str]:
@@ -265,10 +271,11 @@ def _links(rel: str, parts: list[str], pages: str, color: bool) -> tuple[str, st
     return "/print/" + settings.url_path(rel) + tail, "/print-pdf/" + settings.url_path(rel) + tail
 
 
-def _entry(e: dict, it, g: dict) -> dict:
-    color = bool(e.get("color", g.get("color")))
+def _entry(e: dict, it) -> dict:
+    color = bool(e.get("color"))
     row = {"title": e.get("doc", ""), "what": e.get("what", ""), "why": e.get("why", ""), "first": bool(e.get("first")),
-           "color": color, "sub": "", "pages": 0, "url": "", "pdf_url": "", "read_url": "", "large": False, "problem": ""}
+           "color": color, "sub": "", "pages": 0, "sheets": 0, "url": "", "pdf_url": "", "read_url": "", "large": False,
+           "problem": ""}
     if it is None:
         row["problem"] = "Not in the library list."
         return row
@@ -290,9 +297,15 @@ def _entry(e: dict, it, g: dict) -> dict:
     except ValueError as err:
         row["problem"] = str(err)
         n = 0
-    row["pages"] = n
+    row["pages"], row["sheets"] = n, (n + 1) // 2
     row["url"], row["pdf_url"] = _links(rel, parts, e.get("pages", ""), color)
     return row
+
+
+def _in_folder(e: dict, rel: str) -> bool:
+    """Whether a binder folder entry takes this file: in the folder, and named as its files: list says."""
+    only = tuple(e.get("files") or ())
+    return rel.startswith(e["folder"].strip("/") + "/") and (not only or Path(rel).stem.startswith(only))
 
 
 def _folder_items(g: dict) -> list[dict]:
@@ -302,16 +315,17 @@ def _folder_items(g: dict) -> list[dict]:
     rows = []
     for d in documents.loose():
         r = d["rel"]
-        if not r.startswith(folder + "/") or not r.lower().endswith(".pdf"):
+        if not _in_folder(g, r) or not r.lower().endswith(".pdf"):
             continue
         sub, _, name = r[len(folder) + 1:].rpartition("/")
         path = documents.file_for(r)
         stem = Path(name).stem
         large = path is not None and pdf_large(path)
         url, pdf_url = _links(r, [], "", bool(g.get("color")))
+        n = pdf_pages(path) if path else 0
         rows.append({"title": stem, "what": "Full-size sheet: best printed at a print shop, or used on screen." if large else "",
                      "why": "", "first": stem.startswith(first) if first else False, "color": bool(g.get("color")), "sub": sub,
-                     "pages": pdf_pages(path) if path else 0, "url": url, "pdf_url": pdf_url,
+                     "pages": n, "sheets": (n + 1) // 2, "url": url, "pdf_url": pdf_url,
                      "read_url": "/read/" + settings.url_path(r), "large": large, "problem": ""})
     rows.sort(key=lambda x: (x["sub"] != "", x["sub"].lower(), x["title"].lower()))
     return rows
@@ -323,12 +337,12 @@ def recommended(t: dict) -> dict | None:
 
     A document listed more than once (three parts of a manual) gets all of them together."""
     entries = []
-    for g in library.raw_list().get("binder") or []:
-        if g.get("folder"):
-            if t["rel"].startswith(g["folder"].strip("/") + "/"):
-                entries.append({"color": g.get("color"), "what": ""})
-            continue
-        for e in g.get("items") or []:
+    for b in library.raw_list().get("binders") or []:
+        for e in b.get("items") or []:
+            if e.get("folder"):
+                if _in_folder(e, t["rel"]):
+                    entries.append({"color": e.get("color"), "what": ""})
+                continue
             it = next((i for i in library.items() if i.title == e.get("doc")), None)
             if it and it.kind in ("pdf", "book") and documents.rel(it.book_dir() if it.kind == "book" else it.doc_path()) == t["rel"]:
                 entries.append(e)

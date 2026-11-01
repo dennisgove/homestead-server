@@ -2,7 +2,7 @@
 
 The computer can fail. Print these and keep them in a binder next to it, with colored tabs. Reprint after changes.
 
-The website's **Binder** page (`/binder`, linked from **Print**) is the full list to print, by tab, with the right chapters and pages already picked and every map in `family/maps`. It comes from the `binder:` section of `library.yaml`. This file covers what the list can't: encyclopedia articles, the repo's own docs and things kept in the vault.
+The website's **Binder** page (`/binder`, linked from **Print**) is the full list to print: nine half-inch binders of similar things (about 100 sheets each), with the right chapters and pages already picked and every map in `family/maps`. It comes from the `binders:` section of `library.yaml`. This file covers what the list can't: encyclopedia articles, the repo's own docs and things kept in the vault.
 
 The links work from any browser on the home network or the hotspot (on the hotspot, `library.lan` works in place of `homestead.local`). There are two kinds of source:
 

@@ -1,24 +1,26 @@
 {% extends "base.html" %}
-{% block title %}The binder · Homestead Library{% endblock %}
+{% block title %}The binders · Homestead Library{% endblock %}
 {% block body %}
 <p class="crumbs noprint"><a href="/print">Print</a> /</p>
-<h1>📒 The binder</h1>
-<p class="lead">What to keep on paper in case this computer fails, a coloured tab per group:
-<b>{{ '{:,}'.format(pages) }} pages</b> in all, about {{ '{:,}'.format((pages + 1) // 2) }} sheets printed on both sides.
-Start with the ★ first round: <b>{{ '{:,}'.format(first_pages) }} pages</b>.</p>
+<h1>📒 The binders</h1>
+<p class="lead">What to keep on paper in case this computer fails, in {{ in_binders }} half-inch binders of similar things:
+<b>{{ '{:,}'.format(pages) }} pages</b>, {{ '{:,}'.format(sheets) }} sheets printed on both sides. A half-inch binder holds
+about {{ holds }} sheets. Start with the ★ first round: <b>{{ '{:,}'.format(first_pages) }} pages</b>.</p>
 <p class="noprint">Each <b>Print</b> opens the print form with the chapters and pages already picked; <b>PDF</b> opens just those
 pages to print from your own device. Tick things off as you print them (this device remembers).
 <label><input type="checkbox" id="firstonly"> Only the first round</label>
-<button type="button" onclick="window.print()">Print this list as the binder's index</button></p>
+<button type="button" onclick="window.print()">Print this list: a contents page for each binder</button></p>
 
-{% for g in groups %}
+{% for b in binders %}
 <section class="tab bgroup">
-  <h2 class="label">{{ g.group }}{% if g.tab %} · {{ g.tab }} tab{% endif %}
-    <small>{{ '{:,}'.format(g.pages) }} page{{ 's' if g.pages != 1 }}{% if g.first_pages and g.first_pages != g.pages %}, first round {{ '{:,}'.format(g.first_pages) }}{% endif %}</small></h2>
-  {% if g.note %}<p class="meta">{{ g.note }}</p>{% endif %}
+  <h2 class="label">{% if b.color %}<span class="spine spine-{{ b.color }}" aria-hidden="true"></span>{% endif %}{{ loop.index }}. {{ b.binder }}
+    <small>{% if b.sheets %}{{ b.sheets }} sheets, {{ '{:,}'.format(b.pages) }} pages{% if b.first_pages and b.first_pages != b.pages %}, first round {{ '{:,}'.format(b.first_pages) }}{% endif %}{% if b.color %} · {{ b.color }} label{% endif %}{% endif %}</small></h2>
+  {% if b.full %}<p class="meta bad">More than a half-inch binder holds: use a 1-inch binder, or split it.</p>{% endif %}
+  {% if b.note %}<p class="meta">{{ b.note }}</p>{% endif %}
   <ul class="list binder">
-    {% set ns = namespace(sub=none) %}
-    {% for i in g["items"] %}
+    {% set ns = namespace(section=none, sub=none) %}
+    {% for i in b["items"] %}
+    {% if i.section != ns.section %}{% set ns.section = i.section %}{% set ns.sub = none %}{% if i.section %}<li class="sub"><h3>{{ i.section }}</h3></li>{% endif %}{% endif %}
     {% if i.sub != ns.sub %}{% set ns.sub = i.sub %}{% if i.sub %}<li class="sub"><h3>{{ i.sub }}</h3></li>{% endif %}{% endif %}
     <li class="{{ 'first' if i.first }}" data-key="{{ i.url or i.title }}">
       <label class="tick noprint"><input type="checkbox" aria-label="Printed"></label>
@@ -36,7 +38,7 @@ pages to print from your own device. Tick things off as you print them (this dev
   </ul>
 </section>
 {% endfor %}
-{% if not groups %}<p class="empty">The binder list is empty (the <code>binder:</code> section of the library list).</p>{% endif %}
+{% if not binders %}<p class="empty">The binder list is empty (the <code>binders:</code> section of the library list).</p>{% endif %}
 
 <section class="box tab"><h2>Also print</h2>
 <ul>{% if wifi_sign %}<li><a href="/files/share/print/wifi-sign.html">The WiFi sign</a>, for the wall</li>{% endif %}
@@ -59,6 +61,11 @@ pages to print from your own device. Tick things off as you print them (this dev
   const only = document.getElementById("firstonly");
   only.addEventListener("change", () => {
     document.querySelectorAll("ul.binder > li[data-key]").forEach(li => li.hidden = only.checked && !li.classList.contains("first"));
+    document.querySelectorAll("ul.binder > li.sub").forEach(h => {
+      let n = h.nextElementSibling, any = false;
+      while (n && !n.classList.contains("sub")) { any = any || !n.hidden; n = n.nextElementSibling; }
+      h.hidden = only.checked && !any;
+    });
     document.querySelectorAll(".bgroup").forEach(g => g.hidden = only.checked && !g.querySelector("li.first"));
   });
 })();
