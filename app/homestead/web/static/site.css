@@ -195,10 +195,33 @@ input.wide { width: 100%; max-width: 520px; margin: 0 0 6px; }
 .spine-red { background: #c62828; } .spine-blue { background: #1565c0; } .spine-green { background: #2e7d32; }
 .spine-black { background: #111; } .spine-white { background: #fff; } .spine-purple { background: #6a1b9a; } .spine-orange { background: #ef6c00; } .spine-yellow { background: #f9a825; }
 .binder li.sub + li.sub { padding-top: 0; } .binder li.sub h3 small { font-weight: 400; }
+.printonly { display: none; }
 
 @media print {
   header.top, footer.bottom, .mapui, .noprint, .readbar { display: none !important; }
   body { background: #fff; color: #000; font-size: 12pt; }
   body.fill { height: auto; }
   .tab { break-before: page; }
+  .printonly { display: block; }
+
+  /* The binder list prints as one dense contents page per binder, for the cover sleeve. */
+  .bgroup { font-size: 9.5pt; line-height: 1.3; break-inside: avoid; }
+  .bgroup:first-of-type { break-before: auto; }
+  .bgroup h2.label { font-size: 17pt; letter-spacing: .03em; color: #000; margin: 0 0 3pt; }
+  .bgroup h2.label small { display: block; margin: 3pt 0 0; font-size: 9.5pt; letter-spacing: 0; color: #000; }
+  .bgroup .spine { width: 14pt; border-color: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .bgroup > .meta { font-size: 11pt; font-style: italic; color: #000; margin: 0 0 8pt; }
+  .binder.list { border: 0; border-radius: 0; background: none; overflow: visible; }
+  .binder li { display: grid; grid-template-columns: 1fr auto; gap: 0 10pt; padding: 1.5pt 0; border-bottom: .5pt solid #bbb; }
+  .binder li.sub { display: block; border: 0; padding: 7pt 0 1pt; }
+  .binder li.sub h3 { font-size: 10.5pt; margin: 0; border-bottom: 1pt solid #000; }
+  .binder li[hidden] { display: none; }          /* after li.sub: hidden headings stay hidden */
+  .binder .title { color: #000; font-weight: 700; }
+  .binder .what br { display: none; }
+  .binder .what small { font-size: inherit; color: #333; }
+  .binder .what small::before { content: " — "; }
+  .binder .meta { font-size: 9pt; color: #000; white-space: nowrap; }
+  .binder .star { color: #000; }
+  .binder li.done .title, .binder li.done .what small { text-decoration: none; opacity: 1; }
+  .legend { margin: 8pt 0 0; font-size: 8pt; color: #555; }
 }

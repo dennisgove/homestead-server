@@ -2,8 +2,8 @@
 {% block title %}The binders · Homestead Library{% endblock %}
 {% block body %}
 <p class="crumbs noprint"><a href="/print">Print</a> /</p>
-<h1>📒 The binders</h1>
-<p class="lead">What to keep on paper in case this computer fails, in {{ in_binders }} half-inch binders of similar things:
+<h1 class="noprint">📒 The binders</h1>
+<p class="lead noprint">What to keep on paper in case this computer fails, in {{ in_binders }} half-inch binders of similar things:
 <b>{{ '{:,}'.format(pages) }} pages</b>, {{ '{:,}'.format(sheets) }} sheets printed on both sides. A half-inch binder holds
 about {{ holds }} sheets. Start with the ★ first round: <b>{{ '{:,}'.format(first_pages) }} pages</b>.</p>
 <p class="noprint">Each <b>Print</b> opens the print form with the chapters and pages already picked; <b>PDF</b> opens just those
@@ -36,11 +36,12 @@ pages to print from your own device. Tick things off as you print them (this dev
     </li>
     {% endfor %}
   </ul>
+  <p class="legend printonly">★ first round, print these first · p. = printed pages · colour = print in colour · the full list is at homestead.local/binder</p>
 </section>
 {% endfor %}
 {% if not binders %}<p class="empty">The binder list is empty (the <code>binders:</code> section of the library list).</p>{% endif %}
 
-<section class="box tab"><h2>Also print</h2>
+<section class="box noprint"><h2>Also print</h2>
 <ul>{% if wifi_sign %}<li><a href="/files/share/print/wifi-sign.html">The WiFi sign</a>, for the wall</li>{% endif %}
 <li>The server's own guides (restore, runbook, power) are in the “This server” binder above, made again from the repo on each update.</li></ul></section>
 <script>
