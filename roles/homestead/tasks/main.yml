@@ -293,6 +293,21 @@
   register: up
   changed_when: "'Started' in up.stderr or 'Recreated' in up.stderr or 'Created' in up.stderr"
 
+- name: The quick tunnel's address
+  ansible.builtin.shell: docker logs homestead-cloudflared 2>&1 | grep -o 'https://[a-z0-9-]*\.trycloudflare\.com' | tail -1
+  register: quick_url
+  retries: 15
+  delay: 2
+  until: quick_url.stdout != ""
+  changed_when: false
+  failed_when: false
+  when: tunnel_token | default('') == 'quick'
+
+- name: The website from the internet (user name {{ tunnel_user }}, the tunnel password)
+  ansible.builtin.debug:
+    msg: "{{ quick_url.stdout or 'No address yet: docker logs homestead-cloudflared' }}"
+  when: tunnel_token | default('') == 'quick'
+
 - name: AI engine answering
   ansible.builtin.uri:
     url: http://127.0.0.1:{{ ollama_port }}/api/version

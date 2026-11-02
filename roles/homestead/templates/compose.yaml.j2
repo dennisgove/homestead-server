@@ -88,6 +88,14 @@ services:
 
 {% if tunnel_token | default('') %}
   # The website from the internet: a Cloudflare Tunnel to Caddy's password-protected port.
+{% if tunnel_token == 'quick' %}
+  # A quick tunnel: no account, a random https://….trycloudflare.com address (new on each restart).
+  cloudflared:
+    image: {{ images.cloudflared }}
+    container_name: homestead-cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --url http://homestead:{{ tunnel_port }}
+{% else %}
   # Its public hostname is set in Cloudflare's dashboard: service http://homestead:{{ tunnel_port }}.
   cloudflared:
     image: {{ images.cloudflared }}
@@ -96,6 +104,7 @@ services:
     command: tunnel --no-autoupdate run
     environment:
       TUNNEL_TOKEN: "{{ tunnel_token }}"
+{% endif %}
     networks: [tunnel]
     extra_hosts: ["homestead:host-gateway"]   # this computer, as the tunnel's service names it
 

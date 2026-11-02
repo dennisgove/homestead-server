@@ -160,6 +160,8 @@ No account, no password. Topics, Search, Ask, Emergency, Maps, Learn, Videos, To
 
 The website can be reached from anywhere through a Cloudflare Tunnel, behind one password. The tunnel's program (cloudflared) runs as a container that dials out to Cloudflare, so the router needs no open ports. The firewall lets that container reach only Caddy's password-protected copy of the website (port 8790), not the open one on port 80, the tools or the admin pages. You need a Cloudflare account and a domain on it.
 
+**To try it first, without a Cloudflare account:** run `sudo bash /opt/homestead/repo/scripts/tunnel-secrets.sh`, answer `quick` for the token, choose the password, and run `sudo ./bootstrap.sh`. It prints a random address like `https://some-words-here.trycloudflare.com` (under “The website from the internet”), behind the same password. The address changes whenever the container restarts (find the current one with `docker logs homestead-cloudflared 2>&1 | grep trycloudflare`), and Cloudflare offers quick tunnels for testing only. For a lasting address, do the steps below and run the script again with the real token.
+
 1. In Cloudflare's dashboard: **Zero Trust → Networks → Tunnels → Create a tunnel → Cloudflared**, name it `homestead`, and pick **Docker**. Copy the long token after `--token` in the command it shows (don't run the command).
 2. Give the tunnel a public hostname (a **published application route** in newer dashboards): a subdomain such as `library.example.com`, service type **HTTP**, URL **`homestead:8790`**.
 3. On the server:
