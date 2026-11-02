@@ -25,3 +25,16 @@ chmod 600 "$dest/secrets.yml"
 
 cd "$dest"
 ansible-playbook site.yml "$@"
+
+# The quick tunnel's address (scripts/tunnel-secrets.sh, token "quick"): last, so it doesn't scroll away.
+if docker inspect -f '{{.State.Running}} {{.Config.Cmd}}' homestead-cloudflared 2>/dev/null | grep -q '^true .*--url'; then
+  url=""
+  for _ in $(seq 15); do
+    url=$(docker logs homestead-cloudflared 2>&1 | grep -o 'https://[a-z0-9-]*\.trycloudflare\.com' | tail -1 || true)
+    [[ -n "$url" ]] && break
+    sleep 2
+  done
+  echo
+  echo "The website from the internet: ${url:-no address yet (docker logs homestead-cloudflared)}"
+  echo "(user name homestead and the tunnel password; the address changes when the tunnel restarts)"
+fi
