@@ -646,6 +646,7 @@ phone_apps:
 # 100 sheets (200 pages printed on both sides), similar things together. The website's Binder page lists
 # them in order and links each entry to the print form with these chapters or pages already picked.
 #   binder:   one binder: its name, colour (for the spine label) and contents
+#   group:    the shelf it goes with ("Emergency medical", ...): on the website, binders of one group sit under one heading
 #   note:     what's in it, for its cover; how: how to print it (shown on the website, not the cover)
 #   section:  a tab divider inside the binder, before this entry and those after it
 #   doc:      a document's title, as in the topics above
@@ -659,6 +660,7 @@ phone_apps:
 # Documents marked print: true that aren't listed here show up at the end.
 binders:
   - binder: "First aid and injuries"
+    group: "Emergency medical"
     color: "red"
     note: "Emergencies: bleeding, breathing, shock, burns, broken bones, wounds, heat and cold."
     items:
@@ -691,6 +693,7 @@ binders:
         what: "Cold-weather tips and first aid for frostbite and hypothermia"
 
   - binder: "Sickness and medicines"
+    group: "Long-term medical"
     color: "red"
     note: "Finding out what's wrong, the common sicknesses, and every common medicine with its doses."
     items:
@@ -706,6 +709,7 @@ binders:
         first: true
 
   - binder: "Childbirth, children and teeth"
+    group: "Long-term medical"
     color: "red"
     note: "Family health: having a baby, a seriously sick child, toothache."
     items:
@@ -724,6 +728,37 @@ binders:
         section: "Teeth"
         chapters: ["Chapter 7", "Chapter 11"]
         what: "Toothache, abscesses and other common problems; taking out a tooth"
+
+  - binder: "Stress and coping"
+    group: "Long-term medical"
+    color: "red"
+    note: "Helping people through it: stress, shock and grief, and children of every age."
+    items:
+      - doc: "Tips for Survivors of a Disaster: Managing Stress (SAMHSA)"
+        section: "Stress"
+        first: true
+      - doc: "Psychological First Aid: Guide for Field Workers (WHO, 2011)"
+        pages: "20-43"
+        what: "How to help someone in shock or distress: look, listen, link (chapter 3)"
+      - doc: "Doing What Matters in Times of Stress: an illustrated guide (WHO, 2020)"
+        pages: "1-53"
+        what: "Stress and grounding: the first part of WHO's illustrated self-help guide"
+        color: true
+      - doc: "Parent Tips: Infants and Toddlers after Disasters (NCTSN)"
+        section: "Children"
+        first: true
+      - doc: "Parent Tips: Preschool-Age Children after Disasters (NCTSN)"
+        first: true
+      - doc: "Parent Tips: School-Age Children after Disasters (NCTSN)"
+        first: true
+      - doc: "Parent Tips: Adolescents after Disasters (NCTSN)"
+        first: true
+      - doc: "Let's Get Ready: Planning Together for Emergencies, family guide (Sesame Workshop)"
+        what: "Planning with young children"
+        color: true
+      - doc: "My Hero Is You: a storybook for children about coping (IASC, 2020)"
+        what: "A storybook to read with a frightened child"
+        color: true
 
   - binder: "Water and food"
     color: "blue"
@@ -794,12 +829,12 @@ binders:
       - doc: "Defensible space around your home against wildfire (FEMA)"
         color: true
 
-  - binder: "Family, stress and radio"
+  - binder: "Comms"
     color: "purple"
-    note: "Plans and papers to fill in, helping people (and children) through it, keeping in touch."
+    note: "Keeping in touch: the family's communication plan and papers, the radio bands, and message forms."
     items:
       - doc: "Family Emergency Communication Plan, fill-in card (FEMA P-1095)"
-        section: "Plans and papers"
+        section: "Family plan and papers"
         what: "Fill it in by hand and keep a copy in every bag"
         color: true
         first: true
@@ -807,31 +842,6 @@ binders:
         pages: "4-21"
         what: "Fill-in forms: IDs, accounts, insurance, medical information, contacts"
         first: true
-      - doc: "Tips for Survivors of a Disaster: Managing Stress (SAMHSA)"
-        section: "Stress"
-        first: true
-      - doc: "Psychological First Aid: Guide for Field Workers (WHO, 2011)"
-        pages: "20-43"
-        what: "How to help someone in shock or distress: look, listen, link (chapter 3)"
-      - doc: "Doing What Matters in Times of Stress: an illustrated guide (WHO, 2020)"
-        pages: "1-53"
-        what: "Stress and grounding: the first part of WHO's illustrated self-help guide"
-        color: true
-      - doc: "Parent Tips: Infants and Toddlers after Disasters (NCTSN)"
-        section: "Children"
-        first: true
-      - doc: "Parent Tips: Preschool-Age Children after Disasters (NCTSN)"
-        first: true
-      - doc: "Parent Tips: School-Age Children after Disasters (NCTSN)"
-        first: true
-      - doc: "Parent Tips: Adolescents after Disasters (NCTSN)"
-        first: true
-      - doc: "Let's Get Ready: Planning Together for Emergencies, family guide (Sesame Workshop)"
-        what: "Planning with young children"
-        color: true
-      - doc: "My Hero Is You: a storybook for children about coping (IASC, 2020)"
-        what: "A storybook to read with a frightened child"
-        color: true
       - doc: "ARRL US Amateur Radio Bands chart"
         section: "Radio"
         color: true

@@ -234,7 +234,7 @@ def binders() -> list[dict]:
     print form with them filled in, and how many pages and sheets (printed on both sides) that is. Then
     documents marked print: true that the list leaves out.
 
-    [{binder, color, note, how, pages, sheets, first_pages, full, items: [{title, what, why, first, color, section, sub,
+    [{binder, group, color, note, how, pages, sheets, first_pages, full, items: [{title, what, why, first, color, section, sub,
       pages, sheets, url, pdf_url, read_url, large, problem}]}]
     """
     by_title = {it.title: it for it in library.items() if it.kind in ("pdf", "epub", "book")}
@@ -248,11 +248,11 @@ def binders() -> list[dict]:
             else:
                 listed.add(e.get("doc"))
                 items.append(_entry(e, by_title.get(e.get("doc"))) | {"section": section})
-        out.append(_totals({"binder": b.get("binder", ""), "color": b.get("color", ""), "note": b.get("note", ""),
-                           "how": b.get("how", ""), "items": items}))
+        out.append(_totals({"binder": b.get("binder", ""), "group": b.get("group", ""), "color": b.get("color", ""),
+                            "note": b.get("note", ""), "how": b.get("how", ""), "items": items}))
     extra = [_entry({"doc": it.title}, it) | {"section": ""} for it in library.items() if it.print and it.title not in listed]
     if extra:
-        out.append(_totals({"binder": "Also marked for printing", "color": "", "note": "",
+        out.append(_totals({"binder": "Also marked for printing", "group": "", "color": "", "note": "",
                             "how": "Marked print: true in the library list.", "items": extra}))
     return out
 

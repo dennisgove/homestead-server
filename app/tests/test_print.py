@@ -139,6 +139,7 @@ def test_old_indexes_get_their_page_counts_fixed(indexed):
 BINDER = """
 binders:
   - binder: First aid
+    group: Emergency medical
     color: red
     note: Emergencies first.
     how: Print it double-sided.
@@ -178,6 +179,8 @@ def test_the_binder(indexed, cups):
     assert "<h2>Injuries</h2>" in cover and "Bones and words" in cover and "<h3>Routes</h3>" in cover
     assert "Print it double-sided." in page and "Print it double-sided." not in cover and "Full-size sheet" not in cover
     assert " p." not in cover and "★" not in cover
+    assert '<h2 class="shelf noprint">Emergency medical</h2>' in page and '<h2 class="shelf noprint">Other binders</h2>' in page
+    assert '<p class="kind">Emergency medical</p>' in cover
     assert page.index("Area 1 - Our Town") < page.index("Quad") < page.index("Route A")      # loose files first, then subfolders
     from homestead import printing
     med, maps_b = printing.binders()

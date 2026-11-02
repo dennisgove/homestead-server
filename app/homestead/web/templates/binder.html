@@ -11,7 +11,9 @@ pages to print from your own device. Tick things off as you print them (this dev
 <label><input type="checkbox" id="firstonly"> Only the first round</label>
 <button type="button" onclick="window.print()">Print a cover for each binder</button></p>
 
+{% set gs = namespace(group=none) %}
 {% for b in binders %}
+{% if b.group != gs.group %}{% if b.group or gs.group %}<h2 class="shelf noprint">{{ b.group or "Other binders" }}</h2>{% endif %}{% set gs.group = b.group %}{% endif %}
 <section class="bgroup noprint">
   <h2 class="label">{% if b.color %}<span class="spine spine-{{ b.color }}" aria-hidden="true"></span>{% endif %}{{ loop.index }}. {{ b.binder }}
     <small>{% if b.sheets %}{{ b.sheets }} sheets, {{ '{:,}'.format(b.pages) }} pages{% if b.first_pages and b.first_pages != b.pages %}, first round {{ '{:,}'.format(b.first_pages) }}{% endif %}{% if b.color %} · {{ b.color }} label{% endif %}{% endif %}</small></h2>
@@ -45,7 +47,7 @@ pages to print from your own device. Tick things off as you print them (this dev
 {% for b in binders %}
 <section class="cover printonly">
   <div class="band spine-{{ b.color or 'white' }} ink-{{ 'dark' if b.color in ('white', 'yellow', '') else 'light' }}">
-    <span class="num">{{ loop.index }}</span><h1>{{ b.binder }}</h1>
+    <span class="num">{{ loop.index }}</span><div>{% if b.group %}<p class="kind">{{ b.group }}</p>{% endif %}<h1>{{ b.binder }}</h1></div>
   </div>
   {% if b.note %}<p class="about">{{ b.note }}</p>{% endif %}
   <div class="contents">
@@ -94,6 +96,11 @@ pages to print from your own device. Tick things off as you print them (this dev
       h.hidden = only.checked && !any;
     });
     document.querySelectorAll(".bgroup").forEach(g => g.hidden = only.checked && !g.querySelector("li.first"));
+    document.querySelectorAll("h2.shelf").forEach(h => {
+      let n = h.nextElementSibling, any = false;
+      while (n && n.classList.contains("bgroup")) { any = any || !n.hidden; n = n.nextElementSibling; }
+      h.hidden = !any;
+    });
   });
 })();
 </script>

@@ -196,6 +196,7 @@ input.wide { width: 100%; max-width: 520px; margin: 0 0 6px; }
 .spine-black { background: #111; } .spine-white { background: #fff; } .spine-purple { background: #6a1b9a; } .spine-orange { background: #ef6c00; } .spine-yellow { background: #f9a825; }
 .binder li.sub + li.sub { padding-top: 0; } .binder li.sub h3 small { font-weight: 400; }
 .printonly { display: none; }
+h2.shelf { margin: 28px 0 4px; font-size: 1.5rem; }
 
 @page cover { margin: .5in; }
 
@@ -212,6 +213,7 @@ input.wide { width: 100%; max-width: 520px; margin: 0 0 6px; }
     -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .cover .band.ink-light { color: #fff; } .cover .band.ink-dark { color: #000; }
   .cover .num { font-size: 54pt; font-weight: 800; line-height: 1; }
+  .cover .kind { font-size: 13pt; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 3pt; }
   .cover .band h1 { font-size: 30pt; line-height: 1.1; margin: 0; text-transform: uppercase; letter-spacing: .02em; }
   .cover .about { font-size: 15pt; line-height: 1.35; margin: 16pt 0 10pt; }
   .cover .contents { font-size: 10.5pt; line-height: 1.3; }

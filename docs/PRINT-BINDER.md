@@ -2,7 +2,7 @@
 
 The computer can fail. Print these and keep them in a binder next to it, with colored tabs. Reprint after changes.
 
-The website's **Binder** page (`/binder`, linked from **Print**) is the full list to print: nine half-inch binders of similar things (about 100 sheets each), with the right chapters and pages already picked and every map in `family/maps`. It comes from the `binders:` section of `library.yaml`. Its **Print a cover for each binder** button prints one cover page per binder, for the clear front sleeve: the binder's number, colour, what it's for and what's in it. This file covers what the list can't: encyclopedia articles and things kept in the vault. The repo's own guides (this one included) are the list's "This server" binder.
+The website's **Binder** page (`/binder`, linked from **Print**) is the full list to print: eleven half-inch binders of similar things (about 100 sheets each), the medical ones under Emergency medical and Long-term medical, with the right chapters and pages already picked and every map in `family/maps`. It comes from the `binders:` section of `library.yaml`. Its **Print a cover for each binder** button prints one cover page per binder, for the clear front sleeve: the binder's number, colour, what it's for and what's in it. This file covers what the list can't: encyclopedia articles and things kept in the vault. The repo's own guides (this one included) are the list's "This server" binder.
 
 The links work from any browser on the home network or the hotspot (on the hotspot, `library.lan` works in place of `homestead.local`). There are two kinds of source:
 
@@ -11,17 +11,13 @@ The links work from any browser on the home network or the hotspot (on the hotsp
 
 Items marked **(get by hand)** aren't downloaded automatically: the website's **Status** page lists them, and the library manager's **Add → a file from this computer** puts them in the right place. Save them under the filename shown, and the link will work. Books published chapter by chapter link to their folder.
 
-## RED: MEDICAL
+## RED: EMERGENCY MEDICAL
 
 | Item | Link | On disk |
 |---|---|---|
-| Emergency War Surgery (all chapters) | http://homestead.local/book/emergency-war-surgery-5th-us-revision-borden-institute | `/srv/core/docs/medical/emergency-war-surgery-5th-us-revision-borden-institute/` |
-| Where There Is No Doctor (chapter PDFs) | http://homestead.local/book/where-there-is-no-doctor-hesperian | `/srv/core/docs/medical/where-there-is-no-doctor-hesperian/` |
-| Where There Is No Dentist (chapter PDFs) | http://homestead.local/book/where-there-is-no-dentist-hesperian | `/srv/core/docs/medical/where-there-is-no-dentist-hesperian/` |
-| Where Women Have No Doctor (chapter PDFs) | http://homestead.local/book/where-women-have-no-doctor-hesperian | `/srv/core/docs/medical/where-women-have-no-doctor-hesperian/` |
-| A Book for Midwives (chapter PDFs) | http://homestead.local/book/a-book-for-midwives-hesperian | `/srv/core/docs/medical/a-book-for-midwives-hesperian/` |
 | Stop the Bleed: Save a Life booklet | http://homestead.local/read/medical/stop-the-bleed-save-a-life-booklet-american-college-of-surgeons.pdf | `/srv/core/docs/medical/stop-the-bleed-save-a-life-booklet-american-college-of-surgeons.pdf` |
 | TCCC and first aid (ATP 4-02.11, US Army) | http://homestead.local/read/medical/atp-4-02-11-casualty-response-tactical-combat-casualty-care-and-first.pdf | `/srv/core/docs/medical/atp-4-02-11-casualty-response-tactical-combat-casualty-care-and-first.pdf` |
+| Emergency War Surgery (all chapters) | http://homestead.local/book/emergency-war-surgery-5th-us-revision-borden-institute | `/srv/core/docs/medical/emergency-war-surgery-5th-us-revision-borden-institute/` |
 | Bleeding control / tourniquet | http://homestead.local/search?q=tourniquet | `/srv/core/zim/` (zimgit-medicine, WikEM, WikiMed) |
 | CPR: adult, child, infant | http://homestead.local/search?q=cardiopulmonary+resuscitation | `/srv/core/zim/` |
 | Choking | http://homestead.local/search?q=choking+first+aid | `/srv/core/zim/` |
@@ -29,24 +25,28 @@ Items marked **(get by hand)** aren't downloaded automatically: the website's **
 | Fractures and splints | http://homestead.local/search?q=splint+fracture | `/srv/core/zim/` |
 | Shock | http://homestead.local/search?q=shock+treatment | `/srv/core/zim/` |
 | Hypothermia / heat illness | http://homestead.local/search?q=hypothermia | `/srv/core/zim/` |
-| Oral rehydration | http://homestead.local/search?q=oral+rehydration+solution | `/srv/core/zim/` |
 | Wound care and infection signs | http://homestead.local/search?q=wound+infection | `/srv/core/zim/` |
-| Childbirth basics | http://homestead.local/search?q=childbirth | `/srv/core/zim/` |
-| Drug doses and interactions | http://homestead.local/search?q=paracetamol (change the drug name) | `/srv/core/zim/` (NHS medicines A-Z) |
-| Family medication list and allergies | write it and keep it in the vault: http://homestead.local:7092 | vault (Paperless) |
 
-## PURPLE: STRESS & PLANNING
+## RED: LONG-TERM MEDICAL
+
+Sickness and medicines, childbirth, children and teeth, and stress and coping.
 
 | Item | Link | On disk |
 |---|---|---|
+| Where There Is No Doctor (chapter PDFs) | http://homestead.local/book/where-there-is-no-doctor-hesperian | `/srv/core/docs/medical/where-there-is-no-doctor-hesperian/` |
+| Where There Is No Dentist (chapter PDFs) | http://homestead.local/book/where-there-is-no-dentist-hesperian | `/srv/core/docs/medical/where-there-is-no-dentist-hesperian/` |
+| Where Women Have No Doctor (chapter PDFs) | http://homestead.local/book/where-women-have-no-doctor-hesperian | `/srv/core/docs/medical/where-women-have-no-doctor-hesperian/` |
+| A Book for Midwives (chapter PDFs) | http://homestead.local/book/a-book-for-midwives-hesperian | `/srv/core/docs/medical/a-book-for-midwives-hesperian/` |
+| Oral rehydration | http://homestead.local/search?q=oral+rehydration+solution | `/srv/core/zim/` |
+| Childbirth basics | http://homestead.local/search?q=childbirth | `/srv/core/zim/` |
+| Drug doses and interactions | http://homestead.local/search?q=paracetamol (change the drug name) | `/srv/core/zim/` (NHS medicines A-Z) |
+| Family medication list and allergies | write it and keep it in the vault: http://homestead.local:7092 | vault (Paperless) |
 | Doing What Matters in Times of Stress (WHO) | http://homestead.local/read/mind/doing-what-matters-in-times-of-stress-an-illustrated-guide-who-2020.pdf | `/srv/core/docs/mind/doing-what-matters-in-times-of-stress-an-illustrated-guide-who-2020.pdf` |
 | Managing stress after a disaster (SAMHSA tip sheet) | http://homestead.local/read/mind/tips-for-survivors-of-a-disaster-managing-stress-samhsa.pdf | `/srv/core/docs/mind/tips-for-survivors-of-a-disaster-managing-stress-samhsa.pdf` |
 | Helping infants and toddlers after a disaster | http://homestead.local/read/mind/parent-tips-infants-and-toddlers-after-disasters-nctsn.pdf | `/srv/core/docs/mind/parent-tips-infants-and-toddlers-after-disasters-nctsn.pdf` |
 | Helping preschool children after a disaster | http://homestead.local/read/mind/parent-tips-preschool-age-children-after-disasters-nctsn.pdf | `/srv/core/docs/mind/parent-tips-preschool-age-children-after-disasters-nctsn.pdf` |
 | Helping school-age children after a disaster | http://homestead.local/read/mind/parent-tips-school-age-children-after-disasters-nctsn.pdf | `/srv/core/docs/mind/parent-tips-school-age-children-after-disasters-nctsn.pdf` |
 | Helping teenagers after a disaster | http://homestead.local/read/mind/parent-tips-adolescents-after-disasters-nctsn.pdf | `/srv/core/docs/mind/parent-tips-adolescents-after-disasters-nctsn.pdf` |
-| Family emergency communication plan (fill in by hand) | http://homestead.local/read/mind/family-emergency-communication-plan-fill-in-card-fema-p-1095.pdf | `/srv/core/docs/mind/family-emergency-communication-plan-fill-in-card-fema-p-1095.pdf` |
-| Financial and legal papers checklist (fill in by hand) | http://homestead.local/read/mind/emergency-financial-first-aid-kit-checklists-and-forms-fema-p-2063.pdf | `/srv/core/docs/mind/emergency-financial-first-aid-kit-checklists-and-forms-fema-p-2063.pdf` |
 | Psychological first aid: what to say and do | http://homestead.local/search?q=psychological+first+aid | `/srv/core/docs/mind/` |
 
 ## BLUE: WATER
@@ -87,10 +87,12 @@ Items marked **(get by hand)** aren't downloaded automatically: the website's **
 | County topo maps (get by hand: ngmdb.usgs.gov/topoview) | http://homestead.local/t/survival | `/srv/core/docs/survival/` |
 | Household watch roster, rally points | your plan; keep it in the vault: http://homestead.local:7092 | vault (Paperless) |
 
-## YELLOW: COMMS
+## PURPLE: COMMS
 
 | Item | Link | On disk |
 |---|---|---|
+| Family emergency communication plan (fill in by hand) | http://homestead.local/read/mind/family-emergency-communication-plan-fill-in-card-fema-p-1095.pdf | `/srv/core/docs/mind/family-emergency-communication-plan-fill-in-card-fema-p-1095.pdf` |
+| Financial and legal papers checklist (fill in by hand) | http://homestead.local/read/mind/emergency-financial-first-aid-kit-checklists-and-forms-fema-p-2063.pdf | `/srv/core/docs/mind/emergency-financial-first-aid-kit-checklists-and-forms-fema-p-2063.pdf` |
 | Comms guide (MeshCore channels, Winlink, NOAA) | print `COMMS.md` (see below) | `/opt/homestead/repo/docs/COMMS.md` |
 | US amateur radio band chart (ARRL) | http://homestead.local/read/comms/arrl-us-amateur-radio-bands-chart.pdf | `/srv/core/docs/comms/arrl-us-amateur-radio-bands-chart.pdf` |
 | ICS-213 / ICS-214 and other ICS forms (FEMA booklet) | http://homestead.local/read/comms/nims-ics-forms-booklet-incl-ics-213-214-fema-502-2.pdf | `/srv/core/docs/comms/nims-ics-forms-booklet-incl-ics-213-214-fema-502-2.pdf` |
