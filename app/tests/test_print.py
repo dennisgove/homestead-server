@@ -141,6 +141,7 @@ binders:
   - binder: First aid
     color: red
     note: Emergencies first.
+    how: Print it double-sided.
     items:
       - { doc: Field Doctor, section: Injuries, chapters: ["Chapter 2", "Glossary"], what: Bones and words, first: true }
       - { doc: Stop the Bleed, pages: "1", color: true }
@@ -172,6 +173,11 @@ def test_the_binder(indexed, cups):
     assert "Not in the library list" in page and "Also marked for printing" not in page    # Field Doctor is listed
     assert "Area 1 - Our Town" in page and "Route A - Highways" in page and "<h3>Routes</h3>" in page    # names keep their capitals
     assert "Full-size sheet" in page
+    cover = page[page.index('<section class="cover printonly">'):]                # a cover per binder: what's in it, not how to print
+    assert cover.count('class="cover printonly"') == 2 and "First aid" in cover and "Emergencies first." in cover
+    assert "<h2>Injuries</h2>" in cover and "Bones and words" in cover and "<h3>Routes</h3>" in cover
+    assert "Print it double-sided." in page and "Print it double-sided." not in cover and "Full-size sheet" not in cover
+    assert " p." not in cover and "★" not in cover
     assert page.index("Area 1 - Our Town") < page.index("Quad") < page.index("Route A")      # loose files first, then subfolders
     from homestead import printing
     med, maps_b = printing.binders()

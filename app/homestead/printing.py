@@ -234,7 +234,7 @@ def binders() -> list[dict]:
     print form with them filled in, and how many pages and sheets (printed on both sides) that is. Then
     documents marked print: true that the list leaves out.
 
-    [{binder, color, note, pages, sheets, first_pages, full, items: [{title, what, why, first, color, section, sub,
+    [{binder, color, note, how, pages, sheets, first_pages, full, items: [{title, what, why, first, color, section, sub,
       pages, sheets, url, pdf_url, read_url, large, problem}]}]
     """
     by_title = {it.title: it for it in library.items() if it.kind in ("pdf", "epub", "book")}
@@ -248,11 +248,12 @@ def binders() -> list[dict]:
             else:
                 listed.add(e.get("doc"))
                 items.append(_entry(e, by_title.get(e.get("doc"))) | {"section": section})
-        out.append(_totals({"binder": b.get("binder", ""), "color": b.get("color", ""), "note": b.get("note", ""), "items": items}))
+        out.append(_totals({"binder": b.get("binder", ""), "color": b.get("color", ""), "note": b.get("note", ""),
+                           "how": b.get("how", ""), "items": items}))
     extra = [_entry({"doc": it.title}, it) | {"section": ""} for it in library.items() if it.print and it.title not in listed]
     if extra:
-        out.append(_totals({"binder": "Also marked for printing", "color": "", "note": "Marked print: true in the library list.",
-                            "items": extra}))
+        out.append(_totals({"binder": "Also marked for printing", "color": "", "note": "",
+                            "how": "Marked print: true in the library list.", "items": extra}))
     return out
 
 
@@ -273,7 +274,7 @@ def _links(rel: str, parts: list[str], pages: str, color: bool) -> tuple[str, st
 
 def _entry(e: dict, it) -> dict:
     color = bool(e.get("color"))
-    row = {"title": e.get("doc", ""), "what": e.get("what", ""), "why": e.get("why", ""), "first": bool(e.get("first")),
+    row = {"title": e.get("doc", ""), "what": e.get("what", ""), "why": e.get("why", ""), "how": "", "first": bool(e.get("first")),
            "color": color, "sub": "", "pages": 0, "sheets": 0, "url": "", "pdf_url": "", "read_url": "", "large": False,
            "problem": ""}
     if it is None:
@@ -323,8 +324,9 @@ def _folder_items(g: dict) -> list[dict]:
         large = path is not None and pdf_large(path)
         url, pdf_url = _links(r, [], "", bool(g.get("color")))
         n = pdf_pages(path) if path else 0
-        rows.append({"title": stem, "what": "Full-size sheet: best printed at a print shop, or used on screen." if large else "",
-                     "why": "", "first": stem.startswith(first) if first else False, "color": bool(g.get("color")), "sub": sub,
+        rows.append({"title": stem, "what": "", "why": "",
+                     "how": "Full-size sheet: best printed at a print shop, or used on screen." if large else "",
+                     "first": stem.startswith(first) if first else False, "color": bool(g.get("color")), "sub": sub,
                      "pages": n, "sheets": (n + 1) // 2, "url": url, "pdf_url": pdf_url,
                      "read_url": "/read/" + settings.url_path(r), "large": large, "problem": ""})
     rows.sort(key=lambda x: (x["sub"] != "", x["sub"].lower(), x["title"].lower()))

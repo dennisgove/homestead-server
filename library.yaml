@@ -646,6 +646,7 @@ phone_apps:
 # 100 sheets (200 pages printed on both sides), similar things together. The website's Binder page lists
 # them in order and links each entry to the print form with these chapters or pages already picked.
 #   binder:   one binder: its name, colour (for the spine label) and contents
+#   note:     what's in it, for its cover; how: how to print it (shown on the website, not the cover)
 #   section:  a tab divider inside the binder, before this entry and those after it
 #   doc:      a document's title, as in the topics above
 #   chapters: for a book printed chapter by chapter, which ones (as the website labels them: "Chapter 10", "Guide 1", ...)
@@ -842,7 +843,8 @@ binders:
 
   - binder: "Maps: home and area"
     color: "orange"
-    note: "Our maps of the house, the town and the towns around it, and how to use a map and compass. Print maps at 100%, not 'fit to page', so the scales stay true."
+    note: "Our maps of the house, the town and the towns around it, and how to use a map and compass."
+    how: "Print maps at 100%, not 'fit to page', so the scales stay true."
     items:
       - folder: "family/maps"
         files: ["0 - ", "Property", "Area", "Town"]
@@ -864,7 +866,8 @@ binders:
 
   - binder: "Full-size topo maps"
     color: "orange"
-    note: "USGS quads at 22 x 27 inches: printed at a print shop and folded, not in a binder."
+    note: "USGS topographic quads of the area, 22 x 27 inches, folded."
+    how: "Print these at a print shop and fold them: they don't go in a binder."
     items:
       - folder: "family/maps"
         files: ["USGS"]
@@ -872,7 +875,8 @@ binders:
 
   - binder: "This server"
     color: "white"
-    note: "How to run, power, back up, restore and rebuild this computer, made from the repo's guides. Reprint after updates."
+    note: "How to run, power, back up, restore and rebuild this computer."
+    how: "Made from the repo's guides: reprint after updates."
     items:
       - folder: "reference/server"
         first_files: ["Backup and restore", "Grid-down"]
