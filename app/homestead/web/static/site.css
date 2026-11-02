@@ -188,6 +188,7 @@ input.wide { width: 100%; max-width: 520px; margin: 0 0 6px; }
 .binder .acts { margin-left: auto; display: inline-flex; gap: 12px; align-items: baseline; }
 .binder .btn { background: var(--green); color: var(--green-ink); border-radius: 8px; padding: 4px 14px; font-weight: 700; text-decoration: none; }
 .binder .star { color: var(--amber); }
+.binder form.quick { display: inline; margin: 0; } .binder form.quick button { border: 0; cursor: pointer; font: inherit; }
 .binder li.done .title, .binder li.done .what small { text-decoration: line-through; opacity: .6; }
 .binder li.sub { border-bottom: 0; padding-bottom: 0; } .binder li.sub h3 { margin: 6px 0 0; font-size: 1rem; }
 .bgroup h2 small { font-weight: 400; margin-left: 8px; }

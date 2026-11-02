@@ -6,7 +6,10 @@
 <p class="lead noprint">What to keep on paper in case this computer fails, in {{ in_binders }} half-inch binders of similar things:
 <b>{{ '{:,}'.format(pages) }} pages</b>, {{ '{:,}'.format(sheets) }} sheets printed on both sides. A half-inch binder holds
 about {{ holds }} sheets. Start with the ★ first round: <b>{{ '{:,}'.format(first_pages) }} pages</b>.</p>
-<p class="noprint">Each <b>Print</b> opens the print form with the chapters and pages already picked; <b>PDF</b> opens just those
+{% if sent %}<p class="empty good noprint" role="status">Sent to {{ to }}: <b>{{ sent }}</b>{% if n %}, {{ '{:,}'.format(n) }} pages{% endif %}.
+<a href="/print#queue">See the queue</a></p>{% endif %}
+<p class="noprint">{% if printer %}<b>Quick print</b> sends the chapters and pages picked straight to {{ printer.label }}, on both sides.
+{% endif %}<b>Print</b> opens the print form with them already picked, to change the printer or the pages; <b>PDF</b> opens just those
 pages to print from your own device. Tick things off as you print them (this device remembers).
 <label><input type="checkbox" id="firstonly"> Only the first round</label>
 <button type="button" onclick="window.print()">Print a cover for each binder</button></p>
@@ -36,7 +39,14 @@ pages to print from your own device. Tick things off as you print them (this dev
         {% if i.problem %}<br><small class="bad">{{ i.problem }}</small>{% endif %}
       </span>
       <span class="meta">{% if i.pages %}{{ '{:,}'.format(i.pages) }} p.{% endif %}{% if i.color %} · colour{% endif %}</span>
-      {% if i.url and not i.problem %}<span class="acts noprint"><a class="btn" href="{{ i.url }}">Print</a> <a href="{{ i.pdf_url }}" target="_blank">PDF</a></span>{% endif %}
+      {% if i.url and not i.problem %}<span class="acts noprint">
+        {% if printer and not i.large %}<form method="post" action="{{ i.url.split('?')[0] }}" class="quick">
+          {% for p in i.parts %}<input type="hidden" name="part" value="{{ p }}">{% endfor %}
+          <input type="hidden" name="pages" value="{{ i.range }}"><input type="hidden" name="printer" value="{{ printer.name }}">
+          <input type="hidden" name="copies" value="1"><input type="hidden" name="sides" value="two">
+          <input type="hidden" name="color" value="{{ 'color' if i.color else 'gray' }}"><input type="hidden" name="back" value="binder">
+          <button class="btn" type="submit">Quick print</button></form>{% endif %}
+        <a href="{{ i.url }}">Print</a> <a href="{{ i.pdf_url }}" target="_blank">PDF</a></span>{% endif %}
     </li>
     {% endfor %}
   </ul>
@@ -79,6 +89,13 @@ pages to print from your own device. Tick things off as you print them (this dev
   try { done = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) {}
   document.querySelectorAll("li[data-key]").forEach(li => {
     const box = li.querySelector("input[type=checkbox]");
+    const quick = li.querySelector("form.quick");
+    if (quick) quick.addEventListener("submit", () => {         // sent to the printer: tick it off
+      done[li.dataset.key] = 1;
+      try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {}
+      quick.querySelector("button").disabled = true;
+      quick.querySelector("button").textContent = "Sending…";
+    });
     box.checked = !!done[li.dataset.key];
     li.classList.toggle("done", box.checked);
     box.addEventListener("change", () => {

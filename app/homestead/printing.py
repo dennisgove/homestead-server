@@ -235,7 +235,7 @@ def binders() -> list[dict]:
     documents marked print: true that the list leaves out.
 
     [{binder, group, color, note, how, pages, sheets, first_pages, full, items: [{title, what, why, first, color, section, sub,
-      pages, sheets, url, pdf_url, read_url, large, problem}]}]
+      pages, sheets, url, pdf_url, read_url, rel, parts, range, large, problem}]}]
     """
     by_title = {it.title: it for it in library.items() if it.kind in ("pdf", "epub", "book")}
     listed, out = set(), []
@@ -275,8 +275,8 @@ def _links(rel: str, parts: list[str], pages: str, color: bool) -> tuple[str, st
 def _entry(e: dict, it) -> dict:
     color = bool(e.get("color"))
     row = {"title": e.get("doc", ""), "what": e.get("what", ""), "why": e.get("why", ""), "how": "", "first": bool(e.get("first")),
-           "color": color, "sub": "", "pages": 0, "sheets": 0, "url": "", "pdf_url": "", "read_url": "", "large": False,
-           "problem": ""}
+           "color": color, "sub": "", "pages": 0, "sheets": 0, "url": "", "pdf_url": "", "read_url": "", "rel": "",
+           "parts": [], "range": "", "large": False, "problem": ""}
     if it is None:
         row["problem"] = "Not in the library list."
         return row
@@ -300,6 +300,7 @@ def _entry(e: dict, it) -> dict:
         n = 0
     row["pages"], row["sheets"] = n, (n + 1) // 2
     row["url"], row["pdf_url"] = _links(rel, parts, e.get("pages", ""), color)
+    row["rel"], row["parts"], row["range"] = rel, parts, e.get("pages", "")
     return row
 
 
@@ -328,7 +329,8 @@ def _folder_items(g: dict) -> list[dict]:
                      "how": "Full-size sheet: best printed at a print shop, or used on screen." if large else "",
                      "first": stem.startswith(first) if first else False, "color": bool(g.get("color")), "sub": sub,
                      "pages": n, "sheets": (n + 1) // 2, "url": url, "pdf_url": pdf_url,
-                     "read_url": "/read/" + settings.url_path(r), "large": large, "problem": ""})
+                     "read_url": "/read/" + settings.url_path(r), "rel": r, "parts": [], "range": "",
+                     "large": large, "problem": ""})
     rows.sort(key=lambda x: (x["sub"] != "", x["sub"].lower(), x["title"].lower()))
     return rows
 
