@@ -11,7 +11,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.concurrency import run_in_threadpool
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.background import BackgroundTask
@@ -294,10 +294,10 @@ def print_page(request: Request, sent: str = "", to: str = "", n: int = 0):
 
 
 @app.get("/binder", response_class=HTMLResponse)
-def binder_page(request: Request, sent: str = "", to: str = "", n: int = 0):
+def binder_page(request: Request):
     bs = printing.binders()
     printer = next((p for p in printing.printers() if p["ready"]), None)     # Quick print sends to this one
-    return page(request, "binder.html", binders=bs, printer=printer, sent=sent, to=to, n=n, pages=sum(b["pages"] for b in bs), sheets=sum(b["sheets"] for b in bs),
+    return page(request, "binder.html", binders=bs, printer=printer, pages=sum(b["pages"] for b in bs), sheets=sum(b["sheets"] for b in bs),
                 first_pages=sum(b["first_pages"] for b in bs), holds=printing.HOLDS, in_binders=sum(1 for b in bs if b["sheets"]),
                 wifi_sign=(settings.path("share") / "print" / "wifi-sign.html").is_file())
 
@@ -356,6 +356,7 @@ async def print_send(request: Request, rel: str):
     f = await request.form()
     form = {"chosen": f.getlist("part"), "pages": str(f.get("pages", "")), "printer": str(f.get("printer", "")),
             "two_sided": f.get("sides") != "one", "color": f.get("color") == "color"}
+    quick = f.get("quick") == "1"                # the Binder page's Quick print: an answer for the page, not a new page
     copies = str(f.get("copies") or "1")
     form["copies"] = int(copies) if copies.isdigit() else 1
     try:
@@ -363,11 +364,13 @@ async def print_send(request: Request, rel: str):
         await run_in_threadpool(printing.send, t, chosen, rs, form["printer"], form["copies"],
                                 form["two_sided"], form["color"])
     except ValueError as e:
+        if quick:
+            return JSONResponse({"error": str(e)}, status_code=400)
         return print_form(request, t, status=400, error=str(e), **form)
     label = next((p["label"] for p in printing.printers() if p["name"] == form["printer"]), form["printer"])
+    if quick:
+        return JSONResponse({"sent": t["title"], "to": label, "n": n * form["copies"]})
     q = urllib.parse.urlencode({"sent": t["title"], "to": label, "n": n * form["copies"]})
-    if f.get("back") == "binder":                # a Quick print on the Binder page: back there
-        return RedirectResponse(f"/binder?{q}", status_code=303)
     return RedirectResponse(f"/print?{q}#queue", status_code=303)
 
 

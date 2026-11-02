@@ -202,12 +202,13 @@ def test_the_binder(indexed, cups):
     assert page.count('<button class="btn" type="submit">Quick print</button>') == 4      # not the full-size sheet
     assert '<input type="hidden" name="printer" value="Office_Laser_series">' in page
     r = c.post(fd["url"].split("?")[0], data={"part": fd["parts"], "pages": fd["range"], "printer": "Office_Laser_series",
-                                             "copies": "1", "sides": "two", "color": "gray", "back": "binder"},
-               follow_redirects=False)                            # Quick print: straight to the printer, back to the binder
-    assert r.status_code == 303 and r.headers["location"].startswith("/binder?sent=")
+                                             "copies": "1", "sides": "two", "color": "gray", "quick": "1"},
+               follow_redirects=False)                            # Quick print: straight to the printer, the page stays put
+    assert r.status_code == 200 and r.json() == {"sent": fd["title"], "to": "Office Laser", "n": 2}
     assert "sides=two-sided-long-edge" in json.loads((cups / "args.json").read_text())
     assert [t.split("\n")[0] for t in texts((cups / "job.pdf").read_bytes())] == ["Broken Bones", "Words to Know"]
-    assert "Sent to Office Laser" in c.get(r.headers["location"]).text
+    r = c.post(fd["url"].split("?")[0], data={"printer": "Gone", "quick": "1"})
+    assert r.status_code == 400 and "isn't available" in r.json()["error"]
     assert "/binder" in c.get("/print").text
 
 

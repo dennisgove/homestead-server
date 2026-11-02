@@ -6,8 +6,6 @@
 <p class="lead noprint">What to keep on paper in case this computer fails, in {{ in_binders }} half-inch binders of similar things:
 <b>{{ '{:,}'.format(pages) }} pages</b>, {{ '{:,}'.format(sheets) }} sheets printed on both sides. A half-inch binder holds
 about {{ holds }} sheets. Start with the ★ first round: <b>{{ '{:,}'.format(first_pages) }} pages</b>.</p>
-{% if sent %}<p class="empty good noprint" role="status">Sent to {{ to }}: <b>{{ sent }}</b>{% if n %}, {{ '{:,}'.format(n) }} pages{% endif %}.
-<a href="/print#queue">See the queue</a></p>{% endif %}
 <p class="noprint">{% if printer %}<b>Quick print</b> sends the chapters and pages picked straight to {{ printer.label }}, on both sides.
 {% endif %}<b>Print</b> opens the print form with them already picked, to change the printer or the pages; <b>PDF</b> opens just those
 pages to print from your own device. Tick things off as you print them (this device remembers).
@@ -44,8 +42,8 @@ pages to print from your own device. Tick things off as you print them (this dev
           {% for p in i.parts %}<input type="hidden" name="part" value="{{ p }}">{% endfor %}
           <input type="hidden" name="pages" value="{{ i.range }}"><input type="hidden" name="printer" value="{{ printer.name }}">
           <input type="hidden" name="copies" value="1"><input type="hidden" name="sides" value="two">
-          <input type="hidden" name="color" value="{{ 'color' if i.color else 'gray' }}"><input type="hidden" name="back" value="binder">
-          <button class="btn" type="submit">Quick print</button></form>{% endif %}
+          <input type="hidden" name="color" value="{{ 'color' if i.color else 'gray' }}"><input type="hidden" name="quick" value="1">
+          <button class="btn" type="submit">Quick print</button> <small class="said" role="status"></small></form>{% endif %}
         <a href="{{ i.url }}">Print</a> <a href="{{ i.pdf_url }}" target="_blank">PDF</a></span>{% endif %}
     </li>
     {% endfor %}
@@ -90,11 +88,24 @@ pages to print from your own device. Tick things off as you print them (this dev
   document.querySelectorAll("li[data-key]").forEach(li => {
     const box = li.querySelector("input[type=checkbox]");
     const quick = li.querySelector("form.quick");
-    if (quick) quick.addEventListener("submit", () => {         // sent to the printer: tick it off
-      done[li.dataset.key] = 1;
-      try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {}
-      quick.querySelector("button").disabled = true;
-      quick.querySelector("button").textContent = "Sending…";
+    if (quick) quick.addEventListener("submit", async ev => {   // sent in the background; the page stays put
+      ev.preventDefault();
+      const btn = quick.querySelector("button"), said = quick.querySelector(".said");
+      btn.disabled = true; btn.textContent = "Sending…"; said.textContent = ""; said.className = "said";
+      try {
+        const r = await fetch(quick.action, {method: "POST", body: new FormData(quick)});
+        const a = await r.json();
+        if (!r.ok) throw new Error(a.error || "It didn't print.");
+        said.textContent = `Sent to ${a.to}` + (a.n ? `, ${a.n.toLocaleString()} pages` : "");
+        said.classList.add("good");
+        box.checked = true; li.classList.add("done");             // printed: tick it off
+        done[li.dataset.key] = 1;
+        try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {}
+      } catch (e) {
+        said.textContent = e instanceof TypeError || e instanceof SyntaxError ? "It didn't print: the server didn't answer." : e.message;
+        said.classList.add("bad");
+      }
+      btn.disabled = false; btn.textContent = "Quick print";
     });
     box.checked = !!done[li.dataset.key];
     li.classList.toggle("done", box.checked);
