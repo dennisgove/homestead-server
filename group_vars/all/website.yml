@@ -11,6 +11,13 @@ app_dir: /opt/homestead/app          # the program (copied from app/ in this rep
 library_state: /var/lib/homestead/library
 site_port: 8700                      # the website's backend (Caddy serves it on port 80)
 manager_port: 8701                   # the library manager (127.0.0.1 only)
+
+# --- From the internet: a Cloudflare Tunnel (only with tunnel_token in secrets.yml) ---
+# cloudflared (a container) reaches this one port and nothing else; Caddy serves the website
+# on it behind a password (tunnel_basic_auth_hash). scripts/tunnel-secrets.sh sets both up.
+tunnel_port: 8790                    # what the tunnel's public hostname points at: http://homestead:8790
+tunnel_user: homestead               # the user name to type with the tunnel password
+tunnel_subnet: 172.31.250.0/24       # cloudflared's own network; the firewall holds it to tunnel_port
 fetch_priority: 3                    # download items up to this priority (1 = critical … 3 = everything)
 
 # --- The AI (Ask) -------------------------------------------------------------
@@ -69,3 +76,4 @@ images:
   meshtastic_web: ghcr.io/meshtastic/web:2.7.1
   paperless: ghcr.io/paperless-ngx/paperless-ngx:latest
   redis: redis:7-alpine
+  cloudflared: cloudflare/cloudflared:2026.10.1

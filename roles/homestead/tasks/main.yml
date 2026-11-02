@@ -275,6 +275,12 @@
     mode: "0644"
     force: false
 
+- name: The Cloudflare Tunnel has its password (scripts/tunnel-secrets.sh)
+  ansible.builtin.assert:
+    that: tunnel_basic_auth_hash | default('') | length > 0
+    fail_msg: secrets.yml has a tunnel_token but no tunnel_basic_auth_hash. Run scripts/tunnel-secrets.sh.
+  when: tunnel_token | default('') | length > 0
+
 - name: Containers
   ansible.builtin.template:
     src: compose.yaml.j2

@@ -156,6 +156,21 @@ No account, no password. Topics, Search, Ask, Emergency, Maps, Learn, Videos, To
 
 **Ask** runs the AI on this computer's processor: an answer starts after 10–30 seconds (a couple of minutes if the model has to load first). Nothing anyone asks is kept.
 
+### From the internet (optional): a Cloudflare Tunnel
+
+The website can be reached from anywhere through a Cloudflare Tunnel, behind one password. The tunnel's program (cloudflared) runs as a container that dials out to Cloudflare, so the router needs no open ports. The firewall lets that container reach only Caddy's password-protected copy of the website (port 8790), not the open one on port 80, the tools or the admin pages. You need a Cloudflare account and a domain on it.
+
+1. In Cloudflare's dashboard: **Zero Trust → Networks → Tunnels → Create a tunnel → Cloudflared**, name it `homestead`, and pick **Docker**. Copy the long token after `--token` in the command it shows (don't run the command).
+2. Give the tunnel a public hostname (a **published application route** in newer dashboards): a subdomain such as `library.example.com`, service type **HTTP**, URL **`homestead:8790`**.
+3. On the server:
+   ```bash
+   sudo bash /opt/homestead/repo/scripts/tunnel-secrets.sh    # paste the token, choose the password
+   cd ~/bin/homestead-server && sudo ./bootstrap.sh
+   ```
+4. Open `https://library.example.com`: the browser asks for a user name and password. The user name is `homestead`.
+
+Anyone with the password can use everything on the website, Ask and Print included. The Tools page's tools, the Radio receiver and the admin pages stay on the home network. To change the password, run the script again. To take the tunnel out, run it with a blank token, then run `bootstrap.sh`.
+
 ## 9. The library: downloads, the manager, maps (automatic; days)
 
 `bootstrap.sh` indexes what's on disk, then starts the download in the background; it runs again every week to resume and pick up new releases. It fetches everything in `library.yaml` up to `fetch_priority` (`group_vars/all/website.yml`), checks every download, and skips anything that won't fit, so it's safe with the temporary internal library too.

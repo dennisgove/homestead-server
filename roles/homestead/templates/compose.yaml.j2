@@ -86,6 +86,20 @@ services:
     restart: unless-stopped
     ports: ["127.0.0.1:{{ tools_by_id.meshtastic.backend }}:8080"]
 
+{% if tunnel_token | default('') %}
+  # The website from the internet: a Cloudflare Tunnel to Caddy's password-protected port.
+  # Its public hostname is set in Cloudflare's dashboard: service http://homestead:{{ tunnel_port }}.
+  cloudflared:
+    image: {{ images.cloudflared }}
+    container_name: homestead-cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: "{{ tunnel_token }}"
+    networks: [tunnel]
+    extra_hosts: ["homestead:host-gateway"]   # this computer, as the tunnel's service names it
+
+{% endif %}
   # The family document vault: only runs while the vault is open (homestead-vault open).
   paperless-redis:
     image: {{ images.redis }}
@@ -111,3 +125,11 @@ services:
       - "{{ vault_mount }}/paperless/media:/usr/src/paperless/media"
       - "{{ vault_mount }}/paperless/consume:/usr/src/paperless/consume"
       - "{{ vault_mount }}/paperless/export:/usr/src/paperless/export"
+{% if tunnel_token | default('') %}
+
+networks:
+  tunnel:                            # cloudflared alone; the firewall lets it reach only the tunnel port
+    driver_opts: { com.docker.network.bridge.name: br-tunnel }
+    ipam:
+      config: [{ subnet: "{{ tunnel_subnet }}" }]
+{% endif %}
