@@ -6,8 +6,9 @@
 <p class="lead noprint">What to keep on paper in case this computer fails, in {{ in_binders }} half-inch binders of similar things:
 <b>{{ '{:,}'.format(pages) }} pages</b>, {{ '{:,}'.format(sheets) }} sheets printed on both sides. A half-inch binder holds
 about {{ holds }} sheets. Start with the ★ first round: <b>{{ '{:,}'.format(first_pages) }} pages</b>.</p>
-<p class="noprint">{% if printer %}<b>Quick print</b> sends the chapters and pages picked straight to {{ printer.label }}, on both sides.
-{% endif %}<b>Print</b> opens the print form with them already picked, to change the printer or the pages; <b>PDF</b> opens just those
+<p class="noprint">{% if outside %}You're connected from outside the home, so printing on the home printer is off.
+{% elif printer %}<b>Quick print</b> sends the chapters and pages picked straight to {{ printer.label }}, on both sides.
+{% endif %}<b>Print</b> opens the print form with them already picked{% if not outside %}, to change the printer or the pages{% endif %}; <b>PDF</b> opens just those
 pages to print from your own device. Tick things off as you print them (this device remembers).
 <label><input type="checkbox" id="firstonly"> Only the first round</label>
 <button type="button" onclick="window.print()">Print a cover for each binder</button></p>

@@ -59,6 +59,7 @@
 	@probe host connectivitycheck.gstatic.com clients3.google.com captive.apple.com www.apple.com www.msftconnecttest.com detectportal.firefox.com nmcheck.gnome.org
 	redir @probe http://{{ lan_name }}/ 302
 
+	request_header -X-Homestead-Via                 # only the tunnel's site says where a visit came from
 	import website
 }
 
@@ -69,6 +70,7 @@
 	basicauth {
 		{{ tunnel_user }} {{ tunnel_basic_auth_hash }}
 	}
+	request_header X-Homestead-Via tunnel           # the website turns printing off for these
 	import website
 }
 

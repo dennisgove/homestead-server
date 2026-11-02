@@ -209,6 +209,18 @@ def test_the_binder(indexed, cups):
     assert [t.split("\n")[0] for t in texts((cups / "job.pdf").read_bytes())] == ["Broken Bones", "Words to Know"]
     r = c.post(fd["url"].split("?")[0], data={"printer": "Gone", "quick": "1"})
     assert r.status_code == 400 and "isn't available" in r.json()["error"]
+
+    out = {"X-Homestead-Via": "tunnel"}                           # from outside the home (the Cloudflare Tunnel)
+    page = c.get("/binder", headers=out).text
+    assert "Quick print</button>" not in page and "printing on the home printer is off" in page
+    assert "printing on the home printer is off" in c.get(fd["url"], headers=out).text
+    assert 'name="printer"' not in c.get(fd["url"], headers=out).text
+    assert "Cancel</button>" not in c.get("/print", headers=out).text and "Cancel</button>" in c.get("/print").text
+    (cups / "job.pdf").unlink()
+    r = c.post(fd["url"].split("?")[0], headers=out, data={"printer": "Office_Laser_series", "quick": "1"})
+    assert r.status_code == 403 and not (cups / "job.pdf").exists()
+    assert c.post("/print-cancel/7", headers=out, follow_redirects=False).status_code == 403
+    assert c.get(fd["pdf_url"], headers=out).status_code == 200           # a PDF to print where they are still works
     assert "/binder" in c.get("/print").text
 
 

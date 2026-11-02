@@ -171,7 +171,7 @@ The website can be reached from anywhere through a Cloudflare Tunnel, behind one
    ```
 4. Open `https://library.example.com`: the browser asks for a user name and password. The user name is `homestead`.
 
-Anyone with the password can use everything on the website, Ask and Print included. The Tools page's tools, the Radio receiver and the admin pages stay on the home network. To change the password, run the script again. To take the tunnel out, run it with a blank token, then run `bootstrap.sh`.
+Anyone with the password can use everything on the website, Ask included, except printing on the home printer: from outside, the Print and Binder pages offer PDFs to print where you are. The Tools page's tools, the Radio receiver and the admin pages stay on the home network. To change the password, run the script again. To take the tunnel out, run it with a blank token, then run `bootstrap.sh`.
 
 ## 9. The library: downloads, the manager, maps (automatic; days)
 

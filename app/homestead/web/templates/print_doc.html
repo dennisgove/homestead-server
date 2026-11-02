@@ -50,6 +50,9 @@
     <label><input type="radio" name="color" value="color" {% if color %}checked{% endif %}> Colour</label>
   </fieldset>
   <p><button type="submit" class="go" id="send">Print</button></p>
+  {% elif outside %}
+  <p class="empty">You're connected from outside the home, so printing on the home printer is off.
+  Open it as a PDF below and print it where you are.</p>
   {% else %}
   <p class="empty">The server can't see a printer right now (is it switched on and on the network?).
   You can still print from this device: open it as a PDF below, then use Print.</p>

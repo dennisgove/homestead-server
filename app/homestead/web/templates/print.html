@@ -3,7 +3,8 @@
 {% block body %}
 <h1>🖨️ Print</h1>
 <p class="lead noprint">Print any document, some of a book's chapters, or just a few pages.
-{% if printers %}It goes to <b>{{ printers[0].label }}</b>{% if not printers[0].ready %} (which looks switched off){% endif %},
+{% if outside %}You're connected from outside the home, so printing on the home printer is off: open documents as
+PDFs and print them where you are.{% elif printers %}It goes to <b>{{ printers[0].label }}</b>{% if not printers[0].ready %} (which looks switched off){% endif %},
 or to a printer of your own from your phone or laptop.{% else %}The server can't see a printer right now, so open
 documents as PDFs and print them from your phone or laptop.{% endif %}</p>
 

@@ -42,9 +42,20 @@ def files(area: str, rel: str):
     return FileResponse(p)
 
 
+def from_outside(request: Request) -> bool:
+    """Through the Cloudflare Tunnel: Caddy's tunnel site sets this header (and :80 takes it away)."""
+    return request.headers.get("x-homestead-via") == "tunnel"
+
+
+def printers(request: Request) -> list[dict]:
+    """The printers this visitor may print on: none from outside the home."""
+    return [] if from_outside(request) else printing.printers()
+
+
 def page(request: Request, name: str, status: int = 200, **ctx) -> HTMLResponse:
     s = settings.load()
-    base = {"request": request, "site": s["site"], "topics": library.topics(), "path": request.url.path}
+    base = {"request": request, "site": s["site"], "topics": library.topics(), "path": request.url.path,
+            "outside": from_outside(request)}
     return templates.TemplateResponse(request=request, name=name, context=base | ctx, status_code=status)
 
 
@@ -289,15 +300,16 @@ def emergency(request: Request):
 
 @app.get("/print", response_class=HTMLResponse)
 def print_page(request: Request, sent: str = "", to: str = "", n: int = 0):
-    return page(request, "print.html", every=printing.everything(),
-                printers=printing.printers(), queue=printing.queue(), sent=sent, to=to, n=n)
+    return page(request, "print.html", every=printing.everything(), printers=printers(request),
+                queue=[] if from_outside(request) else printing.queue(), sent=sent, to=to, n=n)
 
 
 @app.get("/binder", response_class=HTMLResponse)
 def binder_page(request: Request):
     bs = printing.binders()
-    printer = next((p for p in printing.printers() if p["ready"]), None)     # Quick print sends to this one
-    return page(request, "binder.html", binders=bs, printer=printer, pages=sum(b["pages"] for b in bs), sheets=sum(b["sheets"] for b in bs),
+    printer = next((p for p in printers(request) if p["ready"]), None)       # Quick print sends to this one
+    return page(request, "binder.html", binders=bs, printer=printer,
+                pages=sum(b["pages"] for b in bs), sheets=sum(b["sheets"] for b in bs),
                 first_pages=sum(b["first_pages"] for b in bs), holds=printing.HOLDS, in_binders=sum(1 for b in bs if b["sheets"]),
                 wifi_sign=(settings.path("share") / "print" / "wifi-sign.html").is_file())
 
@@ -313,7 +325,7 @@ def print_form(request: Request, t: dict, status: int = 200, **form) -> HTMLResp
     read = "/book/" + t["rel"].rsplit("/", 1)[-1] if t["kind"] == "book" else "/read/" + settings.url_path(t["rel"])
     form = {"chosen": [x["rel"] for x in t["parts"]], "pages": "", "copies": 1, "two_sided": True,
             "color": False, "printer": "", "error": "", "recommended": None, "whole_url": ""} | form
-    return page(request, "print_doc.html", status=status, d=t, printers=printing.printers(), read_url=read,
+    return page(request, "print_doc.html", status=status, d=t, printers=printers(request), read_url=read,
                 t=library.topics().get(t["topic"], {}), pdf_url="/print-pdf/" + settings.url_path(t["rel"]), **form)
 
 
@@ -352,6 +364,8 @@ def print_pdf(rel: str, part: list[str] = Query(default=[]), pages: str = ""):
 
 @app.post("/print/{rel:path}", response_class=HTMLResponse)
 async def print_send(request: Request, rel: str):
+    if from_outside(request):
+        raise HTTPException(403, "Printing is only from home: open it as a PDF and print it where you are.")
     t = print_target(rel)
     f = await request.form()
     form = {"chosen": f.getlist("part"), "pages": str(f.get("pages", "")), "printer": str(f.get("printer", "")),
@@ -375,7 +389,9 @@ async def print_send(request: Request, rel: str):
 
 
 @app.post("/print-cancel/{job}")
-def print_cancel(job: int):
+def print_cancel(request: Request, job: int):
+    if from_outside(request):
+        raise HTTPException(403, "Printing is only from home.")
     printing.cancel(job)
     return RedirectResponse("/print#queue", status_code=303)
 
