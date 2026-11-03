@@ -853,7 +853,7 @@ binders:
 
   - binder: "Maps: home and area"
     color: "orange"
-    note: "Our maps of the house, the town and the towns around it, and how to use a map and compass. The route maps from Foxborough are in their own binder."
+    note: "Our maps of the house, the town and the towns around it, and how to use a map and compass. The route maps are in their own binder."
     how: "Print maps at 100%, not 'fit to page', so the scales stay true."
     items:
       - folder: "family/maps"
@@ -867,7 +867,7 @@ binders:
 
   - binder: "Maps: routes"
     color: "orange"
-    note: "Our route maps from Foxborough: every way there, with a turn-by-turn cue sheet and strip maps for each."
+    note: "Our route maps: every way there, with a turn-by-turn cue sheet and strip maps for each."
     how: "Print maps at 100%, not 'fit to page', so the scales stay true."
     items:
       - folder: "family/maps"
