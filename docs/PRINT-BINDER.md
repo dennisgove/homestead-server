@@ -2,7 +2,7 @@
 
 The computer can fail. Print these and keep them in a binder next to it, with colored tabs. Reprint after changes.
 
-The website's **Binder** page (`/binder`, linked from **Print**) is the full list to print: eleven half-inch binders of similar things (about 100 sheets each), the medical ones under Emergency medical and Long-term medical, with the right chapters and pages already picked and every map in `family/maps`. It comes from the `binders:` section of `library.yaml`. Its **Print a cover for each binder** button prints one cover page per binder, for the clear front sleeve: the binder's number, colour, what it's for and what's in it. This file covers what the list can't: encyclopedia articles and things kept in the vault. The repo's own guides (this one included) are the list's "This server" binder.
+The website's **Binder** page (`/binder`, linked from **Print**) is the full list to print: twelve half-inch binders of similar things (about 100 sheets each), the medical ones under Emergency medical and Long-term medical, with the right chapters and pages already picked and every map in `family/maps`. It comes from the `binders:` section of `library.yaml`. Its **Print a cover for each binder** button prints one cover page per binder, for the clear front sleeve: the binder's number, colour, what it's for and what's in it. This file covers what the list can't: encyclopedia articles and things kept in the vault. The repo's own guides (this one included) are the list's "This server" binder, except the two radio guides, which are in "Radio how-to".
 
 The links work from any browser on the home network or the hotspot (on the hotspot, `library.lan` works in place of `homestead.local`). There are two kinds of source:
 

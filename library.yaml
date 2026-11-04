@@ -532,6 +532,24 @@ topics:
         title: "NIMS ICS Forms Booklet incl. ICS-213/214 (FEMA 502-2)"
         essential: true
         print: true
+      - pdf: "https://www.cisa.gov/sites/default/files/2024-12/NIFOG%202.02_508%20FINAL%20VERSION%2012%2003%202024.pdf"
+        title: "NIFOG: National Interoperability Field Operations Guide, v2.02 (CISA, 2024)"
+        essential: true
+        print: true
+      - pdf: "https://www.cisa.gov/sites/default/files/publications/AUXFOG%20June%202016%20-%20508%20Reviewed%20-%20Final%20(2-16-17).pdf"
+        title: "AUXFOG: Auxiliary Communications Field Operations Guide, v1.1 (DHS, 2016)"
+        essential: true
+        print: true
+      - pdf: "https://www.arrl.org/files/file/Public%20Service/ARES/ARESFieldResourcesManual_rev10-2019.pdf"
+        title: "ARES Field Resources Manual (ARRL, 2019)"
+        essential: true
+        print: true
+      - pdf: "https://www.arrl.org/files/file/Public%20Service/MPG104A.pdf"
+        title: "NTS Methods and Practices Guidelines, chapter 1: the ARRL message format (ARRL)"
+        priority: 2
+      - pdf: "https://www.radionerds.com/images/a/aa/TM_11-666.pdf"
+        title: "TM 11-666: Antennas and Radio Propagation (US Army, 1953)"
+        priority: 2
 
   learning:
     name: "Learning & school"
@@ -851,6 +869,78 @@ binders:
         what: "Blank forms: radio communications plan (205, 205A), general message (213), activity log (214)"
         first: true
 
+  - binder: "Radio how-to"
+    color: "purple"
+    note: "Using the radios: which radio and band for what, the frequencies, how to talk on the air, building antennas, and passing messages."
+    how: "Pages from the CISA and DHS field guides, the ARRL ARES manual and the Army's tactical radio manual, plus this server's radio guide."
+    items:
+      - doc: "NIFOG: National Interoperability Field Operations Guide, v2.02 (CISA, 2024)"
+        section: "Radios and frequencies"
+        pages: "120-123"
+        what: "FRS, GMRS, MURS and CB channels: the radios that need no license or a simple one"
+        first: true
+      - doc: "NIFOG: National Interoperability Field Operations Guide, v2.02 (CISA, 2024)"
+        pages: "106-112"
+        what: "HF disaster and long-distance frequencies, distress frequencies, ham emergency and calling frequencies, the 60 m channels"
+        first: true
+      - doc: "NIFOG: National Interoperability Field Operations Guide, v2.02 (CISA, 2024)"
+        pages: "113-119"
+        what: "US ham bands, what each license class may use, and the power limits"
+      - doc: "AUXFOG: Auxiliary Communications Field Operations Guide, v1.1 (DHS, 2016)"
+        pages: "56-63"
+        what: "Which HF band works at what time of day; the usual VHF, UHF and HF ham frequencies (simplex, nets, digital)"
+      - doc: "NIFOG: National Interoperability Field Operations Guide, v2.02 (CISA, 2024)"
+        pages: "92-95"
+        what: "VHF marine channels and what each is for"
+      - doc: "NIFOG: National Interoperability Field Operations Guide, v2.02 (CISA, 2024)"
+        pages: "74"
+        what: "How far VHF and UHF reach: line-of-sight and antenna-height formulas"
+      - doc: "ARES Field Resources Manual (ARRL, 2019)"
+        section: "On the air"
+        pages: "57-63"
+        what: "How to make a call and run a net, the phonetic alphabet, signal reports (RST), Q signals, prowords and prosigns"
+        first: true
+      - doc: "ARES Field Resources Manual (ARRL, 2019)"
+        pages: "28-31"
+        what: "How repeaters work and how to use them; the principles of disaster communication"
+      - doc: "ARES Field Resources Manual (ARRL, 2019)"
+        pages: "16-18"
+        what: "Traffic nets (NTS) and the kinds of emergency nets"
+      - doc: "ARES Field Resources Manual (ARRL, 2019)"
+        pages: "84"
+        what: "The Wilderness Protocol: listen on the calling frequencies at the top of the hour"
+      - doc: "ARES Field Resources Manual (ARRL, 2019)"
+        pages: "10-12"
+        what: "Go-kit checklists for a radio operator: a day out and 72 hours"
+      - doc: "ATP 6-02.53: Techniques for Tactical Radios and Retransmission (US Army)"
+        pages: "89-92"
+        what: "AM, FM and single sideband: what the modes are (appendix D)"
+      - doc: "ATP 6-02.53: Techniques for Tactical Radios and Retransmission (US Army)"
+        pages: "117-124"
+        what: "Radio in cold, heat, mountains, forest and towns (appendix G)"
+      - doc: "AUXFOG: Auxiliary Communications Field Operations Guide, v1.1 (DHS, 2016)"
+        section: "Antennas"
+        pages: "93-101"
+        what: "Build them from wire and coax: VHF/UHF ground plane, coaxial sleeve, HF dipole; emergency centre-of-activity frequencies"
+        first: true
+      - doc: "ATP 6-02.53: Techniques for Tactical Radios and Retransmission (US Army)"
+        pages: "93-110"
+        what: "HF radio: skywave, take-off angle, NVIS for 0 to 300 miles, and field-expedient HF antennas (appendix E)"
+      - doc: "ATP 6-02.53: Techniques for Tactical Radios and Retransmission (US Army)"
+        pages: "125-156"
+        what: "Choosing, siting and building antennas: lengths for a frequency, polarization, ground, field repairs and insulators (appendix H)"
+      - doc: "AUXFOG: Auxiliary Communications Field Operations Guide, v1.1 (DHS, 2016)"
+        pages: "105, 107-111"
+        what: "RF connectors, coax loss per 100 ft, and the CTCSS and DCS tone tables for programming radios"
+      - doc: "ARES Field Resources Manual (ARRL, 2019)"
+        section: "Messages"
+        pages: "32-41"
+        what: "Writing and passing a message: the radiogram form, precedences, handling instructions, ARL numbered texts"
+      - folder: "reference/server"
+        section: "Digital modes"
+        files: ["Radio and communications guide", "Radio receiver antenna"]
+        first_files: ["Radio and communications guide"]
+
   - binder: "Maps: home and area"
     color: "orange"
     note: "Our maps of the house, the town and the towns around it, and how to use a map and compass. The route maps are in their own binder."
@@ -889,5 +979,6 @@ binders:
     note: "How to run, power, back up, restore and rebuild this computer."
     how: "Made from the repo's guides: reprint after updates."
     items:
-      - folder: "reference/server"
+      - folder: "reference/server"                 # all but the radio guides, which are in Radio how-to
+        files: ["About", "Backup", "Grid-down", "Power", "Installing", "The printed"]
         first_files: ["Backup and restore", "Grid-down"]
