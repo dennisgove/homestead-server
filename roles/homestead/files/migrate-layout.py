@@ -17,6 +17,7 @@ from pathlib import Path
 core, lib, layout = Path(sys.argv[1]), Path(sys.argv[2]), json.load(open(sys.argv[3]))
 docs = core / "docs"
 changed = 0
+emptied = set()          # folders files were moved out of: the only ones tidied away afterwards
 
 
 def move(src: Path, dst: Path):
@@ -25,6 +26,7 @@ def move(src: Path, dst: Path):
         return
     dst.parent.mkdir(parents=True, exist_ok=True)
     os.rename(src, dst)
+    emptied.add(src.parent)
     changed += 1
 
 
@@ -42,11 +44,15 @@ for old_cat, topic in layout["topics"].items():
             if len(rel.parts) > 1 and f"{old_cat}/{rel.parts[0]}" in layout["folders"]:
                 rel = Path(layout["folders"][f"{old_cat}/{rel.parts[0]}"]).relative_to(topic).joinpath(*rel.parts[1:])
             move(f, docs / topic / rel)
-for d in sorted((p for p in docs.rglob("*") if p.is_dir()), key=lambda p: len(p.parts), reverse=True):
-    try:
-        d.rmdir()          # only empty ones
-    except OSError:
-        pass
+# Folders this left empty go, and their parents if that leaves them empty too; never a folder it didn't
+# move anything out of (the website's empty binder-covers folder, say, which setup makes just before this).
+for d in sorted(emptied, key=lambda p: len(p.parts), reverse=True):
+    while d != docs and docs in d.parents:
+        try:
+            d.rmdir()      # only if empty
+        except OSError:
+            break
+        d = d.parent
 if (lib / "kolibri" / "content").is_dir() and not (lib / "courses").exists():
     os.rename(lib / "kolibri" / "content", lib / "courses")
     changed += 1

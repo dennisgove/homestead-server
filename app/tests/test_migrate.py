@@ -18,6 +18,7 @@ def test_old_files_move_into_the_new_layout(tmp_path):
     (core / "docs" / "personal").mkdir(parents=True)
     (core / "docs" / "personal" / "deed.pdf").write_text("deed")
     (lib / "kolibri" / "content" / "databases").mkdir(parents=True)
+    (core / "docs" / "reference" / "binder-covers").mkdir(parents=True)     # empty, made by setup just before
     run = lambda: subprocess.run([sys.executable, str(ROLE / "migrate-layout.py"), str(core), str(lib),
                                   str(ROLE / "old-layout.json")], capture_output=True, text=True, check=True).stdout
     assert "changed" in run()
@@ -26,7 +27,10 @@ def test_old_files_move_into_the_new_layout(tmp_path):
         assert not (core / "docs" / old).exists()
     assert (core / "docs" / "family" / "deed.pdf").exists()        # personal -> family
     assert (lib / "courses" / "databases").is_dir() and not (lib / "kolibri").exists()
+    assert not (core / "docs" / "personal").exists()                # emptied by the move: tidied away
+    assert (core / "docs" / "reference" / "binder-covers").is_dir()  # empty, but not its to tidy: kept
     assert "changed" not in run()                                   # safe to run again
+    assert (core / "docs" / "reference" / "binder-covers").is_dir()
 
 
 def test_every_old_document_has_a_place_in_the_new_list():
