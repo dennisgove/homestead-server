@@ -191,6 +191,17 @@ def test_the_binder(indexed, cups):
     assert [i["first"] for i in maps_b["items"]] == [True, False, False, False]
     assert [i["section"] for i in med["items"]] == ["Injuries", "Injuries", "Other"]
 
+    assert '<nav class="bnav noprint"' in page and 'href="#binder-1"' in page and 'href="#binder-2"' in page   # quick links
+    assert '<details class="bgroup noprint" id="binder-1" data-n="1" open>' in page                          # collapsible
+    assert f'data-version="{fd["version"]}"' in page and "Changed since you printed it" in page
+    area = maps_b["items"][0]
+    assert fd["version"] and area["version"] and fd["version"] != area["version"]
+    assert printing.binders()[1]["items"][0]["version"] == area["version"]        # the same file: the same version
+    import os
+    st = os.stat(maps / "Area 1 - Our Town.pdf")
+    os.utime(maps / "Area 1 - Our Town.pdf", ns=(st.st_atime_ns, st.st_mtime_ns + 10**9))   # made again
+    assert printing.binders()[1]["items"][0]["version"] != area["version"]       # so it shows as changed
+
     form = c.get(fd["url"]).text                                  # the print form, filled in
     assert 'value="medical/field-doctor/en_fd_02.pdf" data-pages="1" checked' in form
     assert 'value="medical/field-doctor/en_fd_01.pdf" data-pages="1" >' in form

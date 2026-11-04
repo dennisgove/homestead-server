@@ -9,16 +9,22 @@ about {{ holds }} sheets. Start with the ★ first round: <b>{{ '{:,}'.format(fi
 <p class="noprint">{% if outside %}You're connected from outside the home, so printing on the home printer is off.
 {% elif printer %}<b>Quick print</b> sends the chapters and pages picked straight to {{ printer.label }}, on both sides.
 {% endif %}<b>Print</b> opens the print form with them already picked{% if not outside %}, to change the printer or the pages{% endif %}; <b>PDF</b> opens just those
-pages to print from your own device. Tick things off as you print them (this device remembers).
+pages to print from your own device. Tick things off as you print them (this device remembers): if one changes after you
+print it, it's unticked again and marked <b class="again-word">print again</b>.
 <label><input type="checkbox" id="firstonly"> Only the first round</label>
 <button type="button" onclick="window.print()">Print a cover for each binder</button></p>
+
+{% if binders %}<nav class="bnav noprint" aria-label="The binders">
+  {% for b in binders %}<a href="#binder-{{ loop.index }}" data-n="{{ loop.index }}">{% if b.color %}<span class="spine spine-{{ b.color }}" aria-hidden="true"></span>{% endif %}{{ loop.index }}. {{ b.binder }} <span class="again-count" hidden></span></a>
+  {% endfor %}<span class="bnav-acts"><button type="button" id="close-all">Collapse all</button> <button type="button" id="open-all">Expand all</button></span>
+</nav>{% endif %}
 
 {% set gs = namespace(group=none) %}
 {% for b in binders %}
 {% if b.group != gs.group %}{% if b.group or gs.group %}<h2 class="shelf noprint">{{ b.group or "Other binders" }}</h2>{% endif %}{% set gs.group = b.group %}{% endif %}
-<section class="bgroup noprint">
-  <h2 class="label">{% if b.color %}<span class="spine spine-{{ b.color }}" aria-hidden="true"></span>{% endif %}{{ loop.index }}. {{ b.binder }}
-    <small>{% if b.sheets %}{{ b.sheets }} sheets, {{ '{:,}'.format(b.pages) }} pages{% if b.first_pages and b.first_pages != b.pages %}, first round {{ '{:,}'.format(b.first_pages) }}{% endif %}{% if b.color %} · {{ b.color }} label{% endif %}{% endif %}</small></h2>
+<details class="bgroup noprint" id="binder-{{ loop.index }}" data-n="{{ loop.index }}" open>
+  <summary><h2 class="label">{% if b.color %}<span class="spine spine-{{ b.color }}" aria-hidden="true"></span>{% endif %}{{ loop.index }}. {{ b.binder }}
+    <small>{% if b.sheets %}{{ b.sheets }} sheets, {{ '{:,}'.format(b.pages) }} pages{% if b.first_pages and b.first_pages != b.pages %}, first round {{ '{:,}'.format(b.first_pages) }}{% endif %}{% if b.color %} · {{ b.color }} label{% endif %}{% endif %}</small> <span class="again-count" hidden></span></h2></summary>
   {% if b.full %}<p class="meta bad">More than a half-inch binder holds: use a 1-inch binder, or split it.</p>{% endif %}
   {% if b.note %}<p class="meta">{{ b.note }}</p>{% endif %}
   {% if b.how %}<p class="meta">{{ b.how }}</p>{% endif %}
@@ -27,7 +33,7 @@ pages to print from your own device. Tick things off as you print them (this dev
     {% for i in b["items"] %}
     {% if i.section != ns.section %}{% set ns.section = i.section %}{% set ns.sub = none %}{% if i.section %}<li class="sub"><h3>{{ i.section }}</h3></li>{% endif %}{% endif %}
     {% if i.sub != ns.sub %}{% set ns.sub = i.sub %}{% if i.sub %}<li class="sub"><h3>{{ i.sub }}</h3></li>{% endif %}{% endif %}
-    <li class="{{ 'first' if i.first }}" data-key="{{ i.url or i.title }}">
+    <li class="{{ 'first' if i.first }}" data-key="{{ i.url or i.title }}" data-version="{{ i.version }}">
       <label class="tick noprint"><input type="checkbox" aria-label="Printed"></label>
       <span class="what">
         {% if i.first %}<span class="star" title="First round">★</span>{% endif %}
@@ -36,6 +42,7 @@ pages to print from your own device. Tick things off as you print them (this dev
         {% if i.why %}<br><small>{{ i.why }}</small>{% endif %}
         {% if i.how %}<br><small>{{ i.how }}</small>{% endif %}
         {% if i.problem %}<br><small class="bad">{{ i.problem }}</small>{% endif %}
+        <small class="again-note" hidden><br>Changed since you printed it: print again.</small>
       </span>
       <span class="meta">{% if i.pages %}{{ '{:,}'.format(i.pages) }} p.{% endif %}{% if i.color %} · colour{% endif %}</span>
       {% if i.url and not i.problem %}<span class="acts noprint">
@@ -49,7 +56,7 @@ pages to print from your own device. Tick things off as you print them (this dev
     </li>
     {% endfor %}
   </ul>
-</section>
+</details>
 {% endfor %}
 
 {# The covers: one page per binder, for its clear front sleeve. What's in it, nothing about printing. #}
@@ -83,9 +90,31 @@ pages to print from your own device. Tick things off as you print them (this dev
 <li>The server's own guides (restore, runbook, power) are in the “This server” binder above, made again from the repo on each update.</li></ul></section>
 <script>
 (() => {
-  const KEY = "binder-done";
-  let done = {};
-  try { done = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) {}
+  const KEY = "binder-done", CLOSED = "binder-closed";
+  const load = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch (e) { return {}; } };
+  const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+  const done = load(KEY);        // item -> the version printed (1 = ticked before versions were kept)
+  const closed = load(CLOSED);   // binder number -> collapsed
+
+  function mark(li) {            // ticked, or changed since it was printed
+    const key = li.dataset.key, v = li.dataset.version, had = done[key];
+    if (had === 1 && v) { done[key] = v; save(KEY, done); }      // ticked before: take it as this version
+    const printed = had !== undefined, changed = printed && !!v && done[key] !== v;
+    li.querySelector("input[type=checkbox]").checked = printed && !changed;
+    li.classList.toggle("done", printed && !changed);
+    li.classList.toggle("changed", changed);
+    li.querySelector(".again-note").hidden = !changed;
+  }
+  function counts() {            // "n to print again" on each binder and in the nav
+    document.querySelectorAll("details.bgroup").forEach(d => {
+      const n = d.querySelectorAll("li.changed").length, t = n ? `${n} to print again` : "";
+      for (const el of [d.querySelector(".again-count"), document.querySelector(`.bnav a[data-n="${d.dataset.n}"] .again-count`)]) {
+        if (el) { el.textContent = t; el.hidden = !n; }
+      }
+    });
+  }
+  function printed(li) { done[li.dataset.key] = li.dataset.version || 1; save(KEY, done); mark(li); counts(); }
+
   document.querySelectorAll("li[data-key]").forEach(li => {
     const box = li.querySelector("input[type=checkbox]");
     const quick = li.querySelector("form.quick");
@@ -99,23 +128,40 @@ pages to print from your own device. Tick things off as you print them (this dev
         if (!r.ok) throw new Error(a.error || "It didn't print.");
         said.textContent = `Sent to ${a.to}` + (a.n ? `, ${a.n.toLocaleString()} pages` : "");
         said.classList.add("good");
-        box.checked = true; li.classList.add("done");             // printed: tick it off
-        done[li.dataset.key] = 1;
-        try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {}
+        printed(li);                                              // printed: tick it off
       } catch (e) {
         said.textContent = e instanceof TypeError || e instanceof SyntaxError ? "It didn't print: the server didn't answer." : e.message;
         said.classList.add("bad");
       }
       btn.disabled = false; btn.textContent = "Quick print";
     });
-    box.checked = !!done[li.dataset.key];
-    li.classList.toggle("done", box.checked);
+    mark(li);
     box.addEventListener("change", () => {
-      li.classList.toggle("done", box.checked);
-      if (box.checked) done[li.dataset.key] = 1; else delete done[li.dataset.key];
-      try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {}
+      if (box.checked) printed(li);
+      else { delete done[li.dataset.key]; save(KEY, done); mark(li); counts(); }
     });
   });
+  counts();
+
+  // Collapsing: each binder opens and closes from its heading; this device remembers which are closed.
+  const binders = [...document.querySelectorAll("details.bgroup")];
+  binders.forEach(d => {
+    if (closed[d.dataset.n]) d.open = false;
+    d.addEventListener("toggle", () => {
+      if (d.open) delete closed[d.dataset.n]; else closed[d.dataset.n] = 1;
+      save(CLOSED, closed);
+    });
+  });
+  const all = open => binders.forEach(d => { d.open = open; });
+  document.getElementById("close-all")?.addEventListener("click", () => all(false));
+  document.getElementById("open-all")?.addEventListener("click", () => all(true));
+  const reveal = () => { const d = location.hash && document.querySelector(location.hash); if (d && d.tagName === "DETAILS") d.open = true; };
+  window.addEventListener("hashchange", reveal);
+  document.querySelectorAll(".bnav a").forEach(a => a.addEventListener("click", () => {
+    const d = document.querySelector(a.getAttribute("href")); if (d) d.open = true;
+  }));
+  reveal();
+
   const only = document.getElementById("firstonly");
   only.addEventListener("change", () => {
     document.querySelectorAll("ul.binder > li[data-key]").forEach(li => li.hidden = only.checked && !li.classList.contains("first"));

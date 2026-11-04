@@ -3,6 +3,8 @@
 Either straight to a printer the server can see (CUPS, the `lp` command), or as one PDF
 to print from whatever phone or laptop is looking at the page.
 """
+import hashlib
+import os
 import re
 import subprocess
 import tempfile
@@ -266,6 +268,19 @@ def _totals(b: dict) -> dict:
     return b
 
 
+def _version(paths) -> str:
+    """A short fingerprint of the files an item prints (their names, sizes and times): it changes when any
+    of them is made again or replaced, so the Binder page can say what needs printing again."""
+    h = hashlib.sha1()
+    for p in sorted(str(x) for x in paths if x):
+        try:
+            st = os.stat(p)
+        except OSError:
+            continue
+        h.update(f"{p}:{st.st_size}:{st.st_mtime_ns};".encode())
+    return h.hexdigest()[:12]
+
+
 def _links(rel: str, parts: list[str], pages: str, color: bool) -> tuple[str, str]:
     q = [("part", p) for p in parts] + ([("pages", pages)] if pages else []) + ([("color", "1")] if color else [])
     tail = ("?" + urlencode(q)) if q else ""
@@ -276,7 +291,7 @@ def _entry(e: dict, it) -> dict:
     color = bool(e.get("color"))
     row = {"title": e.get("doc", ""), "what": e.get("what", ""), "why": e.get("why", ""), "how": "", "first": bool(e.get("first")),
            "color": color, "sub": "", "pages": 0, "sheets": 0, "url": "", "pdf_url": "", "read_url": "", "rel": "",
-           "parts": [], "range": "", "large": False, "problem": ""}
+           "parts": [], "range": "", "large": False, "problem": "", "version": ""}
     if it is None:
         row["problem"] = "Not in the library list."
         return row
@@ -301,6 +316,7 @@ def _entry(e: dict, it) -> dict:
     row["pages"], row["sheets"] = n, (n + 1) // 2
     row["url"], row["pdf_url"] = _links(rel, parts, e.get("pages", ""), color)
     row["rel"], row["parts"], row["range"] = rel, parts, e.get("pages", "")
+    row["version"] = _version(x["path"] for x in t["parts"] if not parts or x["rel"] in parts)
     return row
 
 
@@ -330,7 +346,7 @@ def _folder_items(g: dict) -> list[dict]:
                      "first": stem.startswith(first) if first else False, "color": bool(g.get("color")), "sub": sub,
                      "pages": n, "sheets": (n + 1) // 2, "url": url, "pdf_url": pdf_url,
                      "read_url": "/read/" + settings.url_path(r), "rel": r, "parts": [], "range": "",
-                     "large": large, "problem": ""})
+                     "large": large, "problem": "", "version": _version([path])})
     rows.sort(key=lambda x: (x["sub"] != "", x["sub"].lower(), x["title"].lower()))
     return rows
 

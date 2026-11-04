@@ -198,6 +198,21 @@ input.wide { width: 100%; max-width: 520px; margin: 0 0 6px; }
 .binder li.sub + li.sub { padding-top: 0; } .binder li.sub h3 small { font-weight: 400; }
 .printonly { display: none; }
 h2.shelf { margin: 28px 0 4px; font-size: 1.5rem; }
+.bnav { display: flex; flex-wrap: wrap; gap: 6px 8px; margin: 14px 0 6px; padding: 8px 0; border-bottom: 1px solid var(--rule); }
+.bnav a { display: inline-flex; align-items: center; gap: 2px; border: 1px solid var(--rule); border-radius: 999px; padding: 3px 10px; font-size: .88rem; text-decoration: none; color: var(--ink); background: var(--card); }
+.bnav a:hover, .bnav a:focus-visible { border-color: var(--green); outline: none; }
+.bnav .spine { width: 9px; height: .9em; margin-right: 5px; }
+.bnav-acts { margin-left: auto; display: inline-flex; gap: 6px; }
+.again-count { color: var(--amber); font-weight: 700; font-size: .82rem; text-transform: none; letter-spacing: 0; margin-left: 6px; }
+details.bgroup > summary { list-style: none; cursor: pointer; }
+details.bgroup > summary::-webkit-details-marker { display: none; }
+details.bgroup > summary h2 { display: block; }
+details.bgroup > summary h2::before { content: "▾"; display: inline-block; width: 1.1em; color: var(--soft); }
+details.bgroup:not([open]) > summary h2::before { content: "▸"; }
+details.bgroup { scroll-margin-top: 64px; }
+.binder li.changed .title { color: var(--amber); font-weight: 700; }
+.again-note, .again-word, .binder .what small.again-note { color: var(--amber); font-weight: 700; }
+.bnav-acts button { font-size: .85rem; padding: 3px 10px; border-radius: 999px; }
 
 @page cover { margin: .5in; }
 
