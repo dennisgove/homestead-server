@@ -303,5 +303,4 @@ ul.binder .what small.again-note, .again-word { color: var(--amber); font-weight
   .cover.long .about { font-size: 12.5pt; margin: 10pt 0 4pt; }
   .cover.long .contents { font-size: 9.5pt; line-height: 1.22; }
   .cover.long h2 { font-size: 10.5pt; margin: 8pt 0 2pt; } .cover.long li { padding: 1pt 0 1pt 10pt; } .cover.long li.more { padding-left: 24pt; }
-  .cover .foot { margin: auto 0 0; padding-top: 10pt; font-size: 9pt; color: #555; }
 }

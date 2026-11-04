@@ -20,9 +20,7 @@ PAGE = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><title>{titl
         '</head><body>{body}</body></html>')
 
 
-EXTRA = """
-.cover .foot { position: fixed; bottom: 0; left: 0; margin: 0; }   /* at the foot of the page */
-"""
+EXTRA = ""
 
 
 def name(b: dict) -> str:

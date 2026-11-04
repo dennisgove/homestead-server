@@ -184,7 +184,7 @@ def test_the_binder(indexed, cups):
     assert 'class="bnum"' not in page and 'class="n"' not in page                  # binders aren't numbered
     one = texts((covers_dir / "First aid cover.pdf").read_bytes())    # a cover: what's in it, not how to print
     assert len(one) == 1 and "FIRST AID" in one[0] and "Emergencies first." in one[0] and "Bones and words" in one[0]
-    assert "INJURIES" in one[0].upper() and "First aid cover · page 1 of 1" in one[0] and "Binder 1" not in one[0]
+    assert "INJURIES" in one[0].upper() and "page 1 of 1" not in one[0] and "Binder 1" not in one[0]   # nothing at the foot
     two = texts((covers_dir / "Maps cover.pdf").read_bytes())[0]
     assert "ROUTES" in two.upper() and "Print it double-sided." in page and "Print it double-sided." not in one[0] + two
     assert " p." not in one[0] and "★" not in page and "first round" not in page.lower()
