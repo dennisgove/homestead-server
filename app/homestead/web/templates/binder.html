@@ -1,19 +1,15 @@
 {% extends "base.html" %}
 {% block title %}The binders · Homestead Library{% endblock %}
-{% block head %}<style>@page { margin: .5in; }</style>{% endblock %}{# the covers: printing this page prints only them #}
 {% block body %}
 <div class="bpage noprint">
 <header class="bhead">
   <p class="crumbs"><a href="/print">Print</a> /</p>
   <h1>The binders</h1>
-  <p class="bsub">{{ in_binders }} binders · {{ '{:,}'.format(sheets) }} sheets · {{ '{:,}'.format(pages) }} pages.
-    Start with the <span class="star">★</span> first round: {{ '{:,}'.format(first_pages) }} pages.</p>
+  <p class="bsub">{{ in_binders }} binders · {{ '{:,}'.format(sheets) }} sheets · {{ '{:,}'.format(pages) }} pages, each binder starting with its cover.</p>
   <div class="btools">
-    <label class="toggle"><input type="checkbox" id="firstonly"> Only the ★ first round</label>
     <span class="grow"></span>
     <button type="button" id="close-all">Collapse all</button>
     <button type="button" id="open-all">Expand all</button>
-    <button type="button" onclick="window.print()">Print the covers</button>
   </div>
   <details class="bhelp"><summary>How this works</summary>
     <p>Each binder holds about {{ holds }} sheets, printed on both sides. Tick each thing off as you print it; this device
@@ -40,7 +36,7 @@
 <details class="bgroup c-{{ b.color or 'white' }}" id="binder-{{ loop.index }}" data-n="{{ loop.index }}" open>
   <summary>
     <span class="btitle"><h2><span class="bnum">{{ loop.index }}</span> {{ b.binder }}</h2>
-      <span class="bmeta">{% if b.sheets %}{{ b.sheets }} sheets · {{ '{:,}'.format(b.pages) }} pages{% if b.first_pages and b.first_pages != b.pages %} · ★ first round {{ '{:,}'.format(b.first_pages) }}{% endif %}{% else %}full-size sheets, not for a binder{% endif %}{% if b.color %} · {{ b.color }} label{% endif %}</span></span>
+      <span class="bmeta">{% if b.sheets %}{{ b.sheets }} sheets · {{ '{:,}'.format(b.pages) }} pages{% else %}full-size sheets, not for a binder{% endif %}{% if b.color %} · {{ b.color }} label{% endif %}</span></span>
     <span class="bstate"><span class="prog"></span><span class="again-count" hidden></span><span class="chev" aria-hidden="true"></span></span>
   </summary>
   <div class="bbody">
@@ -51,10 +47,10 @@
     {% for i in b["items"] %}
     {% if i.section != ns.section %}{% set ns.section = i.section %}{% set ns.sub = none %}{% if i.section %}<li class="sub"><h3>{{ i.section }}</h3></li>{% endif %}{% endif %}
     {% if i.sub != ns.sub %}{% set ns.sub = i.sub %}{% if i.sub %}<li class="sub"><h3>{{ i.sub }}</h3></li>{% endif %}{% endif %}
-    <li class="item{{ ' first' if i.first }}" data-key="{{ i.url or i.title }}" data-version="{{ i.version }}">
+    <li class="item{{ ' cover' if i.title == 'Cover' and not i.section }}" data-key="{{ i.url or i.title }}" data-version="{{ i.version }}">
       <label class="tick"><input type="checkbox" aria-label="Printed"></label>
       <span class="what">
-        {% if i.read_url %}<a class="title" href="{{ i.read_url }}">{{ i.title }}</a>{% else %}<span class="title">{{ i.title }}</span>{% endif %}{% if i.first %} <span class="star" title="First round">★</span>{% endif %}
+        {% if i.read_url %}<a class="title" href="{{ i.read_url }}">{{ i.title }}</a>{% else %}<span class="title">{{ i.title }}</span>{% endif %}
         {% if i.what %}<small>{{ i.what }}</small>{% endif %}
         {% if i.why %}<small>{{ i.why }}</small>{% endif %}
         {% if i.how %}<small>{{ i.how }}</small>{% endif %}
@@ -85,32 +81,6 @@
 {% else %}<p class="empty">The binder list is empty (the <code>binders:</code> section of the library list).</p>{% endif %}
 </div>
 
-{# The covers: one page per binder, for its clear front sleeve. What's in it, nothing about printing. #}
-{% for b in binders %}
-<section class="cover printonly{{ ' long' if b['items']|length > 14 }}">
-  <div class="band spine-{{ b.color or 'white' }} ink-{{ 'dark' if b.color in ('white', 'yellow', '') else 'light' }}">
-    <span class="num">{{ loop.index }}</span><div>{% if b.group %}<p class="kind">{{ b.group }}</p>{% endif %}<h1>{{ b.binder }}</h1></div>
-  </div>
-  {% if b.note %}<p class="about">{{ b.note }}</p>{% endif %}
-  <div class="contents">
-    {% set ns = namespace(section=none, sub=none, open=false, prev=none) %}
-    {% for i in b["items"] %}
-    {% if i.section != ns.section or i.sub != ns.sub %}
-      {% if ns.open %}</ul>{% endif %}
-      {% if i.section != ns.section and i.section %}<h2>{{ i.section }}</h2>{% endif %}
-      {% if i.sub and i.sub != ns.sub %}<h3>{{ i.sub }}</h3>{% endif %}
-      {% set ns.section = i.section %}{% set ns.sub = i.sub %}{% set ns.open = false %}{% set ns.prev = none %}
-    {% endif %}
-    {% if not ns.open %}<ul>{% set ns.open = true %}{% endif %}
-    {% if i.title == ns.prev %}<li class="more"><span>{{ i.what or i.why }}</span></li>{# the same document again: just what's in this part #}
-    {% else %}<li><b>{{ i.title }}</b>{% if i.what or i.why %}<span> — {{ i.what or i.why }}</span>{% endif %}</li>{% endif %}
-    {% set ns.prev = i.title %}
-    {% endfor %}
-    {% if ns.open %}</ul>{% endif %}
-  </div>
-  <p class="foot">Homestead Library · Binder {{ loop.index }} · page {{ loop.index }} of {{ binders|length }}</p>
-</section>
-{% endfor %}
 <script>
 (() => {
   const KEY = "binder-done", CLOSED = "binder-closed";
@@ -195,21 +165,6 @@
   }));
   reveal();
 
-  const only = document.getElementById("firstonly");
-  only.addEventListener("change", () => {
-    document.querySelectorAll("ul.binder > li[data-key]").forEach(li => li.hidden = only.checked && !li.classList.contains("first"));
-    document.querySelectorAll("ul.binder > li.sub").forEach(h => {
-      let n = h.nextElementSibling, any = false;
-      while (n && !n.classList.contains("sub")) { any = any || !n.hidden; n = n.nextElementSibling; }
-      h.hidden = only.checked && !any;
-    });
-    document.querySelectorAll(".bgroup").forEach(g => g.hidden = only.checked && !g.querySelector("li.first"));
-    document.querySelectorAll("h2.bshelf").forEach(h => {
-      let n = h.nextElementSibling, any = false;
-      while (n && n.classList.contains("bgroup")) { any = any || !n.hidden; n = n.nextElementSibling; }
-      h.hidden = !any;
-    });
-  });
 })();
 </script>
 {% endblock %}

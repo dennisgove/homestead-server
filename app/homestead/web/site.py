@@ -307,7 +307,7 @@ def print_page(request: Request, sent: str = "", to: str = "", n: int = 0):
 
 @app.get("/binder", response_class=HTMLResponse)
 def binder_page(request: Request):
-    bs = printing.binders()
+    bs = printing.binders(covers=True)      # each binder starts with its cover, made again when it changes
     printer = next((p for p in printers(request) if p["ready"]), None)       # Quick print sends to this one
     return page(request, "binder.html", binders=bs, printer=printer,
                 pages=sum(b["pages"] for b in bs), sheets=sum(b["sheets"] for b in bs),

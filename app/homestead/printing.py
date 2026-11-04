@@ -40,7 +40,7 @@ def target(rel: str) -> dict | None:
         for x in d["parts"]:     # one chapter of a book
             if x["rel"] == rel:
                 return _counted(one(f"{d['title']}: {x['title']}", "pdf", x["pages"]))
-    for d in documents.loose(topic):     # copied in by hand, not in the library list
+    for d in documents.loose(topic, hidden=True):     # copied in by hand (or a binder cover), not in the library list
         if d["rel"] == rel:
             ext = Path(rel).suffix.lower()
             kind = "text" if ext in TEXT else "epub" if ext == ".epub" else "pdf"
@@ -231,10 +231,11 @@ def everything() -> list[dict]:
 HOLDS = 100        # sheets a half-inch ring binder takes
 
 
-def binders() -> list[dict]:
+def binders(covers: bool = False) -> list[dict]:
     """library.yaml's binders, each entry ready to print: the chapters and pages picked, its link to the
     print form with them filled in, and how many pages and sheets (printed on both sides) that is. Then
-    documents marked print: true that the list leaves out.
+    documents marked print: true that the list leaves out. covers=True brings the binder covers up to date and
+    puts each binder's cover first in its list.
 
     [{binder, group, color, note, how, pages, sheets, first_pages, full, items: [{title, what, why, first, color, section, sub,
       pages, sheets, url, pdf_url, read_url, rel, parts, range, large, problem}]}]
@@ -255,8 +256,27 @@ def binders() -> list[dict]:
     extra = [_entry({"doc": it.title}, it) | {"section": ""} for it in library.items() if it.print and it.title not in listed]
     if extra:
         out.append(_totals({"binder": "Also marked for printing", "group": "", "color": "", "note": "",
-                            "how": "Marked print: true in the library list.", "items": extra}))
+                            "how": "Marked print: true in the library list.", "items": extra, "extra": True}))
+    if covers:
+        from . import covers as cv
+        cv.make(out)
+        for n, b in enumerate(out, 1):
+            if cv.wanted(b):
+                b["items"].insert(0, _cover_row(cv.rel(n)))
+                _totals(b)
     return out
+
+
+def _cover_row(rel: str) -> dict:
+    """The binder's cover, first in its list: one page, in colour (the band is the binder's label colour)."""
+    path = documents.file_for(rel)
+    here = path is not None and path.is_file()
+    url, pdf_url = _links(rel, [], "", True)
+    return {"title": "Cover", "what": "The front sleeve: the binder's number, colour and what's in it", "why": "", "how": "",
+            "first": False, "color": True, "section": "", "sub": "", "pages": 1 if here else 0, "sheets": 1 if here else 0,
+            "url": url, "pdf_url": pdf_url, "read_url": "/read/" + settings.url_path(rel) if here else "", "rel": rel,
+            "parts": [], "range": "", "large": False, "problem": "" if here else "Not made yet.",
+            "version": _version([path]) if here else ""}
 
 
 def _totals(b: dict) -> dict:

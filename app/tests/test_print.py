@@ -168,19 +168,31 @@ def test_the_binder(indexed, cups):
     w.add_blank_page(width=22 * 72, height=27 * 72)            # a full-size USGS quad
     w.write(maps / "Quad.pdf")
     c = client()
+    assert "Not made yet." in c.get("/binder").text           # no covers' folder: each binder says its cover isn't made
+    covers_dir = indexed["core"] / "docs" / "reference" / "binder-covers"
+    covers_dir.mkdir(parents=True)
     page = c.get("/binder").text
     assert '<h2><span class="bnum">1</span> First aid</h2>' in page and "red label" in page and "Emergencies first." in page and "Bones and words" in page
     assert "<h3>Injuries</h3>" in page and "<h3>Other</h3>" in page and "<h3>And a guide</h3>" in page
     assert "Not in the library list" in page and "Also marked for printing" not in page    # Field Doctor is listed
     assert "Area 1 - Our Town" in page and "Route A - Highways" in page and "<h3>Routes</h3>" in page    # names keep their capitals
     assert "Full-size sheet" in page
-    cover = page[page.index('<section class="cover printonly">'):]                # a cover per binder: what's in it, not how to print
-    assert cover.count('class="cover printonly"') == 2 and "First aid" in cover and "Emergencies first." in cover
-    assert "<h2>Injuries</h2>" in cover and "Bones and words" in cover and "<h3>Routes</h3>" in cover
-    assert "Print it double-sided." in page and "Print it double-sided." not in cover and "Full-size sheet" not in cover
-    assert " p." not in cover and "★" not in cover
+    assert sorted(f.name for f in covers_dir.glob("*.pdf")) == ["Binder 1 cover.pdf", "Binder 2 cover.pdf"]
+    for n, binder in enumerate(page.split('<details class="bgroup')[1:], 1):     # each binder's list starts with its cover
+        first = binder[binder.index('<li class="item'):]
+        assert first.startswith('<li class="item cover"') and f"binder-covers/Binder%20{n}%20cover.pdf" in first.split("</li>")[0]
+    one = texts((covers_dir / "Binder 1 cover.pdf").read_bytes())    # a cover: what's in it, not how to print
+    assert len(one) == 1 and "FIRST AID" in one[0] and "Emergencies first." in one[0] and "Bones and words" in one[0]
+    assert "INJURIES" in one[0].upper() and "Binder 1 cover · page 1 of 1" in one[0]
+    two = texts((covers_dir / "Binder 2 cover.pdf").read_bytes())[0]
+    assert "ROUTES" in two.upper() and "Print it double-sided." in page and "Print it double-sided." not in one[0] + two
+    assert " p." not in one[0] and "★" not in page and "first round" not in page.lower()
+    made = (covers_dir / "Binder 1 cover.pdf").stat().st_mtime_ns
+    c.get("/binder")
+    assert (covers_dir / "Binder 1 cover.pdf").stat().st_mtime_ns == made        # unchanged: not made again
+    assert "binder-covers" not in c.get("/print").text                          # not on the Print page's list
     assert '<h2 class="bshelf">Emergency medical</h2>' in page and '<h2 class="bshelf">Other binders</h2>' in page
-    assert '<p class="kind">Emergency medical</p>' in cover
+    assert "EMERGENCY MEDICAL" in one[0]                                   # the shelf it's on, on the cover
     assert page.index("Area 1 - Our Town") < page.index("Quad") < page.index("Route A")      # loose files first, then subfolders
     from homestead import printing
     med, maps_b = printing.binders()
@@ -210,7 +222,7 @@ def test_the_binder(indexed, cups):
     pdf = c.get(fd["pdf_url"])
     assert [t.split("\n")[0] for t in texts(pdf.content)] == ["Broken Bones", "Words to Know"]
 
-    assert page.count('<button class="btn" type="submit">Quick print</button>') == 4      # not the full-size sheet
+    assert page.count('<button class="btn" type="submit">Quick print</button>') == 6      # the two covers too; not the full-size sheet
     assert '<input type="hidden" name="printer" value="Office_Laser_series">' in page
     r = c.post(fd["url"].split("?")[0], data={"part": fd["parts"], "pages": fd["range"], "printer": "Office_Laser_series",
                                              "copies": "1", "sides": "two", "color": "gray", "quick": "1"},

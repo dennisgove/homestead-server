@@ -27,6 +27,7 @@ CREATE VIRTUAL TABLE IF NOT EXISTS pages USING fts5(
 # Parts of a book that aren't chapters, by the word in their file name.
 FRONT = {"fm": "Front matter", "toc": "Contents", "int": "Introduction", "intro": "Introduction",
          "info": "Additional information"}
+HIDDEN = ("reference/binder-covers/",)   # made for printing (the binder covers): not on the shelves or in search
 BACK = {"gloss": "Glossary", "indx": "Index", "index": "Index", "resc": "Resources", "bm": "Back matter",
         "gp": "Medicines pages", "ob": "Other books", "abbrevacro": "Abbreviations", "prodmfg": "Product manufacturers",
         "envoi": "Envoi", "skills": "Health care skills", "ddc": "Due date calculator"}
@@ -342,7 +343,7 @@ def build(log=print, progress=None) -> dict:
     want = {}
     for f in sorted(docs.rglob("*")) if docs.is_dir() else []:
         if f.is_file() and not f.name.startswith(".") and f.suffix.lower() in (".pdf", ".epub", ".txt", ".md") \
-                and ".partial" not in f.parts:
+                and ".partial" not in f.parts and not rel(f).startswith(HIDDEN):
             want[rel(f)] = f
     known = {p: (m, s) for p, m, s in con.execute("SELECT path, mtime, size FROM docs")}
     gone = [p for p in known if p not in want]
@@ -429,8 +430,9 @@ def shelf(topic: str | None = None) -> list[dict]:
     return out
 
 
-def loose(topic: str | None = None) -> list[dict]:
-    """Documents on disk that aren't in the library list (copied in by hand), so they still show."""
+def loose(topic: str | None = None, hidden: bool = False) -> list[dict]:
+    """Documents on disk that aren't in the library list (copied in by hand), so they still show.
+    hidden=True includes the ones made only for printing (the binder covers)."""
     owned = set()
     for it in library.items():
         if it.kind in ("pdf", "epub", "book"):
@@ -441,7 +443,7 @@ def loose(topic: str | None = None) -> list[dict]:
         if not f.is_file() or f.name.startswith(".") or f.suffix.lower() not in (".pdf", ".epub", ".txt", ".md"):
             continue
         r = rel(f)
-        if r in owned or (topic and not r.startswith(topic + "/")):
+        if r in owned or (topic and not r.startswith(topic + "/")) or (not hidden and r.startswith(HIDDEN)):
             continue
         out.append({"title": re.sub(r"[_-]+", " ", f.stem).strip().capitalize(), "url": f"/read/{settings.url_path(r)}", "rel": r,
                     "size": f.stat().st_size, "topic": r.split("/", 1)[0]})
