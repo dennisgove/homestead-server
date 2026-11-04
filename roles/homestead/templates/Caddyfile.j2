@@ -20,6 +20,9 @@
 
 # The website: the library's files (served directly, with byte ranges) and the app.
 (website) {
+	# Browsers check back before reusing anything (a quick "not modified" when it hasn't changed), so a
+	# remade guide, map or page style shows at once instead of an old copy.
+	header ?Cache-Control "no-cache"
 	handle_path /files/docs/* {
 		root * {{ core_dir }}/docs
 		file_server

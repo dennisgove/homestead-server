@@ -25,6 +25,7 @@ templates = Jinja2Templates(directory=HERE / "templates")
 templates.env.filters["human"] = jobs.human
 templates.env.filters["when"] = lambda t: "never" if not t else time.strftime("%b %d, %H:%M", time.localtime(t))
 templates.env.globals["quote"] = lambda s: urllib.parse.quote(s)
+templates.env.globals["css_v"] = lambda: int((HERE / "static" / "site.css").stat().st_mtime)   # a new link when the styles change
 
 
 FILE_AREAS = ("docs", "courses", "video", "maps", "share")
@@ -125,7 +126,7 @@ def read(request: Request, rel: str):
             nav = {"book": d, "prev": d["parts"][i - 1] if i > 0 else None,
                    "next": d["parts"][i + 1] if 0 <= i < len(urls) - 1 else None}
     return page(request, "read_pdf.html", title=title, label=info.get("label", ""), book_title=book_title,
-                t=t, nav=nav, file=f"/files/docs/{urllib.parse.quote(rel)}", pages=info.get("pages"),
+                t=t, nav=nav, file=f"/files/docs/{urllib.parse.quote(rel)}?v={int(f.stat().st_mtime)}", pages=info.get("pages"),
                 print_url=f"/print/{settings.url_path(rel)}")
 
 

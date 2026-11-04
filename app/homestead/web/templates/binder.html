@@ -77,7 +77,7 @@
           <input type="hidden" name="copies" value="1"><input type="hidden" name="sides" value="two">
           <input type="hidden" name="color" value="{{ 'color' if i.color else 'gray' }}"><input type="hidden" name="quick" value="1">
           <button class="btn" type="submit">Quick print</button></form>{% endif %}
-        <a href="{{ i.url }}">Print</a><a href="{{ i.pdf_url }}" target="_blank">PDF</a></span>
+        <a href="{{ i.url }}">Print</a><a href="{{ i.pdf_url }}{{ '&' if '?' in i.pdf_url else '?' }}v={{ i.version }}" target="_blank">PDF</a></span>
         <small class="said" role="status"></small>{% endif %}
       </span>
     </li>
