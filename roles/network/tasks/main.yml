@@ -75,12 +75,14 @@
     qrencode -t SVG -o "$t/portal-qr.svg" "http://{{ lan_name }}/"
     cat > "$t/wifi-sign.html" <<'EOF'
     <!doctype html><meta charset="utf-8"><title>WiFi sign</title>
-    <style>body{font:28px system-ui;text-align:center;margin:40px}img{width:320px}</style>
+    <style>@page{size:letter;margin:.5in}body{font:28px system-ui;text-align:center;margin:0}h1{margin:0 0 .2in}img{width:3in;height:3in}
+    .pg{position:fixed;bottom:0;right:0;font-size:11px;color:#666}</style>
     <h1>Homestead Library WiFi</h1>
     <p>Network: <b>{{ hotspot_ssid }}</b><br>Password: <b>{{ hotspot_psk }}</b></p>
     <img src="wifi-qr.svg" alt="WiFi QR"><p>Then open <b>http://{{ lan_name }}</b></p>
     <p style="font-size:60%">Nothing on it needs a login.</p>
     <img src="portal-qr.svg" alt="Portal QR">
+    <p class="pg">WiFi sign · page 1 of 1</p>
     EOF
     changed=
     for f in wifi-qr.svg portal-qr.svg wifi-sign.html; do

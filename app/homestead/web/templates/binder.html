@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}The binders · Homestead Library{% endblock %}
+{% block head %}<style>@page { margin: .5in; }</style>{% endblock %}{# the covers: printing this page prints only them #}
 {% block body %}
 <div class="bpage noprint">
 <div class="bhead">
@@ -96,26 +97,28 @@
 
 {# The covers: one page per binder, for its clear front sleeve. What's in it, nothing about printing. #}
 {% for b in binders %}
-<section class="cover printonly">
+<section class="cover printonly{{ ' long' if b['items']|length > 14 }}">
   <div class="band spine-{{ b.color or 'white' }} ink-{{ 'dark' if b.color in ('white', 'yellow', '') else 'light' }}">
     <span class="num">{{ loop.index }}</span><div>{% if b.group %}<p class="kind">{{ b.group }}</p>{% endif %}<h1>{{ b.binder }}</h1></div>
   </div>
   {% if b.note %}<p class="about">{{ b.note }}</p>{% endif %}
   <div class="contents">
-    {% set ns = namespace(section=none, sub=none, open=false) %}
+    {% set ns = namespace(section=none, sub=none, open=false, prev=none) %}
     {% for i in b["items"] %}
     {% if i.section != ns.section or i.sub != ns.sub %}
       {% if ns.open %}</ul>{% endif %}
       {% if i.section != ns.section and i.section %}<h2>{{ i.section }}</h2>{% endif %}
       {% if i.sub and i.sub != ns.sub %}<h3>{{ i.sub }}</h3>{% endif %}
-      {% set ns.section = i.section %}{% set ns.sub = i.sub %}{% set ns.open = false %}
+      {% set ns.section = i.section %}{% set ns.sub = i.sub %}{% set ns.open = false %}{% set ns.prev = none %}
     {% endif %}
     {% if not ns.open %}<ul>{% set ns.open = true %}{% endif %}
-    <li><b>{{ i.title }}</b>{% if i.what or i.why %}<span> — {{ i.what or i.why }}</span>{% endif %}</li>
+    {% if i.title == ns.prev %}<li class="more"><span>{{ i.what or i.why }}</span></li>{# the same document again: just what's in this part #}
+    {% else %}<li><b>{{ i.title }}</b>{% if i.what or i.why %}<span> — {{ i.what or i.why }}</span>{% endif %}</li>{% endif %}
+    {% set ns.prev = i.title %}
     {% endfor %}
     {% if ns.open %}</ul>{% endif %}
   </div>
-  <p class="foot">Homestead Library · Binder {{ loop.index }}</p>
+  <p class="foot">Homestead Library · Binder {{ loop.index }} · page {{ loop.index }} of {{ binders|length }}</p>
 </section>
 {% endfor %}
 <script>

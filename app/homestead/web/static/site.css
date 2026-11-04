@@ -271,7 +271,6 @@ ul.binder .what small.again-note, .again-word { color: var(--amber); font-weight
   .btools .grow { display: none; }
 }
 
-@page cover { margin: .5in; }
 
 @media print {
   header.top, footer.bottom, .mapui, .noprint, .readbar { display: none !important; }
@@ -281,7 +280,8 @@ ul.binder .what small.again-note, .again-word { color: var(--amber); font-weight
   .printonly { display: block; }
 
   /* The binder covers: one page each, for the binder's front sleeve. */
-  .cover { page: cover; break-before: page; min-height: 9.4in; display: flex; flex-direction: column; color: #000; }
+  .cover { break-after: page; min-height: 9.4in; display: flex; flex-direction: column; color: #000; }
+  .cover:last-of-type { break-after: auto; }
   .cover .band { display: flex; align-items: center; gap: 18pt; padding: 22pt 26pt; border: 1.5pt solid #000;
     -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .cover .band.ink-light { color: #fff; } .cover .band.ink-dark { color: #000; }
@@ -295,5 +295,10 @@ ul.binder .what small.again-note, .again-word { color: var(--amber); font-weight
   .cover ul { list-style: none; margin: 0; padding: 0; }
   .cover li { padding: 2pt 0 2pt 10pt; text-indent: -10pt; }
   .cover li span { color: #333; }
+  .cover li.more { padding-left: 24pt; }
+  .cover.long .band { padding: 14pt 22pt; } .cover.long .num { font-size: 42pt; } .cover.long .band h1 { font-size: 24pt; }
+  .cover.long .about { font-size: 12.5pt; margin: 10pt 0 4pt; }
+  .cover.long .contents { font-size: 9.5pt; line-height: 1.22; }
+  .cover.long h2 { font-size: 10.5pt; margin: 8pt 0 2pt; } .cover.long li { padding: 1pt 0 1pt 10pt; } .cover.long li.more { padding-left: 24pt; }
   .cover .foot { margin: auto 0 0; padding-top: 10pt; font-size: 9pt; color: #555; }
 }
