@@ -657,13 +657,14 @@ phone_apps:
   - { title: "MeshCore companion app (Android)", where: "meshcore.co.uk" }
   - { title: "F-Droid (Android app store; for further offline APKs)", where: "f-droid.org" }
 
-# The printed binders: what to keep on paper if this computer fails. Half-inch ring binders, each about
-# 100 sheets (200 pages printed on both sides), similar things together. The website's Binder page lists
+# The printed binders: what to keep on paper if this computer fails. 1-inch ring binders, each up to about
+# 250 sheets (500 pages printed on both sides), similar things together. The website's Binder page lists
 # them in order and links each entry to the print form with these chapters or pages already picked.
 #   binder:   one binder: its name, colour (for the spine label) and contents
 #   group:    the shelf it goes with ("Emergency medical", ...): on the website, binders of one group sit under one heading
 #   note:     what's in it, for its cover; how: how to print it (shown on the website, not the cover)
 #   section:  a tab divider inside the binder, before this entry and those after it
+#   sub:      a heading under that tab, before this entry and those after it (until the next section)
 #   doc:      a document's title, as in the topics above
 #   chapters: for a book printed chapter by chapter, which ones (as the website labels them: "Chapter 10", "Guide 1", ...)
 #   pages:    which pages, like "57-106" or "21-25, 65-70" (counted through the chapters picked, for a book)
@@ -707,50 +708,41 @@ binders:
         pages: "113-115"
         what: "Cold-weather tips and first aid for frostbite and hypothermia"
 
-  - binder: "Sickness and medicines"
+  - binder: "Sickness, family health and coping"
     group: "Long-term medical"
     color: "red"
-    note: "Finding out what's wrong, the common sicknesses, and every common medicine with its doses."
+    note: "Finding out what's wrong, the common sicknesses and every common medicine with its doses; having a baby, a seriously sick child, toothache; and helping people through stress, shock and grief, children of every age."
     items:
       - doc: "Where There Is No Doctor (Hesperian)"
-        section: "Sickness"
+        section: "Sickness and medicines"
+        sub: "Sickness"
         chapters: ["Chapter 3", "Chapter 10", "Chapter 13"]
         what: "Examining a sick person, first aid, the most common sicknesses (dehydration, fever, diarrhea, worms)"
         first: true
       - doc: "Where There Is No Doctor (Hesperian)"
-        section: "Medicines"
+        sub: "Medicines"
         chapters: ["Chapter 8", "Chapter 23", "Medicines pages"]
         what: "Measuring and giving medicine, the home medicine kit, and the Green Pages: every common medicine with its doses"
         first: true
-
-  - binder: "Childbirth, children and teeth"
-    group: "Long-term medical"
-    color: "red"
-    note: "Family health: having a baby, a seriously sick child, toothache."
-    items:
       - doc: "Where There Is No Doctor (Hesperian)"
-        section: "Childbirth"
+        section: "Childbirth, children and teeth"
+        sub: "Childbirth"
         chapters: ["Chapter 19"]
         what: "Pregnancy and childbirth for whoever has to help"
       - doc: "WHO Managing Complications in Pregnancy and Childbirth (2017)"
         pages: "173-192"
         what: "Heavy bleeding after childbirth, the most common way a birth goes wrong"
       - doc: "Pocket Book of Hospital Care for Children (WHO, 2005)"
-        section: "Children"
+        sub: "Children"
         pages: "21-56, 129-152"
         what: "A seriously sick child: emergency signs and what to do (chapter 1); diarrhea and dehydration (chapter 5)"
       - doc: "Where There Is No Dentist (Hesperian)"
-        section: "Teeth"
+        sub: "Teeth"
         chapters: ["Chapter 7", "Chapter 11"]
         what: "Toothache, abscesses and other common problems; taking out a tooth"
-
-  - binder: "Stress and coping"
-    group: "Long-term medical"
-    color: "red"
-    note: "Helping people through it: stress, shock and grief, and children of every age."
-    items:
       - doc: "Tips for Survivors of a Disaster: Managing Stress (SAMHSA)"
-        section: "Stress"
+        section: "Stress and coping"
+        sub: "Stress"
         first: true
       - doc: "Psychological First Aid: Guide for Field Workers (WHO, 2011)"
         pages: "20-43"
@@ -760,7 +752,7 @@ binders:
         what: "Stress and grounding: the first part of WHO's illustrated self-help guide"
         color: true
       - doc: "Parent Tips: Infants and Toddlers after Disasters (NCTSN)"
-        section: "Children"
+        sub: "Children"
         first: true
       - doc: "Parent Tips: Preschool-Age Children after Disasters (NCTSN)"
         first: true

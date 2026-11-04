@@ -40,7 +40,7 @@
     <span class="bstate"><span class="prog"></span><span class="again-count" hidden></span><span class="chev" aria-hidden="true"></span></span>
   </summary>
   <div class="bbody">
-  {% if b.full %}<p class="bnote bad">More than a half-inch binder holds: use a 1-inch binder, or split it.</p>{% endif %}
+  {% if b.full %}<p class="bnote bad">More than a 1-inch binder holds (about {{ holds }} sheets): split it.</p>{% endif %}
   {% if b.note or b.how %}<p class="bnote">{{ b.note }}{% if b.how %} <span class="meta">{{ b.how }}</span>{% endif %}</p>{% endif %}
   <ul class="binder">
     {% set ns = namespace(section=none, sub=none) %}

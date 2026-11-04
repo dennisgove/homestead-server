@@ -230,7 +230,7 @@ def everything() -> list[dict]:
 
 # --- the binder: what to keep on paper ------------------------------------------------
 
-HOLDS = 100        # sheets a half-inch ring binder takes
+HOLDS = 250        # sheets a 1-inch ring binder takes
 
 
 def binders(covers: bool = False) -> list[dict]:
@@ -245,14 +245,16 @@ def binders(covers: bool = False) -> list[dict]:
     by_title = {it.title: it for it in library.items() if it.kind in ("pdf", "epub", "book")}
     listed, out = set(), []
     for b in library.raw_list().get("binders") or []:
-        items, section = [], ""
+        items, section, sub = [], "", ""
         for e in b.get("items") or []:
-            section = e.get("section", section)
-            if e.get("folder"):
+            if "section" in e:                     # a new tab: its sub-headings start again
+                section, sub = e["section"], ""
+            sub = e.get("sub", sub)
+            if e.get("folder"):                    # a folder's files go under its own subfolders' headings
                 items += [r | {"section": section} for r in _folder_items(e)]
             else:
                 listed.add(e.get("doc"))
-                items.append(_entry(e, by_title.get(e.get("doc"))) | {"section": section})
+                items.append(_entry(e, by_title.get(e.get("doc"))) | {"section": section, "sub": sub})
         out.append(_totals({"binder": b.get("binder", ""), "group": b.get("group", ""), "color": b.get("color", ""),
                             "note": b.get("note", ""), "how": b.get("how", ""), "items": items}))
     extra = [_entry({"doc": it.title}, it) | {"section": ""} for it in library.items() if it.print and it.title not in listed]

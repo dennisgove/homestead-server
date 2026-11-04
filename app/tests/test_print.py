@@ -145,7 +145,7 @@ binders:
     how: Print it double-sided.
     items:
       - { doc: Field Doctor, section: Injuries, chapters: ["Chapter 2", "Glossary"], what: Bones and words, first: true }
-      - { doc: Stop the Bleed, pages: "1", color: true }
+      - { doc: Stop the Bleed, sub: Bleeding, pages: "1", color: true }
       - { doc: Not In The List, section: Other }
   - binder: Maps
     color: orange
@@ -173,7 +173,7 @@ def test_the_binder(indexed, cups):
     covers_dir.mkdir(parents=True)
     page = c.get("/binder").text
     assert '<h2><span class="bnum">1</span> First aid</h2>' in page and "red label" in page and "Emergencies first." in page and "Bones and words" in page
-    assert "<h3>Injuries</h3>" in page and "<h3>Other</h3>" in page and "<h3>And a guide</h3>" in page
+    assert "<h3>Bleeding</h3>" in page and "<h3>Injuries</h3>" in page and "<h3>Other</h3>" in page and "<h3>And a guide</h3>" in page
     assert "Not in the library list" in page and "Also marked for printing" not in page    # Field Doctor is listed
     assert "Area 1 - Our Town" in page and "Route A - Highways" in page and "<h3>Routes</h3>" in page    # names keep their capitals
     assert "Full-size sheet" in page
@@ -198,6 +198,7 @@ def test_the_binder(indexed, cups):
     med, maps_b = printing.binders()
     fd, bleed, missing = med["items"]
     assert fd["pages"] == 2 and fd["first"] and bleed["pages"] == 1 and bleed["color"] and missing["problem"]
+    assert (fd["sub"], bleed["sub"], missing["sub"]) == ("", "Bleeding", "")     # a heading under the tab, until the next tab
     assert med["pages"] == 3 and med["sheets"] == 2 and med["first_pages"] == 2 and not med["full"]
     assert maps_b["pages"] == 2 and maps_b["sheets"] == 2       # the full-size sheet isn't counted; each map its own sheet
     assert [i["first"] for i in maps_b["items"]] == [True, False, False, False]
