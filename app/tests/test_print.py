@@ -172,24 +172,25 @@ def test_the_binder(indexed, cups):
     covers_dir = indexed["core"] / "docs" / "reference" / "binder-covers"
     covers_dir.mkdir(parents=True)
     page = c.get("/binder").text
-    assert '<h2><span class="bnum">1</span> First aid</h2>' in page and "red label" in page and "Emergencies first." in page and "Bones and words" in page
+    assert '<h2>First aid</h2>' in page and "red label" in page and "Emergencies first." in page and "Bones and words" in page
     assert "<h3>Bleeding</h3>" in page and "<h3>Injuries</h3>" in page and "<h3>Other</h3>" in page and "<h3>And a guide</h3>" in page
     assert "Not in the library list" in page and "Also marked for printing" not in page    # Field Doctor is listed
     assert "Area 1 - Our Town" in page and "Route A - Highways" in page and "<h3>Routes</h3>" in page    # names keep their capitals
     assert "Full-size sheet" in page
-    assert sorted(f.name for f in covers_dir.glob("*.pdf")) == ["Binder 1 cover.pdf", "Binder 2 cover.pdf"]
-    for n, binder in enumerate(page.split('<details class="bgroup')[1:], 1):     # each binder's list starts with its cover
+    assert sorted(f.name for f in covers_dir.glob("*.pdf")) == ["First aid cover.pdf", "Maps cover.pdf"]
+    for name, binder in zip(["First%20aid", "Maps"], page.split('<details class="bgroup')[1:]):     # each binder's list starts with its cover
         first = binder[binder.index('<li class="item'):]
-        assert first.startswith('<li class="item cover"') and f"binder-covers/Binder%20{n}%20cover.pdf" in first.split("</li>")[0]
-    one = texts((covers_dir / "Binder 1 cover.pdf").read_bytes())    # a cover: what's in it, not how to print
+        assert first.startswith('<li class="item cover"') and f"binder-covers/{name}%20cover.pdf" in first.split("</li>")[0]
+    assert 'class="bnum"' not in page and 'class="n"' not in page                  # binders aren't numbered
+    one = texts((covers_dir / "First aid cover.pdf").read_bytes())    # a cover: what's in it, not how to print
     assert len(one) == 1 and "FIRST AID" in one[0] and "Emergencies first." in one[0] and "Bones and words" in one[0]
-    assert "INJURIES" in one[0].upper() and "Binder 1 cover · page 1 of 1" in one[0]
-    two = texts((covers_dir / "Binder 2 cover.pdf").read_bytes())[0]
+    assert "INJURIES" in one[0].upper() and "First aid cover · page 1 of 1" in one[0] and "Binder 1" not in one[0]
+    two = texts((covers_dir / "Maps cover.pdf").read_bytes())[0]
     assert "ROUTES" in two.upper() and "Print it double-sided." in page and "Print it double-sided." not in one[0] + two
     assert " p." not in one[0] and "★" not in page and "first round" not in page.lower()
-    made = (covers_dir / "Binder 1 cover.pdf").stat().st_mtime_ns
+    made = (covers_dir / "First aid cover.pdf").stat().st_mtime_ns
     c.get("/binder")
-    assert (covers_dir / "Binder 1 cover.pdf").stat().st_mtime_ns == made        # unchanged: not made again
+    assert (covers_dir / "First aid cover.pdf").stat().st_mtime_ns == made        # unchanged: not made again
     assert "binder-covers" not in c.get("/print").text                          # not on the Print page's list
     assert '<h2 class="bshelf">Emergency medical</h2>' in page and '<h2 class="bshelf">Other binders</h2>' in page
     assert "EMERGENCY MEDICAL" in one[0]                                   # the shelf it's on, on the cover

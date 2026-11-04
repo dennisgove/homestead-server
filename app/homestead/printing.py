@@ -265,9 +265,9 @@ def binders(covers: bool = False) -> list[dict]:
     if covers:
         from . import covers as cv
         cv.make(out)
-        for n, b in enumerate(out, 1):
+        for b in out:
             if cv.wanted(b):
-                b["items"].insert(0, _cover_row(cv.rel(n)))
+                b["items"].insert(0, _cover_row(cv.rel(b)))
                 _when_printed(b["items"][:1])
                 _totals(b)
     return out
@@ -278,7 +278,7 @@ def _cover_row(rel: str) -> dict:
     path = documents.file_for(rel)
     here = path is not None and path.is_file()
     url, pdf_url = _links(rel, [], "", True)
-    return {"title": "Cover", "what": "The front sleeve: the binder's number, colour and what's in it", "why": "", "how": "",
+    return {"title": "Cover", "what": "The front sleeve: the binder's name, colour and what's in it", "why": "", "how": "",
             "first": False, "color": True, "section": "", "sub": "", "pages": 1 if here else 0, "sheets": 1 if here else 0,
             "url": url, "pdf_url": pdf_url, "read_url": "/read/" + settings.url_path(rel) if here else "", "rel": rel,
             "parts": [], "range": "", "large": False, "problem": "" if here else "Not made yet.",

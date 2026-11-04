@@ -22,7 +22,7 @@
 <nav class="bnav" aria-label="The binders"><div class="tiles">
   {% for b in binders %}
   <a class="tile c-{{ b.color or 'white' }}" href="#binder-{{ loop.index }}" data-n="{{ loop.index }}">
-    <span class="tile-name"><span class="n">{{ loop.index }}</span> {{ b.binder }}</span>
+    <span class="tile-name">{{ b.binder }}</span>
     <span class="tile-meta">{% if b.sheets %}{{ b.sheets }} sheets{% else %}full-size sheets{% endif %} <span class="again-count" hidden></span></span>
     <span class="bar"><i></i></span><span class="prog"></span>
   </a>
@@ -35,7 +35,7 @@
 {% if b.group != gs.group or loop.first %}<h2 class="bshelf">{{ b.group or "Other binders" }}</h2>{% set gs.group = b.group %}{% endif %}
 <details class="bgroup c-{{ b.color or 'white' }}" id="binder-{{ loop.index }}" data-n="{{ loop.index }}" open>
   <summary>
-    <span class="btitle"><h2><span class="bnum">{{ loop.index }}</span> {{ b.binder }}</h2>
+    <span class="btitle"><h2>{{ b.binder }}</h2>
       <span class="bmeta">{% if b.sheets %}{{ b.sheets }} sheets · {{ '{:,}'.format(b.pages) }} pages{% else %}full-size sheets, not for a binder{% endif %}{% if b.color %} · {{ b.color }} label{% endif %}</span></span>
     <span class="bstate"><span class="prog"></span><span class="again-count" hidden></span><span class="chev" aria-hidden="true"></span></span>
   </summary>

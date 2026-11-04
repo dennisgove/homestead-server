@@ -8,6 +8,7 @@ import hashlib
 import html
 import json
 import os
+import re
 from pathlib import Path
 
 from . import settings
@@ -24,12 +25,13 @@ EXTRA = """
 """
 
 
-def name(n: int) -> str:
-    return f"Binder {n} cover.pdf"
+def name(b: dict) -> str:
+    """The cover's file, named for its binder ("Maps: routes" makes "Maps - routes cover.pdf")."""
+    return re.sub(r'\s*[\\/:*?"<>|]+\s*', " - ", b.get("binder", "")).strip(" -") + " cover.pdf"
 
 
-def rel(n: int) -> str:
-    return f"{FOLDER}/{name(n)}"
+def rel(b: dict) -> str:
+    return f"{FOLDER}/{name(b)}"
 
 
 def wanted(b: dict) -> bool:
@@ -65,13 +67,13 @@ def make(binders: list[dict], log=lambda m: None) -> list[str]:
     except (OSError, ValueError):
         stamps = {}
     new, made = {}, []
-    for n, b in enumerate(binders, 1):
+    for b in binders:
         if not wanted(b):
             continue
-        page = PAGE.format(title=html.escape(f"Binder {n} cover"),
-                           body=env.get_template("binder_cover.html").render(b=b, n=n))
+        page = PAGE.format(title=html.escape(name(b).removesuffix(".pdf")),
+                           body=env.get_template("binder_cover.html").render(b=b))
         digest = hashlib.sha256((css + page).encode()).hexdigest()
-        pdf = out / name(n)
+        pdf = out / name(b)
         new[pdf.name] = digest
         if stamps.get(pdf.name) == digest and pdf.is_file():
             continue
@@ -87,7 +89,7 @@ def make(binders: list[dict], log=lambda m: None) -> list[str]:
             tmp.unlink(missing_ok=True)
             log(f"couldn't make {pdf.name}: {e}")
             new[pdf.name] = stamps.get(pdf.name, "")
-    for f in out.glob("Binder * cover.pdf"):        # binders that aren't there any more
+    for f in out.glob("*.pdf"):                     # binders that aren't there any more (the folder is only covers)
         if f.name not in new:
             f.unlink(missing_ok=True)
     stamp_file.write_text(json.dumps(new, indent=1))

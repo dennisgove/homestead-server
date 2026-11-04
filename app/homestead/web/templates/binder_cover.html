@@ -1,8 +1,8 @@
 {# One binder's cover: a page for its clear front sleeve, saying what's in it (nothing about printing).
-   Made into a PDF by covers.py; b is the binder, n its number. #}
+   Made into a PDF by covers.py; b is the binder. #}
 <section class="cover printonly{{ ' long' if b['items']|length > 14 }}">
   <div class="band spine-{{ b.color or 'white' }} ink-{{ 'dark' if b.color in ('white', 'yellow', '') else 'light' }}">
-    <span class="num">{{ n }}</span><div>{% if b.group %}<p class="kind">{{ b.group }}</p>{% endif %}<h1>{{ b.binder }}</h1></div>
+    <div>{% if b.group %}<p class="kind">{{ b.group }}</p>{% endif %}<h1>{{ b.binder }}</h1></div>
   </div>
   {% if b.note %}<p class="about">{{ b.note }}</p>{% endif %}
   <div class="contents">
@@ -21,5 +21,5 @@
     {% endfor %}
     {% if ns.open %}</ul>{% endif %}
   </div>
-  <p class="foot">Homestead Library · Binder {{ n }} cover · page 1 of 1</p>
+  <p class="foot">{{ b.binder }} cover · page 1 of 1</p>
 </section>
