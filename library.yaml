@@ -190,14 +190,12 @@ topics:
       - pdf: "https://www.weather.gov/media/ilx/Hydro/FSAW/family-communication-plan_fillable-card.pdf"
         title: "Family Emergency Communication Plan, fill-in card (FEMA P-1095)"
         essential: true
-        print: true
       - pdf: "https://www.ready.gov/sites/default/files/2020-03/ready_emergency-financial-first-aid-toolkit.pdf"
         title: "Emergency Financial First Aid Kit (FEMA P-2063)"
         essential: true
       - pdf: "https://www.ready.gov/sites/default/files/2020-03/ready_emergency-financial-first-aid-toolkit-checklists-and-forms.pdf"
         title: "Emergency Financial First Aid Kit: checklists and forms (FEMA P-2063)"
         essential: true
-        print: true
 
   water:
     name: "Water & sanitation"
@@ -531,7 +529,6 @@ topics:
       - pdf: "https://training.fema.gov/emiweb/is/icsresource/assets/nims%20ics%20forms%20booklet.v3.pdf"
         title: "NIMS ICS Forms Booklet incl. ICS-213/214 (FEMA 502-2)"
         essential: true
-        print: true
       - pdf: "https://www.cisa.gov/sites/default/files/2024-12/NIFOG%202.02_508%20FINAL%20VERSION%2012%2003%202024.pdf"
         title: "NIFOG: National Interoperability Field Operations Guide, v2.02 (CISA, 2024)"
         essential: true
@@ -847,35 +844,17 @@ binders:
       - doc: "Defensible space around your home against wildfire (FEMA)"
         color: true
 
-  - binder: "Comms"
-    color: "purple"
-    note: "Keeping in touch: the family's communication plan and papers, the radio bands, and message forms."
-    items:
-      - doc: "Family Emergency Communication Plan, fill-in card (FEMA P-1095)"
-        section: "Family plan and papers"
-        what: "Fill it in by hand and keep a copy in every bag"
-        color: true
-        first: true
-      - doc: "Emergency Financial First Aid Kit: checklists and forms (FEMA P-2063)"
-        pages: "4-21"
-        what: "Fill-in forms: IDs, accounts, insurance, medical information, contacts"
-        first: true
-      - doc: "ARRL US Amateur Radio Bands chart"
-        section: "Radio"
-        color: true
-        first: true
-      - doc: "NIMS ICS Forms Booklet incl. ICS-213/214 (FEMA 502-2)"
-        pages: "21-25, 65-70"
-        what: "Blank forms: radio communications plan (205, 205A), general message (213), activity log (214)"
-        first: true
-
   - binder: "Radio how-to"
     color: "purple"
     note: "Using the radios: which radio and band for what, the frequencies, how to talk on the air, building antennas, and passing messages."
     how: "Pages from the CISA and DHS field guides, the ARRL ARES manual and the Army's tactical radio manual, plus this server's radio guide."
     items:
-      - doc: "NIFOG: National Interoperability Field Operations Guide, v2.02 (CISA, 2024)"
+      - doc: "ARRL US Amateur Radio Bands chart"
         section: "Radios and frequencies"
+        what: "Every US ham band on one page, with what each license class may use"
+        color: true
+        first: true
+      - doc: "NIFOG: National Interoperability Field Operations Guide, v2.02 (CISA, 2024)"
         pages: "120-123"
         what: "FRS, GMRS, MURS and CB channels: the radios that need no license or a simple one"
         first: true

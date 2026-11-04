@@ -2,7 +2,7 @@
 
 The computer can fail. Print these and keep them in a binder next to it, with colored tabs. Reprint after changes.
 
-The website's **Binder** page (`/binder`, linked from **Print**) is the full list to print: twelve half-inch binders of similar things (about 100 sheets each), the medical ones under Emergency medical and Long-term medical, with the right chapters and pages already picked and every map in `family/maps`. It comes from the `binders:` section of `library.yaml`. Its **Print a cover for each binder** button prints one cover page per binder, for the clear front sleeve: the binder's number, colour, what it's for and what's in it. This file covers what the list can't: encyclopedia articles and things kept in the vault. The repo's own guides (this one included) are the list's "This server" binder, except the two radio guides, which are in "Radio how-to".
+The website's **Binder** page (`/binder`, linked from **Print**) is the full list to print: eleven half-inch binders of similar things (about 100 sheets each), the medical ones under Emergency medical and Long-term medical, with the right chapters and pages already picked and every map in `family/maps`. It comes from the `binders:` section of `library.yaml`. Its **Print a cover for each binder** button prints one cover page per binder, for the clear front sleeve: the binder's number, colour, what it's for and what's in it. This file covers what the list can't: encyclopedia articles and things kept in the vault. The repo's own guides (this one included) are the list's "This server" binder, except the two radio guides, which are in "Radio how-to".
 
 The links work from any browser on the home network or the hotspot (on the hotspot, `library.lan` works in place of `homestead.local`). There are two kinds of source:
 
@@ -87,17 +87,14 @@ Sickness and medicines, childbirth, children and teeth, and stress and coping.
 | County topo maps (get by hand: ngmdb.usgs.gov/topoview) | http://homestead.local/t/survival | `/srv/core/docs/survival/` |
 | Household watch roster, rally points | your plan; keep it in the vault: http://homestead.local:7092 | vault (Paperless) |
 
-## PURPLE: COMMS
+## PURPLE: RADIO HOW-TO
+
+The Binder page's Radio how-to list has the band chart, the frequency, operating, antenna and message pages, and the radio guides. Add by hand:
 
 | Item | Link | On disk |
 |---|---|---|
-| Family emergency communication plan (fill in by hand) | http://homestead.local/read/mind/family-emergency-communication-plan-fill-in-card-fema-p-1095.pdf | `/srv/core/docs/mind/family-emergency-communication-plan-fill-in-card-fema-p-1095.pdf` |
-| Financial and legal papers checklist (fill in by hand) | http://homestead.local/read/mind/emergency-financial-first-aid-kit-checklists-and-forms-fema-p-2063.pdf | `/srv/core/docs/mind/emergency-financial-first-aid-kit-checklists-and-forms-fema-p-2063.pdf` |
-| Comms guide (MeshCore channels, Winlink, NOAA) | print `COMMS.md` (see below) | `/opt/homestead/repo/docs/COMMS.md` |
-| US amateur radio band chart (ARRL) | http://homestead.local/read/comms/arrl-us-amateur-radio-bands-chart.pdf | `/srv/core/docs/comms/arrl-us-amateur-radio-bands-chart.pdf` |
-| ICS-213 / ICS-214 and other ICS forms (FEMA booklet) | http://homestead.local/read/comms/nims-ics-forms-booklet-incl-ics-213-214-fema-502-2.pdf | `/srv/core/docs/comms/nims-ics-forms-booklet-incl-ics-213-214-fema-502-2.pdf` |
 | Local repeater list, ARES/RACES plan (get by hand: your county ARES, RepeaterBook) | http://homestead.local/t/comms | `/srv/core/docs/comms/` |
-| Family comms plan and frequencies | write it and keep it in the vault: http://homestead.local:7092 | vault (Paperless) |
+| Our frequencies and channels (family, neighbors, repeaters) | write it and keep it in the vault: http://homestead.local:7092 | vault (Paperless) |
 
 ## WHITE: THIS COMPUTER
 
