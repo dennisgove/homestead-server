@@ -169,7 +169,7 @@ def test_the_binder(indexed, cups):
     w.write(maps / "Quad.pdf")
     c = client()
     page = c.get("/binder").text
-    assert "1. First aid" in page and "red label" in page and "Emergencies first." in page and "Bones and words" in page
+    assert '<span class="bnum">1</span>' in page and "<h2>First aid</h2>" in page and "red label" in page and "Emergencies first." in page and "Bones and words" in page
     assert "<h3>Injuries</h3>" in page and "<h3>Other</h3>" in page and "<h3>And a guide</h3>" in page
     assert "Not in the library list" in page and "Also marked for printing" not in page    # Field Doctor is listed
     assert "Area 1 - Our Town" in page and "Route A - Highways" in page and "<h3>Routes</h3>" in page    # names keep their capitals
@@ -179,7 +179,8 @@ def test_the_binder(indexed, cups):
     assert "<h2>Injuries</h2>" in cover and "Bones and words" in cover and "<h3>Routes</h3>" in cover
     assert "Print it double-sided." in page and "Print it double-sided." not in cover and "Full-size sheet" not in cover
     assert " p." not in cover and "★" not in cover
-    assert '<h2 class="shelf noprint">Emergency medical</h2>' in page and '<h2 class="shelf noprint">Other binders</h2>' in page
+    assert '<h2 class="bshelf">Emergency medical</h2>' in page and '<h2 class="bshelf">Other binders</h2>' in page
+    assert '<p class="bnav-shelf">Emergency medical</p>' in page
     assert '<p class="kind">Emergency medical</p>' in cover
     assert page.index("Area 1 - Our Town") < page.index("Quad") < page.index("Route A")      # loose files first, then subfolders
     from homestead import printing
@@ -191,8 +192,8 @@ def test_the_binder(indexed, cups):
     assert [i["first"] for i in maps_b["items"]] == [True, False, False, False]
     assert [i["section"] for i in med["items"]] == ["Injuries", "Injuries", "Other"]
 
-    assert '<nav class="bnav noprint"' in page and 'href="#binder-1"' in page and 'href="#binder-2"' in page   # quick links
-    assert '<details class="bgroup noprint" id="binder-1" data-n="1" open>' in page                          # collapsible
+    assert '<nav class="bnav"' in page and 'href="#binder-1"' in page and 'href="#binder-2"' in page   # quick links
+    assert '<details class="bgroup" id="binder-1" data-n="1" open>' in page                          # collapsible
     assert f'data-version="{fd["version"]}"' in page and "Changed since you printed it" in page
     area = maps_b["items"][0]
     assert fd["version"] and area["version"] and fd["version"] != area["version"]
