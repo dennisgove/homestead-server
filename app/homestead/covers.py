@@ -21,6 +21,7 @@ PAGE = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><title>{titl
 
 
 EXTRA = ""
+FITS = ["", "long", "long tight"]       # the cover's sizes, largest first: the first that fits on one page is used
 
 
 def name(b: dict) -> str:
@@ -50,6 +51,27 @@ def print_css() -> str:
     return colours + "\n" + css[i + 1:] + EXTRA
 
 
+def outline(items: list[dict]) -> list[dict]:
+    """What the cover lists: under each tab and heading, one bullet per document, with what's in each part of it
+    as bullets under that (a document listed twice under one heading is one bullet).
+    [{section, sub, docs: [{title, parts: [what, ...]}]}]; section is "" when the tab is the one before."""
+    blocks, section = [], None
+    for i in items:
+        if not blocks or (i.get("section") or "", i.get("sub") or "") != (blocks[-1]["_section"], blocks[-1]["sub"]):
+            s = i.get("section") or ""
+            blocks.append({"section": s if s != section else "", "_section": s, "sub": i.get("sub") or "", "docs": []})
+            section = s
+        docs = blocks[-1]["docs"]
+        doc = next((d for d in docs if d["title"] == i["title"]), None)
+        if doc is None:
+            doc = {"title": i["title"], "parts": []}
+            docs.append(doc)
+        part = i.get("what") or i.get("why")
+        if part and part not in doc["parts"]:
+            doc["parts"].append(part)
+    return blocks
+
+
 def make(binders: list[dict], log=lambda m: None) -> list[str]:
     """Bring the covers up to date with the binder list; returns the names made. Quietly does nothing
     if the folder isn't there or can't be written (the rows then say the cover isn't made yet)."""
@@ -68,9 +90,10 @@ def make(binders: list[dict], log=lambda m: None) -> list[str]:
     for b in binders:
         if not wanted(b):
             continue
-        page = PAGE.format(title=html.escape(name(b).removesuffix(".pdf")),
-                           body=env.get_template("binder_cover.html").render(b=b))
-        digest = hashlib.sha256((css + page).encode()).hexdigest()
+        def page(fit=""):
+            return PAGE.format(title=html.escape(name(b).removesuffix(".pdf")),
+                               body=env.get_template("binder_cover.html").render(b=b, blocks=outline(b["items"]), fit=fit))
+        digest = hashlib.sha256((css + page()).encode()).hexdigest()
         pdf = out / name(b)
         new[pdf.name] = digest
         if stamps.get(pdf.name) == digest and pdf.is_file():
@@ -78,7 +101,11 @@ def make(binders: list[dict], log=lambda m: None) -> list[str]:
         import weasyprint
         tmp = out / f".{pdf.name}.{os.getpid()}.part"
         try:
-            weasyprint.HTML(string=page, base_url=str(WEB)).write_pdf(tmp, stylesheets=[weasyprint.CSS(string=css)])
+            for fit in FITS:                        # as large as fits on one page
+                doc = weasyprint.HTML(string=page(fit), base_url=str(WEB)).render(stylesheets=[weasyprint.CSS(string=css)])
+                if len(doc.pages) == 1:
+                    break
+            doc.write_pdf(tmp)
             tmp.chmod(0o644)
             tmp.replace(pdf)
             made.append(pdf.name)

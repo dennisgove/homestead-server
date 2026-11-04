@@ -306,3 +306,16 @@ def test_print_again(indexed, cups, monkeypatch):
     assert f"{bleed['rel']}||1" in log and log["_since"] > 3_000_000
     assert printing.binders()[0]["items"][1]["printed_at"] >= log["_since"]
     assert area_row()["printed_at"] == 2_000_000                            # the history from before still counts
+
+
+def test_cover_outline():
+    """A cover lists one bullet per document under each heading, with what's in each part under it."""
+    from homestead.covers import outline
+    rows = [{"title": "A", "what": "one", "section": "Tab", "sub": "Head"},
+            {"title": "B", "what": "", "section": "Tab", "sub": "Head"},
+            {"title": "A", "what": "two", "section": "Tab", "sub": "Head"},
+            {"title": "A", "what": "three", "section": "Tab", "sub": "Other"}]
+    blocks = outline(rows)
+    assert [(k["section"], k["sub"]) for k in blocks] == [("Tab", "Head"), ("", "Other")]   # the tab named once
+    assert blocks[0]["docs"] == [{"title": "A", "parts": ["one", "two"]}, {"title": "B", "parts": []}]
+    assert blocks[1]["docs"] == [{"title": "A", "parts": ["three"]}]

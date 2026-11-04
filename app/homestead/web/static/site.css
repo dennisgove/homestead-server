@@ -295,12 +295,16 @@ ul.binder .what small.again-note, .again-word { color: var(--amber); font-weight
   .cover .contents { font-size: 10.5pt; line-height: 1.3; }
   .cover h2 { font-size: 12pt; text-transform: uppercase; letter-spacing: .06em; margin: 12pt 0 3pt; padding-bottom: 2pt; border-bottom: 1pt solid #000; }
   .cover h3 { font-size: 11pt; margin: 8pt 0 2pt; }
-  .cover ul { list-style: none; margin: 0; padding: 0; }
-  .cover li { padding: 2pt 0 2pt 10pt; text-indent: -10pt; }
-  .cover li span { color: #333; }
-  .cover li.more { padding-left: 24pt; }
+  .cover ul { list-style: disc; margin: 0; padding: 0 0 0 14pt; }
+  .cover li { padding: 1.5pt 0; }
+  .cover li ul { list-style: circle; padding-left: 16pt; }
+  .cover li li { color: #333; padding: .5pt 0; }
   .cover.long .band { padding: 14pt 22pt; } .cover.long .band h1 { font-size: 24pt; }
   .cover.long .about { font-size: 12.5pt; margin: 10pt 0 4pt; }
   .cover.long .contents { font-size: 9.5pt; line-height: 1.22; }
-  .cover.long h2 { font-size: 10.5pt; margin: 8pt 0 2pt; } .cover.long li { padding: 1pt 0 1pt 10pt; } .cover.long li.more { padding-left: 24pt; }
+  .cover.long h2 { font-size: 10.5pt; margin: 8pt 0 2pt; } .cover.long li { padding: 1pt 0; } .cover.long li li { padding: 0; }
+  .cover.tight .band { padding: 10pt 18pt; } .cover.tight .band h1 { font-size: 20pt; } .cover.tight .kind { font-size: 11pt; }
+  .cover.tight .about { font-size: 11pt; line-height: 1.25; margin: 8pt 0 2pt; }
+  .cover.tight .contents { font-size: 8.5pt; line-height: 1.15; }
+  .cover.tight h2 { font-size: 9.5pt; margin: 6pt 0 1pt; } .cover.tight h3 { font-size: 9pt; margin: 4pt 0 1pt; }
 }
