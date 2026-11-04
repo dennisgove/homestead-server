@@ -102,7 +102,7 @@
     - "{{ core_dir }}/maps"
     - "{{ core_dir }}/share"
 
-- name: The binder covers' folder, which the website keeps up to date (it runs as homestead)
+- name: Folders the website writes to (it runs as homestead) - the binder covers and the record of what was printed
   ansible.builtin.file:
     path: "{{ item.path }}"
     state: directory
@@ -112,6 +112,7 @@
   loop:
     - { path: "{{ core_dir }}/docs/reference", owner: root }
     - { path: "{{ core_dir }}/docs/reference/binder-covers", owner: homestead }
+    - { path: "{{ library_state }}/printed", owner: homestead }
 
 - name: The server's guides (the repo's docs/) as PDFs, for the website and the binder
   ansible.builtin.command: /usr/local/bin/homestead guides

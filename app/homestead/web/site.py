@@ -312,7 +312,7 @@ def binder_page(request: Request):
     return page(request, "binder.html", binders=bs, printer=printer,
                 pages=sum(b["pages"] for b in bs), sheets=sum(b["sheets"] for b in bs),
                 first_pages=sum(b["first_pages"] for b in bs), holds=printing.HOLDS, in_binders=sum(1 for b in bs if b["sheets"]),
-                wifi_sign=(settings.path("share") / "print" / "wifi-sign.html").is_file())
+                wifi_sign=(settings.path("share") / "print" / "wifi-sign.html").is_file(), now=int(time.time()))
 
 
 def print_target(rel: str) -> dict:
@@ -378,6 +378,7 @@ async def print_send(request: Request, rel: str):
         chosen, rs, n = printing.choose(t, form["chosen"], form["pages"])
         await run_in_threadpool(printing.send, t, chosen, rs, form["printer"], form["copies"],
                                 form["two_sided"], form["color"])
+        printing.record(t, chosen, form["pages"])     # so the Binder page knows when it was printed
     except ValueError as e:
         if quick:
             return JSONResponse({"error": str(e)}, status_code=400)

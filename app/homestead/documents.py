@@ -430,6 +430,11 @@ def shelf(topic: str | None = None) -> list[dict]:
     return out
 
 
+def loose_title(stem: str) -> str:
+    """What a document copied in by hand is called (from its file name)."""
+    return re.sub(r"[_-]+", " ", stem).strip().capitalize()
+
+
 def loose(topic: str | None = None, hidden: bool = False) -> list[dict]:
     """Documents on disk that aren't in the library list (copied in by hand), so they still show.
     hidden=True includes the ones made only for printing (the binder covers)."""
@@ -445,6 +450,6 @@ def loose(topic: str | None = None, hidden: bool = False) -> list[dict]:
         r = rel(f)
         if r in owned or (topic and not r.startswith(topic + "/")) or (not hidden and r.startswith(HIDDEN)):
             continue
-        out.append({"title": re.sub(r"[_-]+", " ", f.stem).strip().capitalize(), "url": f"/read/{settings.url_path(r)}", "rel": r,
+        out.append({"title": loose_title(f.stem), "url": f"/read/{settings.url_path(r)}", "rel": r,
                     "size": f.stat().st_size, "topic": r.split("/", 1)[0]})
     return out

@@ -270,3 +270,37 @@ def test_print_forms_start_with_what_the_binder_recommends(indexed):
     assert 'name="pages" id="pages" value="1"' in form and 'value="color" checked' in form
     form = c.get("/print/family/our-plan.txt").text                # not in the binder: everything, as before
     assert "Picked for you" not in form
+
+
+def test_print_again(indexed, cups, monkeypatch):
+    """When each thing was last printed: the print system's history of finished jobs, then the website's own
+    record of each print it sends. A file newer than its last print is one to print again."""
+    import os
+    from conftest import make_pdf
+    from homestead import printing, settings
+    indexed["list"].write_text(indexed["list"].read_text() + BINDER)
+    maps = indexed["core"] / "docs" / "family" / "maps"
+    maps.mkdir(parents=True)
+    area = maps / "Area 1 - Our Town.pdf"
+    make_pdf(area, [(24, "Our Town")])
+    os.utime(area, (1_000_000, 1_000_000))                                   # made long ago
+    monkeypatch.setattr(printing, "cups_history", lambda: [("Area 1   our town", 2_000_000)])   # as lp named it
+
+    def area_row():
+        return next(i for i in printing.binders()[1]["items"] if i["title"] == "Area 1 - Our Town")
+    assert area_row()["printed_at"] == 2_000_000 and area_row()["mtime"] == 1_000_000      # printed since: up to date
+    os.utime(area, (3_000_000, 3_000_000))                                   # made again after it was printed
+    assert area_row()["mtime"] > area_row()["printed_at"]                    # so: print again
+    c = client()
+    assert 'data-changed="3000000" data-printed="2000000"' in c.get("/binder").text
+
+    settings.path("printed").parent.mkdir(parents=True)                     # the website's own record
+    bleed = printing.binders()[0]["items"][1]
+    assert bleed["printed_at"] == 0
+    r = c.post(bleed["url"].split("?")[0], data={"pages": bleed["range"], "printer": "Office_Laser_series", "copies": "1",
+                                                  "sides": "two", "color": "color", "quick": "1"})
+    assert r.status_code == 200
+    log = json.loads(settings.path("printed").read_text())
+    assert f"{bleed['rel']}||1" in log and log["_since"] > 3_000_000
+    assert printing.binders()[0]["items"][1]["printed_at"] >= log["_since"]
+    assert area_row()["printed_at"] == 2_000_000                            # the history from before still counts

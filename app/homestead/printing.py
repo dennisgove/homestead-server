@@ -4,10 +4,12 @@ Either straight to a printer the server can see (CUPS, the `lp` command), or as 
 to print from whatever phone or laptop is looking at the page.
 """
 import hashlib
+import json
 import os
 import re
 import subprocess
 import tempfile
+import time
 from functools import lru_cache
 from pathlib import Path
 from urllib.parse import urlencode
@@ -257,12 +259,14 @@ def binders(covers: bool = False) -> list[dict]:
     if extra:
         out.append(_totals({"binder": "Also marked for printing", "group": "", "color": "", "note": "",
                             "how": "Marked print: true in the library list.", "items": extra, "extra": True}))
+    _when_printed([i for b in out for i in b["items"]])
     if covers:
         from . import covers as cv
         cv.make(out)
         for n, b in enumerate(out, 1):
             if cv.wanted(b):
                 b["items"].insert(0, _cover_row(cv.rel(n)))
+                _when_printed(b["items"][:1])
                 _totals(b)
     return out
 
@@ -276,7 +280,8 @@ def _cover_row(rel: str) -> dict:
             "first": False, "color": True, "section": "", "sub": "", "pages": 1 if here else 0, "sheets": 1 if here else 0,
             "url": url, "pdf_url": pdf_url, "read_url": "/read/" + settings.url_path(rel) if here else "", "rel": rel,
             "parts": [], "range": "", "large": False, "problem": "" if here else "Not made yet.",
-            "version": _version([path]) if here else ""}
+            "version": _version([path]) if here else "", "mtime": _mtime([path]) if here else 0,
+            "job": documents.loose_title(Path(rel).stem)}
 
 
 def _totals(b: dict) -> dict:
@@ -301,6 +306,100 @@ def _version(paths) -> str:
     return h.hexdigest()[:12]
 
 
+def _mtime(paths) -> int:
+    """When the newest of an item's files last changed (made again, replaced, downloaded anew)."""
+    times = []
+    for p in paths:
+        try:
+            times.append(int(os.stat(p).st_mtime))
+        except (OSError, TypeError):
+            pass
+    return max(times, default=0)
+
+
+# --- what was printed, and when ---------------------------------------------------------------------
+# Every print sent from the website is written down (what, which chapters and pages, when), so the Binder page
+# can say "print again" when a file changed after it was printed, on any device. Prints from before this record
+# began come from the print system's own history of finished jobs, matched by the job's name.
+
+def _key(rel: str, parts: list[str], pages: str) -> str:
+    pages = re.sub(r"\s+", "", pages or "")
+    return f"{rel}|{','.join(sorted(parts))}|{pages}"
+
+
+def _printed_log() -> dict:
+    try:
+        return json.loads(settings.path("printed").read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def record(t: dict, chosen: list[dict], pages: str) -> None:
+    """Write down that this was just printed. Quietly does nothing if the record can't be written."""
+    f = settings.path("printed")
+    if not f.parent.is_dir() or not os.access(f.parent, os.W_OK):
+        return
+    log = _printed_log()
+    log.setdefault("_since", int(time.time()))           # prints before this come from the print system's history
+    parts = [] if len(chosen) == len(t["parts"]) else [x["rel"] for x in chosen]
+    log[_key(t["rel"], parts, pages)] = int(time.time())
+    tmp = f.with_name(f".{f.name}.{os.getpid()}")
+    tmp.write_text(json.dumps(log, indent=1))
+    tmp.replace(f)
+
+
+IPP_JOBS = """{
+  OPERATION Get-Jobs
+  GROUP operation-attributes-tag
+  ATTR charset attributes-charset utf-8
+  ATTR naturalLanguage attributes-natural-language en
+  ATTR uri printer-uri $uri
+  ATTR keyword which-jobs completed
+  ATTR boolean my-jobs false
+  ATTR name requesting-user-name homestead
+  ATTR keyword requested-attributes job-name,time-at-completed
+}
+"""
+_history = {"at": 0.0, "jobs": []}
+
+
+def cups_history() -> list[tuple[str, int]]:
+    """The print system's finished jobs: [(job name, when)]. Empty if it can't be asked."""
+    if time.monotonic() - _history["at"] < 30:
+        return _history["jobs"]
+    jobs, name = [], None
+    try:
+        with tempfile.NamedTemporaryFile("w", suffix=".test") as f:
+            f.write(IPP_JOBS)
+            f.flush()
+            out = subprocess.run(["ipptool", "-tv", "ipp://localhost/", f.name], capture_output=True, text=True,
+                                 timeout=10).stdout
+        for line in out.splitlines():
+            m = re.match(r"\s*(job-name|time-at-completed) \([^)]*\) = (.*)$", line)
+            if m and m[1] == "job-name":
+                name = m[2].strip()
+            elif m and name is not None:
+                jobs.append((name, int(m[2])))
+                name = None
+    except (OSError, subprocess.TimeoutExpired, ValueError):
+        jobs = []
+    _history.update(at=time.monotonic(), jobs=jobs)
+    return jobs
+
+
+def _when_printed(rows: list[dict]) -> None:
+    """Each row's printed_at: when it was last printed (0 if never, as far as the server knows)."""
+    log = _printed_log()
+    since = log.get("_since", int(time.time()))
+    old = [(n, at) for n, at in cups_history() if at < since]
+    for r in rows:
+        at = log.get(_key(r["rel"], r["parts"], r["range"]), 0) if r.get("rel") else 0
+        job = (r.get("job") or "")[:120]
+        if job:
+            at = max([at] + [w for n, w in old if n == job or n.startswith(job + " (")])
+        r["printed_at"] = at
+
+
 def _links(rel: str, parts: list[str], pages: str, color: bool) -> tuple[str, str]:
     q = [("part", p) for p in parts] + ([("pages", pages)] if pages else []) + ([("color", "1")] if color else [])
     tail = ("?" + urlencode(q)) if q else ""
@@ -311,7 +410,7 @@ def _entry(e: dict, it) -> dict:
     color = bool(e.get("color"))
     row = {"title": e.get("doc", ""), "what": e.get("what", ""), "why": e.get("why", ""), "how": "", "first": bool(e.get("first")),
            "color": color, "sub": "", "pages": 0, "sheets": 0, "url": "", "pdf_url": "", "read_url": "", "rel": "",
-           "parts": [], "range": "", "large": False, "problem": "", "version": ""}
+           "parts": [], "range": "", "large": False, "problem": "", "version": "", "mtime": 0, "job": ""}
     if it is None:
         row["problem"] = "Not in the library list."
         return row
@@ -336,7 +435,10 @@ def _entry(e: dict, it) -> dict:
     row["pages"], row["sheets"] = n, (n + 1) // 2
     row["url"], row["pdf_url"] = _links(rel, parts, e.get("pages", ""), color)
     row["rel"], row["parts"], row["range"] = rel, parts, e.get("pages", "")
-    row["version"] = _version(x["path"] for x in t["parts"] if not parts or x["rel"] in parts)
+    files = [x["path"] for x in t["parts"] if not parts or x["rel"] in parts]
+    row["version"], row["mtime"] = _version(files), _mtime(files)
+    chosen = len(files)
+    row["job"] = t["title"] if chosen == len(t["parts"]) else f"{t['title']} ({chosen} chapters)"   # as send() names the job
     return row
 
 
@@ -366,7 +468,7 @@ def _folder_items(g: dict) -> list[dict]:
                      "first": stem.startswith(first) if first else False, "color": bool(g.get("color")), "sub": sub,
                      "pages": n, "sheets": (n + 1) // 2, "url": url, "pdf_url": pdf_url,
                      "read_url": "/read/" + settings.url_path(r), "rel": r, "parts": [], "range": "",
-                     "large": large, "problem": "", "version": _version([path])})
+                     "large": large, "problem": "", "version": _version([path]), "mtime": _mtime([path]), "job": d["title"]})
     rows.sort(key=lambda x: (x["sub"] != "", x["sub"].lower(), x["title"].lower()))
     return rows
 

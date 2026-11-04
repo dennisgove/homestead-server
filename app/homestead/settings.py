@@ -29,6 +29,7 @@ def path(name: str) -> Path:
         "changes": state / "changes.yaml",              # additions and removals made on this server
         "index": state / "index.sqlite",                # documents' and courses' search index
         "status": state / "status",                     # job progress, for the Status page
+        "printed": state / "printed" / "printed.json",  # what the Binder page's things were last printed (the website writes it)
         "docs": core / "docs",
         "maps": core / "maps",
         "share": core / "share",

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}The binders · Homestead Library{% endblock %}
 {% block body %}
-<div class="bpage noprint">
+<div class="bpage noprint" data-now="{{ now }}">
 <header class="bhead">
   <p class="crumbs"><a href="/print">Print</a> /</p>
   <h1>The binders</h1>
@@ -47,7 +47,7 @@
     {% for i in b["items"] %}
     {% if i.section != ns.section %}{% set ns.section = i.section %}{% set ns.sub = none %}{% if i.section %}<li class="sub"><h3>{{ i.section }}</h3></li>{% endif %}{% endif %}
     {% if i.sub != ns.sub %}{% set ns.sub = i.sub %}{% if i.sub %}<li class="sub"><h3>{{ i.sub }}</h3></li>{% endif %}{% endif %}
-    <li class="item{{ ' cover' if i.title == 'Cover' and not i.section }}" data-key="{{ i.url or i.title }}" data-version="{{ i.version }}">
+    <li class="item{{ ' cover' if i.title == 'Cover' and not i.section }}" data-key="{{ i.url or i.title }}" data-version="{{ i.version }}" data-changed="{{ i.mtime or 0 }}" data-printed="{{ i.printed_at or 0 }}">
       <label class="tick"><input type="checkbox" aria-label="Printed"></label>
       <span class="what">
         {% if i.read_url %}<a class="title" href="{{ i.read_url }}">{{ i.title }}</a>{% else %}<span class="title">{{ i.title }}</span>{% endif %}
@@ -86,13 +86,26 @@
   const KEY = "binder-done", CLOSED = "binder-closed";
   const load = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch (e) { return {}; } };
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
-  const done = load(KEY);        // item -> the version printed (1 = ticked before versions were kept)
+  const done = load(KEY);        // item -> {t: ticked at} or {off: unticked at} (older: a version, or 1)
   const closed = load(CLOSED);   // binder number -> collapsed
+  const NOW = +document.querySelector(".bpage").dataset.now, LOADED = Date.now();
+  const now = () => NOW + Math.round((Date.now() - LOADED) / 1000);   // the server's clock, which the file dates use
 
+  // Printed: the server knows when it printed each thing (data-printed), this device when you ticked it.
+  // Changed: its file is newer than the last print or tick (data-changed).
+  function status(li) {
+    const d = done[li.dataset.key], made = +li.dataset.changed || 0, v = li.dataset.version;
+    let when = +li.dataset.printed || 0;
+    if (d && typeof d === "object") {
+      if (d.off && when <= d.off) return {printed: false, changed: false};     // unticked since its last print
+      if (d.t) when = Math.max(when, d.t);
+    }
+    if (when) return {printed: true, changed: made > when};
+    if (typeof d === "string") return {printed: true, changed: !!v && d !== v};  // ticked by version, before dates
+    return {printed: d === 1, changed: false};
+  }
   function mark(li) {            // ticked, or changed since it was printed
-    const key = li.dataset.key, v = li.dataset.version, had = done[key];
-    if (had === 1 && v) { done[key] = v; save(KEY, done); }      // ticked before: take it as this version
-    const printed = had !== undefined, changed = printed && !!v && done[key] !== v;
+    const {printed, changed} = status(li);
     li.querySelector("input[type=checkbox]").checked = printed && !changed;
     li.classList.toggle("done", printed && !changed);
     li.classList.toggle("changed", changed);
@@ -116,7 +129,7 @@
       }
     });
   }
-  function printed(li) { done[li.dataset.key] = li.dataset.version || 1; save(KEY, done); mark(li); counts(); }
+  function printed(li) { done[li.dataset.key] = {t: now()}; save(KEY, done); mark(li); counts(); }
 
   document.querySelectorAll("li[data-key]").forEach(li => {
     const box = li.querySelector("input[type=checkbox]");
@@ -141,7 +154,7 @@
     mark(li);
     box.addEventListener("change", () => {
       if (box.checked) printed(li);
-      else { delete done[li.dataset.key]; save(KEY, done); mark(li); counts(); }
+      else { done[li.dataset.key] = {off: now()}; save(KEY, done); mark(li); counts(); }
     });
   });
   counts();
