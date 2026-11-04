@@ -3,20 +3,11 @@
 {% block head %}<style>@page { margin: .5in; }</style>{% endblock %}{# the covers: printing this page prints only them #}
 {% block body %}
 <div class="bpage noprint">
-<div class="bhead">
+<header class="bhead">
   <p class="crumbs"><a href="/print">Print</a> /</p>
-  <h1>📒 The binders</h1>
-  <p class="lead">What to keep on paper in case this computer fails, sorted into half-inch binders of similar things.</p>
-  <ul class="bstats">
-    <li><b>{{ in_binders }}</b> binders</li>
-    <li><b>{{ '{:,}'.format(sheets) }}</b> sheets, both sides</li>
-    <li><b>{{ '{:,}'.format(pages) }}</b> pages</li>
-    <li><span class="star">★</span> first round <b>{{ '{:,}'.format(first_pages) }}</b> pages</li>
-  </ul>
-  <p class="bhow">Tick each thing off as you print it; this device remembers. Anything that changes after you print it comes
-  back unticked and marked <b class="again-word">print again</b>. A binder holds about {{ holds }} sheets.
-  {% if outside %}You're connected from outside the home, so printing on the home printer is off.{% elif printer %}<b>Quick print</b> sends it straight to {{ printer.label }}, both sides.{% endif %}
-  <b>Print</b> opens the print form to change {% if not outside %}the printer or {% endif %}the pages; <b>PDF</b> is just those pages, for your own device.</p>
+  <h1>The binders</h1>
+  <p class="bsub">{{ in_binders }} binders · {{ '{:,}'.format(sheets) }} sheets · {{ '{:,}'.format(pages) }} pages.
+    Start with the <span class="star">★</span> first round: {{ '{:,}'.format(first_pages) }} pages.</p>
   <div class="btools">
     <label class="toggle"><input type="checkbox" id="firstonly"> Only the ★ first round</label>
     <span class="grow"></span>
@@ -24,31 +15,33 @@
     <button type="button" id="open-all">Expand all</button>
     <button type="button" onclick="window.print()">Print the covers</button>
   </div>
-</div>
+  <details class="bhelp"><summary>How this works</summary>
+    <p>Each binder holds about {{ holds }} sheets, printed on both sides. Tick each thing off as you print it; this device
+    remembers. Anything that changes after you print it comes back unticked and marked <b class="again-word">print again</b>.</p>
+    <p>{% if outside %}You're connected from outside the home, so printing on the home printer is off. {% elif printer %}<b>Quick print</b> sends it straight to {{ printer.label }}, both sides. {% endif %}<b>Print</b> opens the print form to change {% if not outside %}the printer or {% endif %}the pages. <b>PDF</b> is just those pages, for your own device.</p>
+  </details>
+</header>
 
 {% if binders %}
-<div class="blayout">
-<nav class="bnav" aria-label="The binders">
-  <details id="bnav-box" open><summary>Jump to a binder</summary>
-  {% set gn = namespace(group=none) %}
+<nav class="bnav" aria-label="The binders"><div class="tiles">
   {% for b in binders %}
-  {% if b.group != gn.group %}{% if b.group or gn.group %}<p class="bnav-shelf">{{ b.group or "Other binders" }}</p>{% endif %}{% set gn.group = b.group %}{% endif %}
-  <a href="#binder-{{ loop.index }}" data-n="{{ loop.index }}"><span class="spine spine-{{ b.color or 'white' }}" aria-hidden="true"></span><span class="n">{{ loop.index }}</span><span class="name">{{ b.binder }}</span><span class="prog"></span><span class="again-count" hidden></span></a>
+  <a class="tile c-{{ b.color or 'white' }}" href="#binder-{{ loop.index }}" data-n="{{ loop.index }}">
+    <span class="tile-name"><span class="n">{{ loop.index }}</span> {{ b.binder }}</span>
+    <span class="tile-meta">{% if b.sheets %}{{ b.sheets }} sheets{% else %}full-size sheets{% endif %} <span class="again-count" hidden></span></span>
+    <span class="bar"><i></i></span><span class="prog"></span>
+  </a>
   {% endfor %}
-  </details>
-</nav>
+</div></nav>
 
 <div class="bmain">
 {% set gs = namespace(group=none) %}
 {% for b in binders %}
-{% if b.group != gs.group %}{% if b.group or gs.group %}<h2 class="bshelf">{{ b.group or "Other binders" }}</h2>{% endif %}{% set gs.group = b.group %}{% endif %}
-<details class="bgroup" id="binder-{{ loop.index }}" data-n="{{ loop.index }}" open>
+{% if b.group != gs.group or loop.first %}<h2 class="bshelf">{{ b.group or "Other binders" }}</h2>{% set gs.group = b.group %}{% endif %}
+<details class="bgroup c-{{ b.color or 'white' }}" id="binder-{{ loop.index }}" data-n="{{ loop.index }}" open>
   <summary>
-    <span class="bspine spine-{{ b.color or 'white' }}" aria-hidden="true"></span>
-    <span class="bnum">{{ loop.index }}</span>
-    <span class="btitle"><h2>{{ b.binder }}</h2>
-      <span class="bmeta">{% if b.sheets %}{{ b.sheets }} sheets · {{ '{:,}'.format(b.pages) }} pages{% if b.first_pages and b.first_pages != b.pages %} · ★ first round {{ '{:,}'.format(b.first_pages) }}{% endif %}{% else %}not for a binder{% endif %}{% if b.color %} · {{ b.color }} label{% endif %}</span></span>
-    <span class="bstate"><span class="bcount"><span class="prog"></span><span class="again-count" hidden></span></span><span class="chev" aria-hidden="true"></span></span>
+    <span class="btitle"><h2><span class="bnum">{{ loop.index }}</span> {{ b.binder }}</h2>
+      <span class="bmeta">{% if b.sheets %}{{ b.sheets }} sheets · {{ '{:,}'.format(b.pages) }} pages{% if b.first_pages and b.first_pages != b.pages %} · ★ first round {{ '{:,}'.format(b.first_pages) }}{% endif %}{% else %}full-size sheets, not for a binder{% endif %}{% if b.color %} · {{ b.color }} label{% endif %}</span></span>
+    <span class="bstate"><span class="prog"></span><span class="again-count" hidden></span><span class="chev" aria-hidden="true"></span></span>
   </summary>
   <div class="bbody">
   {% if b.full %}<p class="bnote bad">More than a half-inch binder holds: use a 1-inch binder, or split it.</p>{% endif %}
@@ -68,18 +61,16 @@
         {% if i.problem %}<small class="bad">{{ i.problem }}</small>{% endif %}
         <small class="again-note" hidden>Changed since you printed it: print again.</small>
       </span>
-      <span class="side">
-        <span class="pp">{% if i.pages %}{{ '{:,}'.format(i.pages) }} p.{% endif %}{% if i.color %} · colour{% endif %}</span>
-        {% if i.url and not i.problem %}<span class="acts">
+      <span class="pp">{% if i.pages %}{{ '{:,}'.format(i.pages) }} p.{% endif %}{% if i.color %}<span class="col"> colour</span>{% endif %}</span>
+      <span class="acts">{% if i.url and not i.problem %}
         {% if printer and not i.large %}<form method="post" action="{{ i.url.split('?')[0] }}" class="quick">
           {% for p in i.parts %}<input type="hidden" name="part" value="{{ p }}">{% endfor %}
           <input type="hidden" name="pages" value="{{ i.range }}"><input type="hidden" name="printer" value="{{ printer.name }}">
           <input type="hidden" name="copies" value="1"><input type="hidden" name="sides" value="two">
           <input type="hidden" name="color" value="{{ 'color' if i.color else 'gray' }}"><input type="hidden" name="quick" value="1">
           <button class="btn" type="submit">Quick print</button></form>{% endif %}
-        <a href="{{ i.url }}">Print</a><a href="{{ i.pdf_url }}{{ '&' if '?' in i.pdf_url else '?' }}v={{ i.version }}" target="_blank">PDF</a></span>
-        <small class="said" role="status"></small>{% endif %}
-      </span>
+        <a href="{{ i.url }}">Print</a><a href="{{ i.pdf_url }}{{ '&' if '?' in i.pdf_url else '?' }}v={{ i.version }}" target="_blank">PDF</a>
+        <small class="said" role="status"></small>{% endif %}</span>
     </li>
     {% endfor %}
   </ul>
@@ -90,7 +81,6 @@
 <section class="box"><h2>Also print</h2>
 <ul>{% if wifi_sign %}<li><a href="/files/share/print/wifi-sign.html">The WiFi sign</a>, for the wall</li>{% endif %}
 <li>The server's own guides (restore, runbook, power) are in the “This server” binder, made again from the repo on each update.</li></ul></section>
-</div>
 </div>
 {% else %}<p class="empty">The binder list is empty (the <code>binders:</code> section of the library list).</p>{% endif %}
 </div>
@@ -143,11 +133,16 @@
       const items = d.querySelectorAll("li[data-key]").length, got = d.querySelectorAll("li.done").length;
       const n = d.querySelectorAll("li.changed").length;
       const link = document.querySelector(`.bnav a[data-n="${d.dataset.n}"]`);
-      d.querySelector(".prog").textContent = items ? `${got} of ${items} printed` : "";
-      d.classList.toggle("all-done", items > 0 && got === items);
-      if (link) { link.querySelector(".prog").textContent = items ? `${got}/${items}` : ""; link.classList.toggle("all-done", items > 0 && got === items); }
+      const all = items > 0 && got === items;
+      d.querySelector(".prog").textContent = items ? (all ? "All printed" : `${got} of ${items} printed`) : "";
+      d.classList.toggle("all-done", all);
+      if (link) {
+        link.querySelector(".prog").textContent = items ? (all ? "All printed" : `${got} of ${items} printed`) : "";
+        link.querySelector(".bar i").style.width = items ? `${Math.round(100 * got / items)}%` : "0";
+        link.classList.toggle("all-done", all);
+      }
       for (const el of [d.querySelector(".again-count"), link && link.querySelector(".again-count")]) {
-        if (el) { el.textContent = n ? (el.closest(".bnav") ? `${n} again` : `${n} to print again`) : ""; el.hidden = !n; }
+        if (el) { el.textContent = n ? `${n} to print again` : ""; el.hidden = !n; }
       }
     });
   }
@@ -199,10 +194,6 @@
     const d = document.querySelector(a.getAttribute("href")); if (d) d.open = true;
   }));
   reveal();
-  const navBox = document.getElementById("bnav-box");      // on a phone the jump list starts folded, and folds after a jump
-  const narrow = matchMedia("(max-width: 900px)");
-  if (navBox && narrow.matches) navBox.open = false;
-  navBox?.querySelectorAll("a").forEach(a => a.addEventListener("click", () => { if (narrow.matches) navBox.open = false; }));
 
   const only = document.getElementById("firstonly");
   only.addEventListener("change", () => {
