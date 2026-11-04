@@ -157,6 +157,8 @@
         RestartSec=3
         NoNewPrivileges=yes
         ProtectSystem=strict
+        # the only places it writes: the binder covers and its record of what was printed
+        ReadWritePaths={{ core_dir }}/docs/reference/binder-covers {{ library_state }}/printed
         ProtectHome=yes
         PrivateTmp=yes
         [Install]
