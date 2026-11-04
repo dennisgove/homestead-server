@@ -53,7 +53,7 @@ def _entries(params: dict) -> list[dict]:
         acq = next((l for l in e.findall("a:link", NS) if "acquisition" in (l.get("rel") or "")), None)
         if acq is None:
             continue
-        url = acq.get("href")
+        url = acq.get("href").removesuffix(".meta4")      # the catalog links to the metalink; download() adds .meta4 itself
         m = re.search(r"/([^/]+?)_(\d{4}-\d{2}[a-z]?)\.zim", url)
         if not m:
             continue
