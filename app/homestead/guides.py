@@ -24,7 +24,9 @@ NAMES = {                              # file in the repo -> the name it has in 
     "PRINT-BINDER.md": "The printed binder checklist",
 }
 STYLE = """
-@page { size: letter; margin: 0.7in 0.75in; }
+@page { size: letter; margin: 0.7in 0.75in 0.8in;
+  @bottom-right { content: string(guide) ", page " counter(page) " of " counter(pages); font: 8.5pt "DejaVu Sans", Arial, sans-serif; color: #555; } }
+.made { string-set: guide attr(data-guide); }
 body { font: 11pt/1.45 "DejaVu Sans", Arial, sans-serif; color: #000; }
 h1 { font-size: 20pt; margin: 0 0 4pt; } h2 { font-size: 14pt; margin: 16pt 0 4pt; border-bottom: 1px solid #999; }
 h3 { font-size: 12pt; margin: 12pt 0 3pt; } h2, h3 { break-after: avoid; }
@@ -50,7 +52,7 @@ def page(md: str, title: str) -> str:
     body = MarkdownIt("commonmark").enable("table").render(md)
     return (f'<!doctype html><html lang="en"><head><meta charset="utf-8"><title>{html.escape(title)}</title>'
             f"<style>{STYLE}</style></head><body>"
-            f'<p class="made">{html.escape(title)} · from the server\'s guides, {date.today():%B %d, %Y}</p>{body}</body></html>')
+            f'<p class="made" data-guide="{html.escape(title)}">{html.escape(title)} · from the server\'s guides, {date.today():%B %d, %Y}</p>{body}</body></html>')
 
 
 def make(src: Path | None = None, log=print) -> dict:
