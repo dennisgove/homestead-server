@@ -390,12 +390,12 @@ def _prints(v) -> list[list[int]]:
     return [[int(a), int(j)] for a, j in v] if isinstance(v, list) else []
 
 
-def record(t: dict, chosen: list[dict], pages: str, job: str = "") -> None:
+def record(t: dict, chosen: list[dict], pages: str, job: str = "") -> bool:
     """Write down that this was just printed, and as which print job (so a cancelled one can be left out).
-    Quietly does nothing if the record can't be written."""
+    False (quietly) if the record can't be written."""
     f = settings.path("printed")
     if not f.parent.is_dir() or not os.access(f.parent, os.W_OK):
-        return
+        return False
     log = _printed_log()
     log.setdefault("_since", int(time.time()))           # prints before this come from the print system's history
     parts = [] if len(chosen) == len(t["parts"]) else [x["rel"] for x in chosen]
@@ -405,6 +405,7 @@ def record(t: dict, chosen: list[dict], pages: str, job: str = "") -> None:
     tmp = f.with_name(f".{f.name}.{os.getpid()}")
     tmp.write_text(json.dumps(log))
     tmp.replace(f)
+    return True
 
 
 IPP_JOBS = """{

@@ -261,7 +261,8 @@ ul.binder form.quick { display: inline; margin: 0; }
 ul.binder .btn { font-size: .82rem; font-weight: 700; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--green); background: transparent; color: var(--green); cursor: pointer; }
 ul.binder .btn:hover { background: var(--green); color: var(--green-ink); }
 ul.binder .said { font-size: .8rem; }
-ul.binder li.done .title, ul.binder li.done .what small { text-decoration: line-through; opacity: .5; }
+ul.binder li.done .title, ul.binder li.done .what small:not(.when) { text-decoration: line-through; opacity: .5; }
+ul.binder .what small.when { color: var(--soft); }
 ul.binder li.changed { background: color-mix(in srgb, var(--amber) 8%, transparent); }
 ul.binder li.changed .title { color: var(--amber); }
 ul.binder .what small.again-note, .again-word { color: var(--amber); font-weight: 700; }

@@ -57,6 +57,7 @@
         {% if i.how %}<small>{{ i.how }}</small>{% endif %}
         {% if i.problem %}<small class="bad">{{ i.problem }}</small>{% endif %}
         <small class="again-note" hidden>Changed since you printed it: print again.</small>
+        <small class="when" hidden></small>
       </span>
       <span class="pp">{% if i.pages %}{{ '{:,}'.format(i.pages) }} p.{% endif %}{% if i.color %}<span class="col"> colour</span>{% endif %}</span>
       <span class="acts">{% if i.url and not i.problem %}
@@ -105,8 +106,24 @@
     if (typeof d === "string") return {printed: true, changed: !!v && d !== v};  // ticked by version, before dates
     return {printed: d === 1, changed: false};
   }
+  // When: the last print the server sent (a cancelled one doesn't count), or when this device ticked it off.
+  const sameYear = new Date(now() * 1000).getFullYear();
+  function day(t) {
+    const d = new Date(t * 1000);
+    return d.toLocaleDateString(undefined, {weekday: "short", day: "numeric", month: "short",
+                                            year: d.getFullYear() === sameYear ? undefined : "numeric"})
+      + ", " + d.toLocaleTimeString(undefined, {hour: "numeric", minute: "2-digit"});
+  }
+  function when(li) {
+    const d = done[li.dataset.key], server = +li.dataset.printed || 0, o = d && typeof d === "object" ? d : {};
+    if (o.off && server <= o.off) return "";                     // unticked since
+    if (o.t > server) return `Ticked off on this device ${day(o.t)}` + (server ? ` (last printed ${day(server)})` : "");
+    return server ? `Printed ${day(server)}` : "";
+  }
   function mark(li) {            // ticked, or changed since it was printed
     const {printed, changed} = status(li);
+    const w = li.querySelector(".when"), text = when(li);
+    w.textContent = text; w.hidden = !text;
     li.querySelector("input[type=checkbox]").checked = printed && !changed;
     li.classList.toggle("done", printed && !changed);
     li.classList.toggle("changed", changed);
@@ -145,7 +162,9 @@
         if (!r.ok) throw new Error(a.error || "It didn't print.");
         said.textContent = `Sent to ${a.to}` + (a.n ? `, ${a.n.toLocaleString()} pages` : "");
         said.classList.add("good");
-        printed(li);                                              // printed: tick it off
+        if (a.recorded) {                                         // the server keeps it (and drops it if it's cancelled)
+          li.dataset.printed = now(); delete done[li.dataset.key]; save(KEY, done); mark(li); counts();
+        } else printed(li);                                       // otherwise this device ticks it off
       } catch (e) {
         said.textContent = e instanceof TypeError || e instanceof SyntaxError ? "It didn't print: the server didn't answer." : e.message;
         said.classList.add("bad");

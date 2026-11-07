@@ -378,14 +378,14 @@ async def print_send(request: Request, rel: str):
         chosen, rs, n = printing.choose(t, form["chosen"], form["pages"])
         job = await run_in_threadpool(printing.send, t, chosen, rs, form["printer"], form["copies"],
                                       form["two_sided"], form["color"])
-        printing.record(t, chosen, form["pages"], job)     # so the Binder page knows when it was printed
+        recorded = printing.record(t, chosen, form["pages"], job)     # so the Binder page knows when it was printed
     except ValueError as e:
         if quick:
             return JSONResponse({"error": str(e)}, status_code=400)
         return print_form(request, t, status=400, error=str(e), **form)
     label = next((p["label"] for p in printing.printers() if p["name"] == form["printer"]), form["printer"])
     if quick:
-        return JSONResponse({"sent": t["title"], "to": label, "n": n * form["copies"]})
+        return JSONResponse({"sent": t["title"], "to": label, "n": n * form["copies"], "recorded": recorded})
     q = urllib.parse.urlencode({"sent": t["title"], "to": label, "n": n * form["copies"]})
     return RedirectResponse(f"/print?{q}#queue", status_code=303)
 
