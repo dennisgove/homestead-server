@@ -471,7 +471,9 @@ def _folder_items(g: dict) -> list[dict]:
                      "pages": n, "sheets": (n + 1) // 2, "url": url, "pdf_url": pdf_url,
                      "read_url": "/read/" + settings.url_path(r), "rel": r, "parts": [], "range": "",
                      "large": large, "problem": "", "version": _version([path]), "mtime": _mtime([path]), "job": d["title"]})
-    rows.sort(key=lambda x: (x["sub"] != "", x["sub"].lower(), x["title"].lower()))
+    order = list(g.get("order") or ())       # names starting with these first, in this order; the rest by name
+    rank = lambda t: next((i for i, o in enumerate(order) if t.startswith(o)), len(order))
+    rows.sort(key=lambda x: (x["sub"] != "", x["sub"].lower(), rank(x["title"]), x["title"].lower()))
     return rows
 
 

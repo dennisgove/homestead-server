@@ -672,7 +672,8 @@ phone_apps:
 #   first:    true = print this before the rest
 #   color:    true = print in colour (photos, coloured diagrams)
 #   folder:   instead of doc: every PDF in that folder of the documents, whole, by subfolder
-#             (files: only names starting with these; first_files: those that go in the first round)
+#             (files: only names starting with these; first_files: those that go in the first round;
+#              order: names starting with these come first, in this order, the rest by name)
 # Documents marked print: true that aren't listed here show up at the end.
 binders:
   - binder: "First aid and injuries"
@@ -934,6 +935,7 @@ binders:
       - folder: "family/maps"
         files: ["Routes"]
         first_files: ["Routes - "]
+        order: ["Routes - Index", "Routes - All routes"]
         color: true
 
   - binder: "Full-size topo maps"

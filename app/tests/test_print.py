@@ -150,7 +150,8 @@ binders:
   - binder: Maps
     color: orange
     items:
-      - { folder: family/maps, files: ["Area", "Quad", "Route"], first_files: ["Area"], color: true }
+      - { folder: family/maps, files: ["Area", "Quad", "Route"], first_files: ["Area"], color: true,
+          order: ["Route B", "Route A"] }
       - { doc: Not In The List Either, section: And a guide }
 """
 
@@ -164,6 +165,8 @@ def test_the_binder(indexed, cups):
     (maps / "Routes").mkdir(parents=True)
     make_pdf(maps / "Area 1 - Our Town.pdf", [(24, "Our Town")])
     make_pdf(maps / "Routes" / "Route A - Highways.pdf", [(24, "Route A")])
+    make_pdf(maps / "Routes" / "Route B - Back roads.pdf", [(24, "Route B")])
+    make_pdf(maps / "Routes" / "Route C - Coast.pdf", [(24, "Route C")])
     w = PdfWriter()
     w.add_blank_page(width=22 * 72, height=27 * 72)            # a full-size USGS quad
     w.write(maps / "Quad.pdf")
@@ -195,14 +198,15 @@ def test_the_binder(indexed, cups):
     assert '<h2 class="bshelf">Emergency medical</h2>' in page and '<h2 class="bshelf">Other binders</h2>' in page
     assert "EMERGENCY MEDICAL" in one[0]                                   # the shelf it's on, on the cover
     assert page.index("Area 1 - Our Town") < page.index("Quad") < page.index("Route A")      # loose files first, then subfolders
+    assert page.index("Route B - Back roads") < page.index("Route A - Highways") < page.index("Route C - Coast")   # order: first
     from homestead import printing
     med, maps_b = printing.binders()
     fd, bleed, missing = med["items"]
     assert fd["pages"] == 2 and fd["first"] and bleed["pages"] == 1 and bleed["color"] and missing["problem"]
     assert (fd["sub"], bleed["sub"], missing["sub"]) == ("", "Bleeding", "")     # a heading under the tab, until the next tab
     assert med["pages"] == 3 and med["sheets"] == 2 and med["first_pages"] == 2 and not med["full"]
-    assert maps_b["pages"] == 2 and maps_b["sheets"] == 2       # the full-size sheet isn't counted; each map its own sheet
-    assert [i["first"] for i in maps_b["items"]] == [True, False, False, False]
+    assert maps_b["pages"] == 4 and maps_b["sheets"] == 4       # the full-size sheet isn't counted; each map its own sheet
+    assert [i["first"] for i in maps_b["items"]] == [True, False, False, False, False, False]
     assert [i["section"] for i in med["items"]] == ["Injuries", "Injuries", "Other"]
 
     assert '<nav class="bnav"' in page and 'class="tile c-red" href="#binder-1"' in page and 'href="#binder-2"' in page   # quick links
@@ -224,7 +228,7 @@ def test_the_binder(indexed, cups):
     pdf = c.get(fd["pdf_url"])
     assert [t.split("\n")[0] for t in texts(pdf.content)] == ["Broken Bones", "Words to Know"]
 
-    assert page.count('<button class="btn" type="submit">Quick print</button>') == 6      # the two covers too; not the full-size sheet
+    assert page.count('<button class="btn" type="submit">Quick print</button>') == 8      # the two covers too; not the full-size sheet
     assert '<input type="hidden" name="printer" value="Office_Laser_series">' in page
     r = c.post(fd["url"].split("?")[0], data={"part": fd["parts"], "pages": fd["range"], "printer": "Office_Laser_series",
                                              "copies": "1", "sides": "two", "color": "gray", "quick": "1"},
