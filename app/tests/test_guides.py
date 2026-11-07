@@ -57,3 +57,10 @@ def test_every_repo_guide_has_a_name():
     from homestead import guides
     docs = Path(__file__).parents[2] / "docs"
     assert {f.name for f in docs.glob("*.md")} <= set(guides.NAMES)
+
+
+def test_each_guide_is_headed_with_its_title():
+    """The heading on a guide's first page is its title: what the binder list, its cover and its page numbers say."""
+    from homestead.guides import titled
+    assert titled("# Comms\n\nText\n", "Radio and communications guide") == "# Radio and communications guide\n\nText\n"
+    assert titled("\nNo heading\n", "Power and batteries").startswith("# Power and batteries\n\n")

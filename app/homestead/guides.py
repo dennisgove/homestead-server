@@ -47,8 +47,22 @@ def render(html_text: str, out: Path):
     weasyprint.HTML(string=html_text).write_pdf(out)
 
 
+def titled(md: str, title: str) -> str:
+    """The guide's own first heading becomes its title, so the page says what the binder list, its cover and its
+    page numbers call it."""
+    lines = md.splitlines()
+    for i, line in enumerate(lines):
+        if line.strip():
+            if line.startswith("# "):
+                lines[i] = f"# {title}"
+                return "\n".join(lines) + "\n"
+            break
+    return f"# {title}\n\n{md}"
+
+
 def page(md: str, title: str) -> str:
     from markdown_it import MarkdownIt       # CommonMark, as GitHub shows the guides: code blocks inside lists work
+    md = titled(md, title)
     body = MarkdownIt("commonmark").enable("table").render(md)
     return (f'<!doctype html><html lang="en"><head><meta charset="utf-8"><title>{html.escape(title)}</title>'
             f"<style>{STYLE}</style></head><body>"
@@ -71,7 +85,7 @@ def make(src: Path | None = None, log=print) -> dict:
     for f in sources:
         name = NAMES.get(f.name, f.stem.replace("-", " ").replace("_", " ").capitalize())
         pdf = out / f"{name}.pdf"
-        digest = hashlib.sha256((STYLE + f.read_text()).encode()).hexdigest()
+        digest = hashlib.sha256((STYLE + titled(f.read_text(), name)).encode()).hexdigest()
         new[pdf.name] = digest
         if stamps.get(pdf.name) == digest and pdf.is_file():
             done["kept"] += 1
