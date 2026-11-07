@@ -369,7 +369,7 @@ def _version(paths) -> str:
             st = os.stat(p)
         except OSError:
             continue
-        h.update(f"{p}:{st.st_size}:{st.st_mtime_ns};".encode())
+        h.update(f"{p}:{st.st_size}:{st.st_mtime_ns}:{_print_changed(p)};".encode())
     return h.hexdigest()[:12]
 
 
@@ -378,10 +378,36 @@ def _mtime(paths) -> int:
     times = []
     for p in paths:
         try:
-            times.append(int(os.stat(p).st_mtime))
+            times.append(max(int(os.stat(p).st_mtime), _print_changed(p)))
         except (OSError, TypeError):
             pass
     return max(times, default=0)
+
+
+# Changes to how the website prints pages, not to the files: each makes every page it touches "print again",
+# from when this server first ran with it. Whenever printing changes what comes out on paper, add one here.
+PRINT_CHANGES = {
+    "landscape-top-left": lambda p: pdf_wide(Path(p)),       # landscape pages turned top to the left edge
+}
+_since_changes: dict = {}
+
+
+def _print_changed(path) -> int:
+    """When printing last changed what this file looks like on paper (0: never)."""
+    if not _since_changes:
+        log = _printed_log()
+        known = dict(log.get("_changes") or {})
+        new = {name: int(time.time()) for name in PRINT_CHANGES if name not in known}
+        f = settings.path("printed")
+        if new and f.parent.is_dir() and os.access(f.parent, os.W_OK):
+            log["_changes"] = known | new
+            tmp = f.with_name(f".{f.name}.{os.getpid()}")
+            tmp.write_text(json.dumps(log))
+            tmp.replace(f)
+            known |= new
+        _since_changes.update(known or {"": 0})
+    return max([w for name, w in _since_changes.items() if name in PRINT_CHANGES and PRINT_CHANGES[name](path)],
+               default=0)
 
 
 # --- what was printed, and when ---------------------------------------------------------------------

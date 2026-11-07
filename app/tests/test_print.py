@@ -370,6 +370,33 @@ def test_print_again(indexed, cups, monkeypatch):
     assert area_row()["printed_at"] == 2_000_000                            # the history from before still counts
 
 
+def test_a_change_to_printing_means_print_again(indexed, cups, monkeypatch):
+    """When the website changes how a page comes out on paper (landscape pages turned, say), every page that
+    touches says "print again", though its file is the same."""
+    import os
+    from conftest import make_pdf
+    from homestead import printing, settings
+    indexed["list"].write_text(indexed["list"].read_text() + BINDER)
+    maps = indexed["core"] / "docs" / "family" / "maps"
+    maps.mkdir(parents=True)
+    wide, tall = maps / "Area 1 - Wide.pdf", maps / "Area 2 - Tall.pdf"
+    make_pdf(wide, [(24, "Wide")], box="0 0 792 612")
+    make_pdf(tall, [(24, "Tall")])
+    for f in (wide, tall):
+        os.utime(f, (1_000_000, 1_000_000))
+    settings.path("printed").parent.mkdir(parents=True)
+    settings.path("printed").write_text(json.dumps({"_since": 2_000_000}))
+    monkeypatch.setattr(printing, "_since_changes", {})
+    monkeypatch.setattr(printing, "cups_history", lambda: [("Area 1   wide", 1_500_000), ("Area 2   tall", 1_500_000)])
+    rows = {i["title"]: i for i in printing.binders()[1]["items"]}
+    assert rows["Area 2 - Tall"]["mtime"] == 1_000_000 < rows["Area 2 - Tall"]["printed_at"]       # up to date
+    assert rows["Area 1 - Wide"]["mtime"] > rows["Area 1 - Wide"]["printed_at"]                    # print again
+    when = json.loads(settings.path("printed").read_text())["_changes"]["landscape-top-left"]
+    monkeypatch.setattr(printing, "_since_changes", {})                     # the time is kept, not moved on
+    printing.binders()
+    assert json.loads(settings.path("printed").read_text())["_changes"]["landscape-top-left"] == when
+
+
 def test_cover_outline():
     """A cover lists one bullet per document under each heading, with what's in each part under it."""
     from homestead.covers import outline
