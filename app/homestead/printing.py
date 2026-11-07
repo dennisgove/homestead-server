@@ -369,7 +369,8 @@ def _version(paths) -> str:
             st = os.stat(p)
         except OSError:
             continue
-        h.update(f"{p}:{st.st_size}:{st.st_mtime_ns}:{_print_changed(p)};".encode())
+        changed = _print_changed(p)               # only when printing changed it: the rest keep the fingerprint they had
+        h.update(f"{p}:{st.st_size}:{st.st_mtime_ns}{f':{changed}' if changed else ''};".encode())
     return h.hexdigest()[:12]
 
 

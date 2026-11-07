@@ -391,6 +391,10 @@ def test_a_change_to_printing_means_print_again(indexed, cups, monkeypatch):
     rows = {i["title"]: i for i in printing.binders()[1]["items"]}
     assert rows["Area 2 - Tall"]["mtime"] == 1_000_000 < rows["Area 2 - Tall"]["printed_at"]       # up to date
     assert rows["Area 1 - Wide"]["mtime"] > rows["Area 1 - Wide"]["printed_at"]                    # print again
+    import hashlib
+    st = tall.stat()                                                         # untouched files keep their fingerprint
+    assert rows["Area 2 - Tall"]["version"] == hashlib.sha1(f"{tall}:{st.st_size}:{st.st_mtime_ns};".encode()).hexdigest()[:12]
+    assert rows["Area 1 - Wide"]["version"] != printing._version([]) and len(rows["Area 1 - Wide"]["version"]) == 12
     when = json.loads(settings.path("printed").read_text())["_changes"]["landscape-top-left"]
     monkeypatch.setattr(printing, "_since_changes", {})                     # the time is kept, not moved on
     printing.binders()
