@@ -933,7 +933,7 @@ binders:
     items:
       - folder: "family/maps"
         files: ["Routes"]
-        first_files: ["Routes - ", "Routes 0"]
+        first_files: ["Routes - "]
         color: true
 
   - binder: "Full-size topo maps"
