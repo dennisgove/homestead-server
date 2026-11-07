@@ -39,7 +39,18 @@ open("{log}/args.json", "w").write(json.dumps(args))
 EOF
 echo "request id is Office_Laser_series-8 (1 file(s))" """,
         "cancel": f'echo "$@" >> {log}/cancelled; [ "$1" != 8 ]',          # job 8 is someone else's: refused
-        "ipptool": """grep -q not-completed "$3" || exit 0
+        "ipptool": """if ! grep -q not-completed "$3"; then cat <<'EOF'
+        job-id (integer) = 5
+        job-name (nameWithoutLanguage) = Area 1   our town
+        job-state (enum) = completed
+        time-at-completed (integer) = 2000000
+        -- separator --
+        job-id (integer) = 6
+        job-name (nameWithoutLanguage) = Area 1   our town
+        job-state (enum) = canceled
+        time-at-completed (integer) = 2500000
+EOF
+exit 0; fi
 cat <<'EOF'
         job-printer-uri (uri) = ipp://localhost:631/printers/Office_Laser_series
         job-originating-user-name (nameWithoutLanguage) = homestead
@@ -325,7 +336,9 @@ def test_print_again(indexed, cups, monkeypatch):
     area = maps / "Area 1 - Our Town.pdf"
     make_pdf(area, [(24, "Our Town")])
     os.utime(area, (1_000_000, 1_000_000))                                   # made long ago
-    monkeypatch.setattr(printing, "cups_history", lambda: [("Area 1   our town", 2_000_000)])   # as lp named it
+    printing._history["at"] = 0                                             # the fake print system's finished jobs:
+    assert printing.cups_history() == [("Area 1   our town", 2_000_000)]     # as lp named it; the cancelled one isn't there
+    assert printing.cancelled() == {6}
 
     def area_row():
         return next(i for i in printing.binders()[1]["items"] if i["title"] == "Area 1 - Our Town")
@@ -342,8 +355,17 @@ def test_print_again(indexed, cups, monkeypatch):
                                                   "sides": "two", "color": "color", "quick": "1"})
     assert r.status_code == 200
     log = json.loads(settings.path("printed").read_text())
-    assert f"{bleed['rel']}||1" in log and log["_since"] > 3_000_000
+    key = f"{bleed['rel']}||1"
+    assert log[key][-1][1] == 8 and log["_since"] > 3_000_000               # when, and as which print job
     assert printing.binders()[0]["items"][1]["printed_at"] >= log["_since"]
+    monkeypatch.setattr(printing, "cancelled", lambda: {8})                 # then cancelled: not printed after all
+    assert printing.binders()[0]["items"][1]["printed_at"] == 0
+    log[key] = [[4_000_000, 5], [4_100_000, 8]]                             # printed before that: the earlier one counts
+    settings.path("printed").write_text(json.dumps(log))
+    assert printing.binders()[0]["items"][1]["printed_at"] == 4_000_000
+    log[key] = 4_200_000                                                    # how the record kept it at first
+    settings.path("printed").write_text(json.dumps(log))
+    assert printing.binders()[0]["items"][1]["printed_at"] == 4_200_000
     assert area_row()["printed_at"] == 2_000_000                            # the history from before still counts
 
 

@@ -368,6 +368,9 @@ def _mtime(paths) -> int:
 # can say "print again" when a file changed after it was printed, on any device. Prints from before this record
 # began come from the print system's own history of finished jobs, matched by the job's name.
 
+KEEP = 5      # prints remembered for each thing: if the last is cancelled, the one before still counts
+
+
 def _key(rel: str, parts: list[str], pages: str) -> str:
     pages = re.sub(r"\s+", "", pages or "")
     return f"{rel}|{','.join(sorted(parts))}|{pages}"
@@ -380,17 +383,27 @@ def _printed_log() -> dict:
         return {}
 
 
-def record(t: dict, chosen: list[dict], pages: str) -> None:
-    """Write down that this was just printed. Quietly does nothing if the record can't be written."""
+def _prints(v) -> list[list[int]]:
+    """One thing's prints from the record: [[when, job number], ...], oldest first (job 0: not known)."""
+    if isinstance(v, int):                               # how the record kept them at first: just the last time
+        return [[v, 0]]
+    return [[int(a), int(j)] for a, j in v] if isinstance(v, list) else []
+
+
+def record(t: dict, chosen: list[dict], pages: str, job: str = "") -> None:
+    """Write down that this was just printed, and as which print job (so a cancelled one can be left out).
+    Quietly does nothing if the record can't be written."""
     f = settings.path("printed")
     if not f.parent.is_dir() or not os.access(f.parent, os.W_OK):
         return
     log = _printed_log()
     log.setdefault("_since", int(time.time()))           # prints before this come from the print system's history
     parts = [] if len(chosen) == len(t["parts"]) else [x["rel"] for x in chosen]
-    log[_key(t["rel"], parts, pages)] = int(time.time())
+    key = _key(t["rel"], parts, pages)
+    n = re.search(r"-(\d+)$", job or "")
+    log[key] = (_prints(log.get(key)) + [[int(time.time()), int(n[1]) if n else 0]])[-KEEP:]
     tmp = f.with_name(f".{f.name}.{os.getpid()}")
-    tmp.write_text(json.dumps(log, indent=1))
+    tmp.write_text(json.dumps(log))
     tmp.replace(f)
 
 
@@ -403,29 +416,41 @@ IPP_JOBS = """{
   ATTR keyword which-jobs completed
   ATTR boolean my-jobs false
   ATTR name requesting-user-name homestead
-  ATTR keyword requested-attributes job-name,time-at-completed
+  ATTR keyword requested-attributes job-id,job-name,job-state,time-at-completed
 }
 """
 _history = {"at": 0.0, "jobs": []}
 
 
-def cups_history() -> list[tuple[str, int]]:
-    """The print system's finished jobs: [(job name, when)]. Empty if it can't be asked."""
+def finished() -> list[dict]:
+    """The print system's jobs that are over (printed, cancelled or failed): [{job, name, state, at}].
+    Empty if it can't be asked. Kept for half a minute, as the Binder page asks for every row."""
     if time.monotonic() - _history["at"] < 30:
         return _history["jobs"]
-    jobs, name = [], None
-    try:
-        for line in _ipp(IPP_JOBS).splitlines():
-            m = re.match(r"\s*(job-name|time-at-completed) \([^)]*\) = (.*)$", line)
-            if m and m[1] == "job-name":
-                name = m[2].strip()
-            elif m and name is not None:
-                jobs.append((name, int(m[2])))
-                name = None
-    except ValueError:
-        jobs = []
+    jobs, job = [], {}
+    for line in _ipp(IPP_JOBS).splitlines() + ["-- separator --"]:
+        if line.strip() == "-- separator --":
+            if job.get("job-id", "").isdigit():
+                at = job.get("time-at-completed", "")
+                jobs.append({"job": int(job["job-id"]), "name": job.get("job-name", ""), "state": job.get("job-state", ""),
+                             "at": int(at) if at.isdigit() else 0})
+            job = {}
+            continue
+        m = re.match(r"\s*([a-z-]+) \([^)]*\) = (.*)$", line)
+        if m:
+            job[m[1]] = m[2].strip()
     _history.update(at=time.monotonic(), jobs=jobs)
     return jobs
+
+
+def cups_history() -> list[tuple[str, int]]:
+    """The jobs that printed: [(job name, when)]."""
+    return [(j["name"], j["at"]) for j in finished() if j["state"] == "completed" and j["name"]]
+
+
+def cancelled() -> set[int]:
+    """The jobs that were cancelled or failed, so never printed."""
+    return {j["job"] for j in finished() if j["state"] in ("canceled", "aborted")}
 
 
 def _when_printed(rows: list[dict]) -> None:
@@ -433,8 +458,10 @@ def _when_printed(rows: list[dict]) -> None:
     log = _printed_log()
     since = log.get("_since", int(time.time()))
     old = [(n, at) for n, at in cups_history() if at < since]
+    gone = cancelled()
     for r in rows:
-        at = log.get(_key(r["rel"], r["parts"], r["range"]), 0) if r.get("rel") else 0
+        prints = _prints(log.get(_key(r["rel"], r["parts"], r["range"]))) if r.get("rel") else []
+        at = max([a for a, j in prints if j not in gone], default=0)
         job = (r.get("job") or "")[:120]
         if job:
             at = max([at] + [w for n, w in old if n == job or n.startswith(job + " (")])

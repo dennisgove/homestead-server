@@ -376,9 +376,9 @@ async def print_send(request: Request, rel: str):
     form["copies"] = int(copies) if copies.isdigit() else 1
     try:
         chosen, rs, n = printing.choose(t, form["chosen"], form["pages"])
-        await run_in_threadpool(printing.send, t, chosen, rs, form["printer"], form["copies"],
-                                form["two_sided"], form["color"])
-        printing.record(t, chosen, form["pages"])     # so the Binder page knows when it was printed
+        job = await run_in_threadpool(printing.send, t, chosen, rs, form["printer"], form["copies"],
+                                      form["two_sided"], form["color"])
+        printing.record(t, chosen, form["pages"], job)     # so the Binder page knows when it was printed
     except ValueError as e:
         if quick:
             return JSONResponse({"error": str(e)}, status_code=400)
