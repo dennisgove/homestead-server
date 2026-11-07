@@ -837,7 +837,7 @@ binders:
         color: true
 
   - binder: "Radio how-to"
-    color: "purple"
+    color: "yellow"
     note: "Using the radios: which radio and band for what, the frequencies, how to talk on the air, building antennas, and passing messages."
     how: "Pages from the CISA and DHS field guides, the ARRL ARES manual and the Army's tactical radio manual, plus this server's radio guide."
     items:

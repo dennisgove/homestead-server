@@ -87,7 +87,7 @@ Sickness and medicines, childbirth, children and teeth, and stress and coping.
 | County topo maps (get by hand: ngmdb.usgs.gov/topoview) | http://homestead.local/t/survival | `/srv/core/docs/survival/` |
 | Household watch roster, rally points | your plan; keep it in the vault: http://homestead.local:7092 | vault (Paperless) |
 
-## PURPLE: RADIO HOW-TO
+## YELLOW: RADIO HOW-TO
 
 The Binder page's Radio how-to list has the band chart, the frequency, operating, antenna and message pages, and the radio guides. Add by hand:
 
