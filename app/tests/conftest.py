@@ -77,15 +77,15 @@ def make_zim(path: Path):
         c.add_item(Page("pic.png", "", "PNG", "image/png"))
 
 
-def make_pdf(path: Path, lines: list[tuple[int, str]]):
-    """A real one-page PDF with lines of text at the given font sizes (biggest = the heading)."""
+def make_pdf(path: Path, lines: list[tuple[int, str]], box: str = "0 0 612 792"):
+    """A real one-page PDF with lines of text at the given font sizes (biggest = the heading); box: its size."""
     y, ops = 760, []
     for size, text in lines:
         ops.append(f"BT /F1 {size} Tf 72 {y} Td ({text}) Tj ET")
         y -= size + 14
     stream = "\n".join(ops).encode()
     objs = [b"<< /Type /Catalog /Pages 2 0 R >>", b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-            b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>",
+            b"<< /Type /Page /Parent 2 0 R /MediaBox [" + box.encode() + b"] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>",
             b"<< /Length %d >>\nstream\n" % len(stream) + stream + b"\nendstream",
             b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"]
     out, offsets = bytearray(b"%PDF-1.4\n"), []

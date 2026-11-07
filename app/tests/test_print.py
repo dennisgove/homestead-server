@@ -381,3 +381,20 @@ def test_cover_outline():
     assert [(k["section"], k["sub"]) for k in blocks] == [("Tab", "Head"), ("", "Other")]   # the tab named once
     assert blocks[0]["docs"] == [{"title": "A", "parts": ["one", "two"]}, {"title": "B", "parts": []}]
     assert blocks[1]["docs"] == [{"title": "A", "parts": ["three"]}]
+
+
+def test_landscape_pages_turn_top_to_the_left(tmp_path):
+    """In a binder every landscape page reads the same way: top at the left edge, so turning the binder a quarter
+    right reads left to right, top to bottom. Portrait pages, and files with none, go as they are."""
+    from pypdf import PdfReader
+    from conftest import make_pdf
+    from homestead import printing
+    wide, tall = tmp_path / "wide.pdf", tmp_path / "tall.pdf"
+    make_pdf(wide, [(24, "Route A")], box="0 0 792 612")
+    make_pdf(tall, [(24, "Index")])
+    part = lambda f: {"path": f, "pages": 1, "rel": f.name}
+    path, temp = printing.pdf({}, [part(wide)], [])
+    assert temp and PdfReader(path).pages[0].rotation == 270
+    path, temp = printing.pdf({}, [part(tall), part(wide)], [])
+    assert [pg.rotation for pg in PdfReader(path).pages] == [0, 270]
+    assert printing.pdf({}, [part(tall)], []) == (tall, False)

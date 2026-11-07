@@ -76,17 +76,32 @@ def pdf_large(path: Path) -> bool:
     return _pdf_facts(str(path), st.st_mtime_ns, st.st_size)[1]
 
 
+def _wide(page) -> bool:
+    """A landscape page, as it's seen (its own turn included)."""
+    box = page.cropbox
+    return (float(box.width) > float(box.height)) != (page.get("/Rotate", 0) % 180 == 90)
+
+
+def pdf_wide(path: Path) -> bool:
+    """Whether any page is landscape."""
+    try:
+        st = path.stat()
+    except OSError:
+        return False
+    return _pdf_facts(str(path), st.st_mtime_ns, st.st_size)[2]
+
+
 @lru_cache(maxsize=2048)
-def _pdf_facts(path: str, _mtime: int, _size: int) -> tuple[int, bool]:
-    """(pages, large), remembered until the file changes: opening a 700-page PDF takes a while."""
+def _pdf_facts(path: str, _mtime: int, _size: int) -> tuple[int, bool, bool]:
+    """(pages, large, any landscape), remembered until the file changes: opening a 700-page PDF takes a while."""
     from pypdf import PdfReader
     try:
         r = PdfReader(path)
         box = r.pages[0].mediabox if len(r.pages) else None
         large = bool(box) and max(float(box.width), float(box.height)) > 14.5 * 72
-        return len(r.pages), large
+        return len(r.pages), large, any(_wide(pg) for pg in r.pages)
     except Exception:   # a damaged file: counted as unknown, not fatal
-        return 0, False
+        return 0, False, False
 
 
 def ranges(text: str, total: int) -> list[tuple[int, int]]:
@@ -119,8 +134,11 @@ def choose(t: dict, parts: list[str] | None, pages: str) -> tuple[list[dict], li
 
 
 def pdf(t: dict, chosen: list[dict], rs: list[tuple[int, int]]) -> tuple[Path, bool]:
-    """(one PDF of just what was chosen, True if it's a temporary file to delete afterwards)."""
-    if len(chosen) == 1 and not rs:
+    """(one PDF of just what was chosen, True if it's a temporary file to delete afterwards).
+    Landscape pages are turned a quarter left, top to the left edge, so in the binder every one reads the same
+    way: turn the binder a quarter right and it reads left to right, top to bottom (left to itself, the printer
+    turns them the other way)."""
+    if len(chosen) == 1 and not rs and not pdf_wide(chosen[0]["path"]):
         return chosen[0]["path"], False
     from pypdf import PdfWriter
     order = [(x["path"], i) for x in chosen for i in range(x["pages"] or 0)]
@@ -134,6 +152,9 @@ def pdf(t: dict, chosen: list[dict], rs: list[tuple[int, int]]) -> tuple[Path, b
             run = []
         if f is not None:
             run.append((f, i))
+    for page in w.pages:
+        if _wide(page):
+            page.rotate(270)                     # a quarter turn left: the page's top goes to the left edge
     tmp = tempfile.NamedTemporaryFile(prefix="print-", suffix=".pdf", delete=False)
     with tmp:
         w.write(tmp)
