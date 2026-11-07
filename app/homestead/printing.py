@@ -196,15 +196,52 @@ def send(t: dict, chosen: list[dict], rs: list[tuple[int, int]], printer: str,
     return m[1] if m else ""
 
 
+IPP_QUEUE = """{
+  OPERATION Get-Jobs
+  GROUP operation-attributes-tag
+  ATTR charset attributes-charset utf-8
+  ATTR naturalLanguage attributes-natural-language en
+  ATTR uri printer-uri $uri
+  ATTR keyword which-jobs not-completed
+  ATTR boolean my-jobs false
+  ATTR name requesting-user-name homestead
+  ATTR keyword requested-attributes job-id,job-name,job-state,job-originating-user-name,time-at-creation,job-printer-uri,job-impressions-completed,job-k-octets
+}
+"""
+STATES = {"pending": "waiting", "pending-held": "held", "processing": "printing", "processing-stopped": "stopped"}
+
+
+def _ipp(test: str) -> str:
+    """Ask the print system (CUPS, over IPP) with an ipptool test; "" if it can't be asked."""
+    try:
+        with tempfile.NamedTemporaryFile("w", suffix=".test") as f:
+            f.write(test)
+            f.flush()
+            return subprocess.run(["ipptool", "-tv", "ipp://localhost/", f.name], capture_output=True, text=True,
+                                  timeout=10).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+
+
 def queue() -> list[dict]:
-    """[{job, printer, title, size}]: what's waiting to print or printing now."""
-    out = []
-    for p in printers():
-        for line in _run("lpq", "-P", p["name"]).splitlines():
-            m = re.match(r"(active|\d+\w*)\s+(\S+)\s+(\d+)\s+(.*?)\s+(\d+) bytes$", line.strip())
-            if m:
-                out.append({"job": int(m[3]), "printer": p["label"], "state": "printing" if m[1] == "active" else "waiting",
-                            "title": m[4], "size": int(m[5])})
+    """What's printing now and waiting, oldest first: [{job, printer, title, owner, state, at, pages_done, size}]."""
+    labels = {p["name"]: p["label"] for p in printers()}
+    out, job = [], {}
+    for line in _ipp(IPP_QUEUE).splitlines() + ["-- separator --"]:
+        if line.strip() == "-- separator --":
+            if "job-id" in job:
+                printer = job.get("job-printer-uri", "").rsplit("/", 1)[-1]
+                out.append({"job": int(job["job-id"]), "printer": labels.get(printer, printer.replace("_", " ")),
+                            "title": job.get("job-name", ""), "owner": job.get("job-originating-user-name", ""),
+                            "state": STATES.get(job.get("job-state", ""), job.get("job-state", "")),
+                            "at": int(job.get("time-at-creation") or 0), "pages_done": int(job.get("job-impressions-completed") or 0),
+                            "size": int(job.get("job-k-octets") or 0) * 1024})
+            job = {}
+            continue
+        m = re.match(r"\s*([a-z-]+) \([^)]*\) = (.*)$", line)
+        if m:
+            job[m[1]] = m[2].strip()
+    out.sort(key=lambda j: (j["state"] != "printing", j["job"]))
     return out
 
 
@@ -213,6 +250,13 @@ def cancel(job: int) -> bool:
         return subprocess.run(["cancel", str(int(job))], capture_output=True, timeout=20).returncode == 0
     except (OSError, subprocess.TimeoutExpired):
         return False
+
+
+def cancel_all() -> tuple[int, int]:
+    """Cancel every job in the queue: (how many were cancelled, how many couldn't be: someone else's, say)."""
+    jobs = queue()
+    done = sum(cancel(j["job"]) for j in jobs)
+    return done, len(jobs) - done
 
 
 def everything() -> list[dict]:
@@ -371,19 +415,14 @@ def cups_history() -> list[tuple[str, int]]:
         return _history["jobs"]
     jobs, name = [], None
     try:
-        with tempfile.NamedTemporaryFile("w", suffix=".test") as f:
-            f.write(IPP_JOBS)
-            f.flush()
-            out = subprocess.run(["ipptool", "-tv", "ipp://localhost/", f.name], capture_output=True, text=True,
-                                 timeout=10).stdout
-        for line in out.splitlines():
+        for line in _ipp(IPP_JOBS).splitlines():
             m = re.match(r"\s*(job-name|time-at-completed) \([^)]*\) = (.*)$", line)
             if m and m[1] == "job-name":
                 name = m[2].strip()
             elif m and name is not None:
                 jobs.append((name, int(m[2])))
                 name = None
-    except (OSError, subprocess.TimeoutExpired, ValueError):
+    except ValueError:
         jobs = []
     _history.update(at=time.monotonic(), jobs=jobs)
     return jobs

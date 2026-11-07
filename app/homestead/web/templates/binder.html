@@ -7,6 +7,7 @@
   <h1>The binders</h1>
   <p class="bsub">{{ in_binders }} binders · {{ '{:,}'.format(sheets) }} sheets · {{ '{:,}'.format(pages) }} pages, each binder starting with its cover.</p>
   <div class="btools">
+    {% if printer %}<a href="/print-queue">Print queue</a>{% endif %}
     <span class="grow"></span>
     <button type="button" id="close-all">Collapse all</button>
     <button type="button" id="open-all">Expand all</button>

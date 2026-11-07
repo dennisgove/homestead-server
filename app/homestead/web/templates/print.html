@@ -13,16 +13,9 @@ binders of similar things, with the right chapters and pages already picked.</p>
 
 {% if sent %}<p class="empty good noprint" role="status">Sent to {{ to }}: <b>{{ sent }}</b>{% if n %}, {{ '{:,}'.format(n) }} pages{% endif %}.</p>{% endif %}
 
-{% if queue %}
-<section class="noprint" id="queue">
-<h2 class="label">Printing now</h2>
-<ul class="list">
-  {% for j in queue %}
-  <li><span class="title">{{ j.title }}</span> <span class="meta">{{ j.state }} on {{ j.printer }} · {{ j.size | human }}</span>
-    <form method="post" action="/print-cancel/{{ j.job }}" class="end"><button class="plain">Cancel</button></form></li>
-  {% endfor %}
-</ul>
-</section>
+{% if not outside and printers %}
+<p class="box noprint" id="queue">🧾 <a href="/print-queue"><b>Print queue</b></a>:
+{% if queue %}{{ queue | length }} job{{ 's' if queue | length != 1 }} printing or waiting. See them, or cancel them.{% else %}nothing printing or waiting.{% endif %}</p>
 {% endif %}
 
 <section class="noprint">

@@ -183,6 +183,11 @@ audio.player { background: none; }
 input.wide { width: 100%; max-width: 520px; margin: 0 0 6px; }
 .pgroup h3 { margin: 18px 0 8px; font-size: 1.05rem; }
 .list li form.end { margin-left: auto; }
+.qall { margin: 14px 0; }
+.qall .btn { font-weight: 700; padding: 7px 16px; border-radius: 999px; border: 1px solid var(--red); background: transparent; color: var(--red); cursor: pointer; }
+.list.queue li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 16px; align-items: center; }
+.list.queue .title { grid-column: 1; overflow-wrap: anywhere; } .list.queue .meta { grid-column: 1; }
+.list.queue form.end { grid-column: 2; grid-row: 1 / span 2; margin: 0; }
 .spine { display: inline-block; width: 12px; height: 1.1em; border-radius: 3px; margin-right: 8px; vertical-align: -3px; border: 1px solid var(--rule); }
 .spine-red { background: #c62828; } .spine-blue { background: #1565c0; } .spine-green { background: #2e7d32; }
 .spine-black { background: #111; } .spine-white { background: #fff; } .spine-purple { background: #6a1b9a; } .spine-orange { background: #ef6c00; } .spine-yellow { background: #f9a825; }

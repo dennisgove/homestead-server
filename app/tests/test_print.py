@@ -38,7 +38,27 @@ shutil.copy(args[-1], "{log}/job.pdf")
 open("{log}/args.json", "w").write(json.dumps(args))
 EOF
 echo "request id is Office_Laser_series-8 (1 file(s))" """,
-        "cancel": f'echo "$@" > {log}/cancelled',
+        "cancel": f'echo "$@" >> {log}/cancelled; [ "$1" != 8 ]',          # job 8 is someone else's: refused
+        "ipptool": """grep -q not-completed "$3" || exit 0
+cat <<'EOF'
+        job-printer-uri (uri) = ipp://localhost:631/printers/Office_Laser_series
+        job-originating-user-name (nameWithoutLanguage) = homestead
+        job-name (nameWithoutLanguage) = Where There Is No Doctor (Hesperian)
+        time-at-creation (integer) = 1794077371
+        job-id (integer) = 7
+        job-state (enum) = processing
+        job-impressions-completed (integer) = 3
+        job-k-octets (integer) = 1024
+        -- separator --
+        job-printer-uri (uri) = ipp://localhost:631/printers/Office_Laser_series
+        job-originating-user-name (nameWithoutLanguage) = dennis
+        job-name (nameWithoutLanguage) = A letter
+        time-at-creation (integer) = 1794077373
+        job-id (integer) = 8
+        job-state (enum) = pending
+        job-impressions-completed (integer) = 0
+        job-k-octets (integer) = 20
+EOF""",
     }
     for name, body in scripts.items():
         (bin / name).write_text("#!/bin/sh\n" + body + "\n")
@@ -64,7 +84,11 @@ def test_every_print_page(indexed, cups):
         assert r.status_code == 200, (p, r.text[:300])
     page = c.get("/print").text
     assert "Office Laser" in page and f'href="/print/{BOOK}"' in page and 'href="/print/family/our-plan.txt"' in page
-    assert "Where There Is No Doctor" in page and 'action="/print-cancel/7"' in page      # the queue
+    assert 'href="/print-queue"' in page and "2 jobs printing or waiting" in page          # the queue, a page of its own
+    q = c.get("/print-queue").text
+    assert "Where There Is No Doctor (Hesperian)" in q and "<b>Printing</b>, 3 pages done" in q and 'action="/print-cancel/7"' in q
+    assert "A letter" in q and "Waiting" in q and "by dennis" in q and 'action="/print-cancel-all"' in q and "Cancel all (2)" in q
+    assert q.index("Where There Is No Doctor") < q.index("A letter")                       # printing first
     assert c.get("/print/medical/nothing.pdf").status_code == 404
     assert c.get("/print/../site.json").status_code == 404
 
@@ -112,8 +136,17 @@ def test_mistakes_are_explained(indexed, cups):
 
 
 def test_cancel(indexed, cups):
-    r = client().post("/print-cancel/7", follow_redirects=False)
-    assert r.status_code == 303 and (cups / "cancelled").read_text().strip() == "7"
+    c = client()
+    r = c.post("/print-cancel/7", follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == "/print-queue?cancelled=1"
+    assert (cups / "cancelled").read_text().split() == ["7"]
+    r = c.post("/print-cancel/8", follow_redirects=False)                    # someone else's job: refused
+    assert r.headers["location"] == "/print-queue?failed=8" and "Job 8 couldn" in c.get(r.headers["location"]).text
+    (cups / "cancelled").unlink()
+    r = c.post("/print-cancel-all", follow_redirects=False)
+    assert r.headers["location"] == "/print-queue?cancelled=1&left=1" and (cups / "cancelled").read_text().split() == ["7", "8"]
+    said = c.get(r.headers["location"]).text
+    assert "Cancelled 1 job." in said and "1 couldn" in said
 
 
 def test_without_a_printer_it_still_makes_the_pdf(indexed, cups):
@@ -244,11 +277,13 @@ def test_the_binder(indexed, cups):
     assert "Quick print</button>" not in page and "printing on the home printer is off" in page
     assert "printing on the home printer is off" in c.get(fd["url"], headers=out).text
     assert 'name="printer"' not in c.get(fd["url"], headers=out).text
-    assert "Cancel</button>" not in c.get("/print", headers=out).text and "Cancel</button>" in c.get("/print").text
+    assert "/print-queue" not in c.get("/print", headers=out).text and "/print-queue" in c.get("/print").text
     (cups / "job.pdf").unlink()
     r = c.post(fd["url"].split("?")[0], headers=out, data={"printer": "Office_Laser_series", "quick": "1"})
     assert r.status_code == 403 and not (cups / "job.pdf").exists()
     assert c.post("/print-cancel/7", headers=out, follow_redirects=False).status_code == 403
+    assert c.post("/print-cancel-all", headers=out, follow_redirects=False).status_code == 403
+    assert "Where There Is No Doctor (Hesperian)" not in c.get("/print-queue", headers=out).text
     assert c.get(fd["pdf_url"], headers=out).status_code == 200           # a PDF to print where they are still works
     assert "/binder" in c.get("/print").text
 

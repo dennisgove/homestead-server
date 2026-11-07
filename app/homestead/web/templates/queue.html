@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Print queue · Homestead Library{% endblock %}
+{% block body %}
+<div class="noprint">
+<p class="crumbs"><a href="/print">Print</a> / <a href="/binder">The binders</a></p>
+<h1>Print queue</h1>
+{% if outside %}
+<p class="lead">You're connected from outside the home, so the home printer's queue isn't shown here.</p>
+{% else %}
+{% if cancelled > 0 %}<p class="empty good" role="status">Cancelled {{ cancelled }} job{{ 's' if cancelled != 1 }}.{% if left %} {{ left }} couldn't be: sent by someone else from another computer, so only they (or the admin) can cancel {{ 'it' if left == 1 else 'them' }}.{% endif %} Pages the printer already had may still come out.</p>
+{% elif cancelled == 0 and left %}<p class="empty bad" role="status">Nothing could be cancelled: {{ 'that job was' if left == 1 else 'those jobs were' }} sent from another computer.</p>
+{% elif failed %}<p class="empty bad" role="status">Job {{ failed }} couldn't be cancelled: it has finished, or it was sent from another computer.</p>{% endif %}
+
+{% for p in printers %}
+<p class="meta">{{ p.label }}: {% if not p.ready %}stopped{% elif queue | selectattr('printer', 'equalto', p.label) | list %}printing{% else %}idle{% endif %}</p>
+{% else %}<p class="lead">The server can't see a printer right now.</p>
+{% endfor %}
+
+{% if queue %}
+<form method="post" action="/print-cancel-all" class="qall" onsubmit="return confirm('Cancel all {{ queue | length }} job{{ 's' if queue | length != 1 }}?')">
+  <button class="btn" type="submit">Cancel all ({{ queue | length }})</button></form>
+<ul class="list queue">
+  {% for j in queue %}
+  <li><span class="title">{{ j.title }}</span>
+    <span class="meta">{% if j.state == 'printing' %}<b>Printing</b>{% if j.pages_done %}, {{ j.pages_done }} page{{ 's' if j.pages_done != 1 }} done{% endif %}{% else %}{{ j.state | capitalize }}{% endif %}
+      · sent {{ j.at | when }}{% if j.owner and j.owner != 'homestead' %} by {{ j.owner }}{% endif %} · {{ j.size | human }}{% if printers | length > 1 %} · {{ j.printer }}{% endif %}</span>
+    <form method="post" action="/print-cancel/{{ j.job }}" class="end"><button class="plain">Cancel</button></form></li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="empty">Nothing is printing or waiting.</p>
+{% endif %}
+<p class="meta">This page checks again every 10 seconds.</p>
+<script>
+  if (location.search) history.replaceState(null, "", location.pathname);   // the message shows once
+  setTimeout(() => location.reload(), 10000);
+</script>
+{% endif %}
+</div>
+{% endblock %}

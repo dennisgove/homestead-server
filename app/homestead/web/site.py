@@ -390,12 +390,27 @@ async def print_send(request: Request, rel: str):
     return RedirectResponse(f"/print?{q}#queue", status_code=303)
 
 
+@app.get("/print-queue", response_class=HTMLResponse)
+def print_queue(request: Request, cancelled: int = -1, left: int = 0, failed: int = 0):
+    outside = from_outside(request)
+    return page(request, "queue.html", queue=[] if outside else printing.queue(), printers=printers(request),
+                cancelled=cancelled, left=left, failed=failed)
+
+
 @app.post("/print-cancel/{job}")
 def print_cancel(request: Request, job: int):
     if from_outside(request):
         raise HTTPException(403, "Printing is only from home.")
-    printing.cancel(job)
-    return RedirectResponse("/print#queue", status_code=303)
+    done = printing.cancel(job)
+    return RedirectResponse("/print-queue?" + ("cancelled=1" if done else f"failed={job}"), status_code=303)
+
+
+@app.post("/print-cancel-all")
+def print_cancel_all(request: Request):
+    if from_outside(request):
+        raise HTTPException(403, "Printing is only from home.")
+    done, left = printing.cancel_all()
+    return RedirectResponse(f"/print-queue?cancelled={done}&left={left}", status_code=303)
 
 
 @app.get("/tools", response_class=HTMLResponse)
